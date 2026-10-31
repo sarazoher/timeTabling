@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ 'Timetable dashboard' if current_lang == 'en' else 'לוח ניהול מערכת השעות' }}</title>
+    <title>{{ 'Home' if current_lang == 'en' else 'בית' }} · {{ 'Timetable builder' if current_lang == 'en' else 'בניית מערכת שעות' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
 </head>
 <body>
@@ -27,24 +27,60 @@
 {% set nav_active = 'home' %}{% set nav_inert = panel_open %}
 {% include "_top_nav.html" %}
 
-<main id="main-content" class="dashboard-page{{ ' behind-panel' if panel_open else '' }}"{% if panel_open %} aria-hidden="true"{% endif %}>
-    <header class="dashboard-topbar">
-        <div>
-            <span class="dashboard-kicker">{{ 'University Timetable Scheduler' if current_lang == 'en' else 'מערכת לבניית מערכת שעות אוניברסיטאית' }}</span>
-            <h1>{{ 'Timetable dashboard' if current_lang == 'en' else 'לוח ניהול מערכת השעות' }}</h1>
-            <p>{{ 'Manage scheduling requests, constraints and course data from one place.' if current_lang == 'en' else 'ניהול בקשות שיבוץ, אילוצים ונתוני קורסים במקום אחד.' }}</p>
-        </div>
-        <div class="dashboard-top-actions">
-            <a class="secondary-button" href="{{ url_for('guided_setup') }}">{{ 'Step-by-step setup' if current_lang == 'en' else 'הגדרה שלב אחר שלב' }}</a>
-            <a class="secondary-button" href="{{ url_for('export_timetable') }}">{{ 'Download timetable' if current_lang == 'en' else 'הורדת מערכת השעות' }}</a>
-        </div>
-    </header>
+<main id="main-content" class="home-page{{ ' behind-panel' if panel_open else '' }}"{% if panel_open %} aria-hidden="true"{% endif %}>
+    {% set en = current_lang == 'en' %}
+    <h1 class="home-title">{{ 'Hello, ' if en else 'שלום, ' }}<bdi>{{ current_user.name if current_user else '' }}</bdi></h1>
+    <p class="home-lead">
+        {%- if built_at -%}
+            {% if config.program_name %}{{ 'The timetable for ' if en else 'מערכת השעות של ' }}<bdi>{{ config.program_name }}</bdi>{{ ' is ready.' if en else ' מוכנה.' }}{% else %}{{ 'Your timetable is ready.' if en else 'מערכת השעות שלכם מוכנה.' }}{% endif %}
+        {%- elif courses_excel_exists -%}
+            {{ 'The file is loaded. Check the settings, then build.' if en else 'הקובץ נטען. נשאר לבדוק את ההגדרות ולבנות.' }}
+        {%- else -%}
+            {{ 'Build a timetable for a whole degree from one Excel file.' if en else 'בונים מערכת שעות לתואר שלם מקובץ Excel אחד.' }}
+        {%- endif -%}
+    </p>
 
     {% include "_page_messages.html" %}
 
-    <section class="dashboard-hero-grid">
-        <div class="dashboard-main-column">
-        <section class="ai-assistant-panel dashboard-ai" id="ai-assistant">
+    <section class="home-status-card" aria-labelledby="homeStatusTitle">
+        <h2 id="homeStatusTitle" class="sr-only">{{ 'Where things stand' if en else 'איפה הדברים עומדים' }}</h2>
+        <ul class="home-rows">
+            <li class="{{ 'is-done' if courses_excel_exists else '' }}">
+                <span class="home-mark" aria-hidden="true"></span>
+                <div><strong>{{ 'Course file' if en else 'קובץ הקורסים' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if courses_excel_exists else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
+                <span class="home-value">{% if courses_excel_exists %}<bdi>{{ config.course_file_name or 'courses.xlsx' }}</bdi> · {{ courses|length }} {{ 'courses' if en else 'קורסים' }}{% else %}{{ 'Not uploaded yet' if en else 'עדיין לא הועלה' }}{% endif %}</span></div>
+                {% if courses_excel_exists %}<a class="home-link" href="{{ url_for('data_page') }}">{{ 'Data' if en else 'נתונים' }}</a>{% endif %}
+            </li>
+            <li class="{{ 'is-done' if courses_excel_exists else '' }}">
+                <span class="home-mark" aria-hidden="true"></span>
+                <div><strong>{{ 'Settings' if en else 'הגדרות' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if courses_excel_exists else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
+                <span class="home-value">{% if courses_excel_exists %}{% if config.program_name %}<bdi>{{ config.program_name }}</bdi> · {% endif %}{{ config.degree_years }} {{ 'years' if en else 'שנים' }} · {% for day in all_days if config.days[day.key].enabled %}{{ day.key if en else day.hebrew }}{{ ', ' if not loop.last }}{% endfor %}{% else %}{{ 'After the file is loaded' if en else 'אחרי שהקובץ ייטען' }}{% endif %}</span></div>
+                {% if courses_excel_exists %}<a class="home-link" href="{{ url_for('data_page') }}#settings">{{ 'Edit' if en else 'עריכה' }}</a>{% endif %}
+            </li>
+            <li class="{{ 'is-done' if built_at else '' }}">
+                <span class="home-mark" aria-hidden="true"></span>
+                <div><strong>{{ 'Timetable' if en else 'מערכת השעות' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if built_at else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
+                <span class="home-value">{% if built_at %}{{ 'Built on ' if en else 'נבנתה ב־' }}<bdi dir="ltr">{{ built_at }}</bdi>{% else %}{{ 'Not built yet' if en else 'עדיין לא נבנתה' }}{% endif %}</span></div>
+            </li>
+        </ul>
+        <div class="home-cta">
+            {% if built_at %}
+                <a class="home-main-button" href="{{ url_for('calendar_page') }}">{{ 'Open the timetable' if en else 'פתיחת מערכת השעות' }}</a>
+                <form method="post" action="{{ url_for('rebuild_timetable') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="home-second-button" type="submit">{{ 'Rebuild' if en else 'בנייה מחדש' }}</button>
+                </form>
+                <a class="home-second-button" href="{{ url_for('export_timetable') }}">{{ 'Download' if en else 'הורדה' }}</a>
+            {% elif courses_excel_exists %}
+                <a class="home-main-button" href="{{ url_for('guided_setup') }}#gsStep2">{{ 'Continue setup' if en else 'המשך להגדרה' }}</a>
+            {% else %}
+                <a class="home-main-button" href="{{ url_for('guided_setup') }}">{{ 'Start' if en else 'התחלה' }}</a>
+                <span class="home-hint">{{ 'Three steps, a few minutes.' if en else 'שלושה שלבים, כמה דקות.' }}</span>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="ai-assistant-panel dashboard-ai" id="ai-assistant">
             <div class="ai-assistant-header">
                 <div>
                     <h2>{{ 'Tell the scheduler what you need' if current_lang == 'en' else 'כתבו למערכת מה אתם צריכים' }}</h2>
@@ -101,66 +137,14 @@
                 </div>
             {% endif %}
         </section>
-        </div>
-
-        <aside class="quick-actions-card home-build-card" id="settings">
-            {% set en = current_lang == 'en' %}
-            <h2>{{ 'The timetable' if en else 'מערכת השעות' }}</h2>
-            <p class="home-status">
-                {% if courses_excel_exists %}{% if en %}{{ courses|length }} courses loaded.{% else %}{{ courses|length }} קורסים נטענו.{% endif %}{% else %}{{ 'No course file yet.' if en else 'עדיין אין קובץ קורסים.' }}{% endif %}
-                {% if built_at %}<br>{{ 'Last built:' if en else 'נבנתה לאחרונה:' }} <bdi dir="ltr">{{ built_at }}</bdi>{% endif %}
-            </p>
-            {% if courses_excel_exists %}
-            <form method="post" action="{{ url_for('rebuild_timetable') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="primary-button full-width" type="submit">{{ 'Rebuild the timetable' if en else 'בנייה מחדש של מערכת השעות' }}</button>
-            </form>
-            {% else %}
-            <a class="primary-button full-width" href="{{ url_for('guided_setup') }}">{{ 'Go to setup' if en else 'להגדרה' }}</a>
-            {% endif %}
-            <a class="action-card-link" href="{{ url_for('data_page') }}">
-                <span><strong>{{ 'Data' if en else 'נתונים' }}</strong>
-                <small>{{ 'Course file, settings and the data check' if en else 'קובץ הקורסים, ההגדרות ובדיקת הנתונים' }}</small></span>
-            </a>
-            <a class="action-card-link" href="{{ url_for('rules_page') }}">
-                <span><strong>{{ 'Rules' if en else 'כללים' }}</strong>
-                <small>{{ 'Your own rules and lecturer hours' if en else 'הכללים שלכם ושעות של מרצים' }}</small></span>
-            </a>
-        </aside>
-    </section>
 </main>
 <script>
+    // Sending a request to the assistant can take a while: show the loading box.
     const loadingOverlay = document.getElementById('loadingOverlay');
-    // Years from the file: the number field is read-only while the box is ticked.
-    const yearsAuto = document.getElementById('degreeYearsAuto');
-    const yearsField = document.getElementById('settingsDegreeYears');
-    if (yearsAuto && yearsField) yearsAuto.addEventListener('change', () => {
-        yearsField.readOnly = yearsAuto.checked;
-        if (yearsAuto.checked && yearsAuto.dataset.fileYears) yearsField.value = yearsAuto.dataset.fileYears;
-    });
     document.querySelectorAll('.generate-form').forEach(form => {
-        form.addEventListener('submit', (event) => {
-            // "Save settings" and "Remove" do not run the solver: no loading box.
-            if (event.submitter && event.submitter.classList.contains('no-loading')) return;
-            if (loadingOverlay) loadingOverlay.hidden = false;
-        });
+        form.addEventListener('submit', () => { if (loadingOverlay) loadingOverlay.hidden = false; });
     });
     window.addEventListener('pageshow', () => { if (loadingOverlay) loadingOverlay.hidden = true; });
-    const fileInput = document.getElementById('courses_excel');
-    const fileName = document.getElementById('selectedFileName');
-    if (fileInput && fileName) fileInput.addEventListener('change', () => {
-        fileName.textContent = fileInput.files[0] ? fileInput.files[0].name : {{ ('No new file selected' if current_lang == 'en' else 'לא נבחר קובץ חדש')|tojson }};
-    });
-    const courseSearch = document.getElementById('courseSearch');
-    const courseRows = document.querySelectorAll('#courseTable tbody tr');
-    if (courseSearch && courseRows.length) {
-        courseSearch.addEventListener('input', () => {
-            const term = courseSearch.value.trim().toLowerCase();
-            courseRows.forEach(row => {
-                row.hidden = term && !row.textContent.toLowerCase().includes(term);
-            });
-        });
-    }
 </script>
 </body>
 </html>

@@ -81,8 +81,7 @@ class DashboardTests(unittest.TestCase):
         page = self.client.get("/").get_data(as_text=True)
         self.assertNotIn('id="department-rules"', page)
         self.assertNotIn("/department", page)
-        order = [page.index(m) for m in ('id="ai-assistant"', 'id="settings"')]
-        self.assertEqual(order, sorted(order))
+        self.assertIn('id="ai-assistant"', page)
 
     def test_department_route_is_gone(self):
         with self.client.session_transaction() as sess:

@@ -77,7 +77,7 @@ class TimetableExportTests(AuthFixture, unittest.TestCase):
         for page in ('/', '/calendar'):
             with patch.object(app,'load_timetable',return_value=[event()]):
                 html=self.client.get(page).get_data(as_text=True)
-            self.assertIn('/export/timetable',html)
+            if page=='/calendar':self.assertIn('/export/timetable',html)  # Home offers it once built: test_home_page
             self.assertNotIn('לסטודנטים',html)
             self.assertNotIn('JSON של',html)
 
