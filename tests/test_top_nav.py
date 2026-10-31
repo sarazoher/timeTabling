@@ -43,11 +43,32 @@ class TopNavTests(AuthFixture, unittest.TestCase):
                 target = {"home": "/", "timetable": "/calendar", "data": "/data", "rules": "/rules"}[active]
                 self.assertEqual(current, [target], url)
 
-    def test_all_four_items_are_links(self):
+    def test_new_account_greys_timetable_and_rules(self):
+        nav = nav_of(self.get("/"))
+        for href in ("/", "/data"):
+            self.assertIn(f'href="{href}"', nav)
+        for href in ("/calendar", "/rules"):
+            self.assertNotIn(f'href="{href}"', nav)
+        self.assertEqual(nav.count('class="app-nav-item is-disabled" tabindex="0" role="link" aria-disabled="true"'), 2)
+        self.assertIn("יהיה זמין אחרי הבנייה הראשונה", nav)
+        self.assertIn("יהיה זמין אחרי שקובץ הקורסים ייטען", nav)
+
+    def test_rules_open_with_a_file_and_timetable_after_a_build(self):
+        with self.client.session_transaction() as sess:
+            token = sess["csrf_token"]
+        self.client.post("/setup/sample", data={"csrf_token": token})
+        nav = nav_of(self.get("/"))
+        self.assertIn('href="/rules"', nav)
+        self.assertNotIn('href="/calendar"', nav)
+        (self.workspace() / "timetable.json").write_text("[]", encoding="utf-8")
         nav = nav_of(self.get("/"))
         for href in ("/", "/calendar", "/data", "/rules"):
             self.assertIn(f'href="{href}"', nav)
         self.assertNotIn("is-disabled", nav)
+
+    def test_a_greyed_page_is_still_marked_when_opened_directly(self):
+        nav = nav_of(self.get("/rules"))
+        self.assertIn('<a class="app-nav-item" href="/rules" aria-current="page"', nav)
 
     def test_days_page_now_lives_on_the_data_page(self):
         self.assertTrue(self.client.get("/days").headers["Location"].endswith("/data#settings"))

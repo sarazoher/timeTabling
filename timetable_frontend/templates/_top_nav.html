@@ -1,4 +1,6 @@
 {# The app's top menu, shared by every signed-in page.
+   Timetable is greyed until a timetable is built, Rules until a course file
+   is loaded (nav_has_timetable / nav_has_file, from inject_setup_progress).
    Before including, a page sets nav_active to 'home' or 'timetable' (or
    nothing, for a page the menu has no item for yet) and may set nav_inert
    while a panel covers the page.
@@ -12,9 +14,17 @@
 
     <nav class="app-nav" aria-label="{{ 'Main' if en else 'ניווט ראשי' }}">
         <a class="app-nav-item" href="{{ url_for('setup_page') }}"{% if nav_active == 'home' %} aria-current="page"{% endif %}>{{ 'Home' if en else 'בית' }}</a>
+        {% if nav_has_timetable or nav_active == 'timetable' %}
         <a class="app-nav-item" href="{{ url_for('calendar_page') }}"{% if nav_active == 'timetable' %} aria-current="page"{% endif %}>{{ 'Timetable' if en else 'מערכת השעות' }}</a>
+        {% else %}
+        <span class="app-nav-item is-disabled" tabindex="0" role="link" aria-disabled="true" aria-describedby="navTipTimetable">{{ 'Timetable' if en else 'מערכת השעות' }}<span class="app-nav-tip" id="navTipTimetable" role="tooltip">{{ 'Available after the first build. Finish setup first.' if en else 'יהיה זמין אחרי הבנייה הראשונה. קודם מסיימים את ההגדרה.' }}</span></span>
+        {% endif %}
         <a class="app-nav-item" href="{{ url_for('data_page') }}"{% if nav_active == 'data' %} aria-current="page"{% endif %}>{{ 'Data' if en else 'נתונים' }}</a>
+        {% if nav_has_file or nav_active == 'rules' %}
         <a class="app-nav-item" href="{{ url_for('rules_page') }}"{% if nav_active == 'rules' %} aria-current="page"{% endif %}>{{ 'Rules' if en else 'כללים' }}</a>
+        {% else %}
+        <span class="app-nav-item is-disabled" tabindex="0" role="link" aria-disabled="true" aria-describedby="navTipRules">{{ 'Rules' if en else 'כללים' }}<span class="app-nav-tip" id="navTipRules" role="tooltip">{{ 'Available once a course file is loaded.' if en else 'יהיה זמין אחרי שקובץ הקורסים ייטען.' }}</span></span>
+        {% endif %}
     </nav>
 
     <div class="app-utilities">

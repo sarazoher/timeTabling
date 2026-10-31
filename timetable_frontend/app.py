@@ -144,6 +144,15 @@ def inject_i18n():
     }
 
 
+@app.context_processor
+def inject_setup_progress():
+    """What the top menu needs: Rules opens once a course file is loaded,
+    Timetable once a timetable has been built (redesign step 13)."""
+    if not g.get("user"):
+        return {}
+    return {"nav_has_file": COURSES_EXCEL_FILE.exists(), "nav_has_timetable": TIMETABLE_FILE.exists()}
+
+
 @app.route("/language/<lang_code>")
 def set_language(lang_code: str):
     if lang_code in app.config["LANGUAGES"]:
