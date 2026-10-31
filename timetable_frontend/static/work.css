@@ -1,0 +1,90 @@
+/* The work level of the TimeTabling look (DESIGN.md): frosted daylight for
+   pages people work on (Data now; Rules and the timetable next). Purple glows
+   from two corners behind milky glass; long content stays easy to read.
+   Loaded after calendar.css and world.css; everything is scoped to
+   .is-light-page so other pages are untouched. */
+
+.is-light-page { background: var(--tt-wash); color: var(--tt-plum-deep); overflow-x: hidden; }
+
+/* Top menu: a floating glass bar. */
+.is-light-page .app-topbar { position: sticky; top: 12px; margin: 12px 20px 0; border-radius: 18px; background: rgba(255, 255, 255, .55); color: var(--tt-plum-deep); backdrop-filter: blur(22px) saturate(1.25); -webkit-backdrop-filter: blur(22px) saturate(1.25); border: 1px solid rgba(255, 255, 255, .85); box-shadow: 0 18px 40px -26px rgba(60, 20, 90, .45), inset 0 1px 0 #fff; }
+.is-light-page .app-brand { color: var(--tt-plum-deep); }
+.is-light-page .app-nav-item { color: var(--tt-plum-deep); }
+.is-light-page a.app-nav-item:hover { background: rgba(117, 68, 154, .1); color: var(--tt-plum-deep); }
+.is-light-page .app-nav-item[aria-current="page"] { background: var(--tt-plum); color: #fff; box-shadow: 0 8px 18px -8px var(--tt-plum); }
+.is-light-page .app-nav-item.is-disabled { color: #8a7898; }
+.is-light-page .app-assistant { color: var(--tt-plum-deep); border-color: rgba(117, 68, 154, .3); background: rgba(255, 255, 255, .5); }
+.is-light-page .app-lang { color: var(--tt-plum-deep); }
+.is-light-page .app-avatar { background: var(--tt-plum); color: #fff; }
+
+/* Glass panels */
+.is-light-page .dr-box { background: rgba(255, 255, 255, .58); backdrop-filter: blur(22px) saturate(1.25); -webkit-backdrop-filter: blur(22px) saturate(1.25); border: 1px solid rgba(255, 255, 255, .88); border-radius: 22px; box-shadow: 0 24px 48px -28px rgba(60, 20, 90, .45), inset 0 1px 0 #fff; padding: 22px 24px; }
+.is-light-page .dr-page { max-width: 1180px; padding: 40px 24px 140px; }
+.is-light-page .dr-head { align-items: flex-end; margin-bottom: 26px; }
+.is-light-page .dr-head h1 { font-size: clamp(34px, 4.4vw, 52px); font-weight: 900; letter-spacing: -.03em; line-height: 1.05; margin-bottom: 8px; }
+.is-light-page .dr-lead { color: var(--tt-muted); text-wrap: pretty; }
+
+/* Buttons */
+.is-light-page .gs-button { min-height: 50px; border: 0; border-radius: 14px; padding: 0 22px; font-weight: 800; color: #fff; background: linear-gradient(135deg, var(--tt-glow), var(--tt-plum) 55%, var(--tt-glow-deep)); box-shadow: 0 14px 30px -14px var(--tt-plum); transition: transform .3s var(--tt-ease), box-shadow .3s var(--tt-ease); }
+.is-light-page .gs-button:hover { background: linear-gradient(135deg, var(--tt-glow), var(--tt-plum) 55%, var(--tt-glow-deep)); transform: translateY(-2px); }
+.is-light-page .gs-button.gs-secondary { color: var(--tt-plum); background: rgba(255, 255, 255, .7); border: 1px solid #e3d3e8; box-shadow: none; }
+.is-light-page .gs-button.gs-secondary:hover { background: #fff; transform: none; }
+.is-light-page .gs-button:focus-visible, .is-light-page .wk-go:focus-visible { outline: 3px solid var(--tt-lilac); outline-offset: 2px; }
+
+/* Card icons */
+.wk-card-head { display: flex; align-items: center; gap: 12px; }
+.wk-icon { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: var(--tt-plum); background: linear-gradient(135deg, var(--tt-lavender), #fff); border: 1px solid #fff; box-shadow: 0 6px 14px -8px rgba(117, 68, 154, .5); }
+
+/* The status bar: one line, a light sheen, a round arrow. */
+.wk-status { display: flex; align-items: center; gap: 14px; padding: 10px; margin: 0 0 18px; text-decoration: none; color: inherit; }
+.wk-bar { position: relative; overflow: hidden; flex: 1; min-height: 50px; border-radius: 26px; display: flex; align-items: center; gap: 12px; padding: 8px 18px; color: #fff; font-weight: 700; line-height: 1.4;
+    background: linear-gradient(to left, rgba(117, 68, 154, .94), rgba(139, 79, 201, .62) 60%, rgba(117, 68, 154, .14)); }
+[dir="ltr"] .wk-bar { background: linear-gradient(to right, rgba(117, 68, 154, .94), rgba(139, 79, 201, .62) 60%, rgba(117, 68, 154, .14)); }
+.wk-bar::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .35) 50%, transparent 70%); transform: translateX(100%); animation: wk-sheen 5s var(--tt-ease) infinite; pointer-events: none; }
+@keyframes wk-sheen { 60%, 100% { transform: translateX(-100%); } }
+.wk-bar.is-warning { background: linear-gradient(to left, rgba(146, 64, 14, .9), rgba(217, 119, 6, .55) 60%, rgba(146, 64, 14, .12)); }
+.wk-bar.is-blocking { background: linear-gradient(to left, rgba(153, 27, 27, .92), rgba(220, 38, 38, .55) 60%, rgba(153, 27, 27, .12)); }
+[dir="ltr"] .wk-bar.is-warning { background: linear-gradient(to right, rgba(146, 64, 14, .9), rgba(217, 119, 6, .55) 60%, rgba(146, 64, 14, .12)); }
+[dir="ltr"] .wk-bar.is-blocking { background: linear-gradient(to right, rgba(153, 27, 27, .92), rgba(220, 38, 38, .55) 60%, rgba(153, 27, 27, .12)); }
+.wk-tick { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: #236236; font-weight: 900; }
+.wk-bar.is-warning .wk-tick { color: #92400e; }
+.wk-bar.is-blocking .wk-tick { color: #991b1b; }
+.wk-go { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--tt-plum); box-shadow: 0 10px 20px -8px var(--tt-plum); }
+[dir="ltr"] .wk-go svg { transform: scaleX(-1); }
+
+/* Lecturer hours card */
+.wk-lecturers { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14.5px; }
+.wk-lecturers li { display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; border-radius: 12px; background: rgba(255, 255, 255, .6); }
+.wk-lecturers span { color: var(--tt-muted); }
+.wk-empty { margin: 0; color: var(--tt-muted); line-height: 1.55; }
+
+/* Settings chips */
+.is-light-page .dr-day { display: inline-flex; gap: 6px; margin: 0 0 6px; margin-inline-end: 6px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, .7); border: 1px solid #eadff2; font-size: 13.5px; }
+
+/* Folds and messages */
+.is-light-page .dr-fold > summary h2, .is-light-page .dr-box h2 { font-size: 19px; font-weight: 800; }
+.is-light-page .dr-overrides { background: rgba(255, 255, 255, .6); }
+.is-light-page .dr-form-actions { border-top-color: rgba(117, 68, 154, .14); }
+.is-light-page .dr-page > .flash { border-radius: 14px; border: 1px solid rgba(255, 255, 255, .8); box-shadow: 0 12px 26px -20px rgba(60, 20, 90, .4); }
+
+/* Course table: glass rows */
+.is-light-page .course-table-wrap { border: 0; background: transparent; }
+.is-light-page .course-data-table { border-collapse: separate; border-spacing: 0 6px; }
+.is-light-page .course-data-table th { background: transparent; color: var(--tt-muted); border: 0; font-size: 13px; }
+.is-light-page .course-data-table td { background: rgba(255, 255, 255, .62); border: 0; }
+.is-light-page .course-data-table td:first-child { border-start-start-radius: 12px; border-end-start-radius: 12px; font-variant-numeric: tabular-nums; color: var(--tt-muted); }
+.is-light-page .course-data-table td:last-child { border-start-end-radius: 12px; border-end-end-radius: 12px; }
+.is-light-page .course-data-table tbody tr:hover td { background: #fff; }
+.is-light-page .dr-search input { background: rgba(255, 255, 255, .75); border: 1px solid #eadff2; border-radius: 12px; }
+
+@media (max-width: 720px) {
+    .is-light-page .app-topbar { margin: 8px; top: 8px; }
+    .is-light-page .dr-page { padding: 26px 14px 120px; }
+    .wk-status { padding: 8px; }
+    .wk-bar { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .wk-bar::after { animation: none; display: none; }
+    .is-light-page .gs-button { transition: none; }
+}
+.wk-lecturers .time-range { white-space: nowrap; }

@@ -741,6 +741,16 @@ def _catalog_summary(catalog: list[dict]) -> dict:
                 file_years=max((int(c.get("year") or 0) for c in catalog), default=None))
 
 
+def _lecturer_hours(config: dict) -> list[dict]:
+    """Lecturers with their own hours, each with the days they can teach."""
+    rows = []
+    for lecturer, days in sorted((config.get("lecturer_availability") or {}).items()):
+        open_days = [(day_label_for(key, select_locale()), rule.get("start"), rule.get("end"))
+                     for key, rule in days.items() if rule.get("enabled")]
+        rows.append({"lecturer": lecturer, "days": open_days})
+    return rows
+
+
 @app.route("/data", methods=["GET"])
 def data_page():
     """Course file, settings, data check and the course list."""
@@ -759,6 +769,7 @@ def data_page():
         column_mapping=_column_mapping_context(),
         year_review=_year_review(),
         return_to="data",
+        custom_hours=_lecturer_hours(config),
         **_catalog_summary(catalog),
     )
 
@@ -767,11 +778,7 @@ def data_page():
 def rules_page():
     """Your own rules, lecturer hours and the built-in rules."""
     config = load_config()
-    custom_hours = []
-    for lecturer, days in sorted((config.get("lecturer_availability") or {}).items()):
-        open_days = [(day_label_for(key, select_locale()), rule.get("start"), rule.get("end"))
-                     for key, rule in days.items() if rule.get("enabled")]
-        custom_hours.append({"lecturer": lecturer, "days": open_days})
+    custom_hours = _lecturer_hours(config)
     core = _core_constraints(config)
     return render_template(
         "rules.html",

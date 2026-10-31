@@ -77,6 +77,29 @@ class DataRulesPagesTests(AuthFixture, unittest.TestCase):
         self.assertTrue(response.headers["Location"].endswith("/rules#ai-assistant"))
         self.assertEqual(self.config()["ai_constraints"], [])
 
+    def test_lecturer_hours_card_and_data_check_line_on_the_data_page(self):
+        self.load_sample()
+        page = self.client.get("/data").get_data(as_text=True)
+        self.assertIn("כל מרצה זמין בכל שעות הלימוד", page)
+        self.assertIn('href="/lecturers"', page)
+        self.assertIn('class="wk-status dr-box" href="#check"', page)
+        self.assertNotIn('id="drCheck"', page)            # the old third card is gone
+        order = [page.index(m) for m in ('id="drLecturers"', 'class="wk-status', 'id="settings"', 'id="check"')]
+        self.assertEqual(order, sorted(order))
+        config = self.config()
+        config["lecturer_availability"] = {"ד\"ר נור איגור": {"Monday": {"enabled": True, "start": "17:00", "end": "20:00"}}}
+        (self.workspace() / "schedule_config.json").write_text(json.dumps(config, ensure_ascii=False), encoding="utf-8")
+        page = self.client.get("/data").get_data(as_text=True)
+        self.assertIn("נור איגור", page)
+        self.assertIn('<bdi dir="ltr" class="time-range">17:00–20:00</bdi>', page)
+
+    def test_data_page_is_in_the_light_look(self):
+        self.load_sample()
+        page = self.client.get("/data").get_data(as_text=True)
+        self.assertIn('<body class="is-light-page">', page)
+        self.assertIn('class="tt-sky is-light"', page)
+        self.assertIn('href="/static/work.css"', page)
+
     def test_lecturer_hours_are_summarised_on_the_rules_page(self):
         self.load_sample()
         config = self.config()
