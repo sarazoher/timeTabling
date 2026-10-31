@@ -16,6 +16,7 @@ import os
 import shutil
 import subprocess
 import threading
+import time
 import webbrowser
 from pathlib import Path
 
@@ -29,6 +30,7 @@ from flask import (
     session,
     url_for,
     send_file,
+    jsonify,
 )
 from flask_babel import Babel, gettext as _
 from werkzeug.utils import secure_filename
@@ -289,10 +291,12 @@ def validate_form_config(config: dict) -> None:
 
 
 
-def _return_url(anchor: str = "") -> str:
+def _return_url(anchor: str = "", return_to: str | None = None) -> str:
     """Where a form goes back to: the guided Setup page when it was sent from
     there (hidden field return_to=setup), otherwise the home page."""
-    if (request.form.get("return_to") or request.args.get("return_to")) == "setup":
+    if return_to is None:
+        return_to = request.form.get("return_to") or request.args.get("return_to")
+    if return_to == "setup":
         return url_for("guided_setup")
     return url_for("setup_page") + anchor
 
@@ -359,10 +363,10 @@ def _save_build_failure(message: str, details: str, debug_url: str | None) -> st
     return message
 
 
-def run_backend() -> tuple[bool, str]:
+def _backend_command() -> list[str]:
     # The solver runs inside the account's workspace; main.py reads
     # courses.xlsx and the config there and writes its results there.
-    command = [
+    return [
         sys.executable,
         str(BACKEND_DIR / "main.py"),
         "courses.xlsx",
@@ -371,6 +375,11 @@ def run_backend() -> tuple[bool, str]:
         "--time-limit",
         "35",
     ]
+
+
+def run_backend() -> tuple[bool, str]:
+    """Run a build and wait for it (used when builds do not run in the background)."""
+    command = _backend_command()
 
     try:
         result = subprocess.run(
@@ -800,13 +809,22 @@ def _flash_automatic_year_moves() -> None:
 
 
 def _build_and_redirect():
-    """Run the solver with the saved configuration and redirect."""
+    """Build with the saved configuration: in the background with a progress
+    page, or (in tests) right away."""
+    return_to = "setup" if request.form.get("return_to") == "setup" else ""
+    if _background_builds():
+        return _start_build(return_to)
     success, details = run_backend()
+    return redirect(_finish_build(success, details, return_to))
+
+
+def _finish_build(success: bool, details: str, return_to: str) -> str:
+    """Record a finished build's result and return the page to open next."""
     if not success and _year_review() is not None:
         # Suggest mode: the backend stopped before solving and wrote the
         # fewest needed year moves. The dashboard shows them in a panel.
         BUILD_FAILURE_FILE.unlink(missing_ok=True)
-        return redirect(_return_url())
+        return _return_url(return_to=return_to)
     if not success:
         details_lower = details.lower()
         solver_failure = (
@@ -838,12 +856,188 @@ def _build_and_redirect():
         # Only a short marker goes into the (cookie-based) flash; the full
         # report is read from disk by the dashboard.
         flash(headline, "build-failure")
-        return redirect(_return_url())
+        return _return_url(return_to=return_to)
 
     BUILD_FAILURE_FILE.unlink(missing_ok=True)
     flash(_("The timetable was built successfully by the solver."), "success")
     _flash_automatic_year_moves()
-    return redirect(url_for("calendar_page"))
+    return url_for("calendar_page")
+
+
+# ---------------------------------------------------------------------------
+# Background builds: the solver runs as its own process; the progress page
+# asks /build/status every second. Stages are read from the markers main.py
+# prints; each solver stage has a fixed time limit, so its share of the bar
+# fills by elapsed time against that limit and never goes backwards.
+BUILD_STATE_FILE = WorkspaceFile("build_state.json")
+BUILD_OUTPUT_FILE = WorkspaceFile("build_output.log")
+BUILD_ERRORS_FILE = WorkspaceFile("build_errors.log")
+BUILD_SAFETY_SECONDS = 240      # the old synchronous limit was 180 s of solving
+_RUNNING_BUILDS: dict[str, subprocess.Popen] = {}
+
+# (key, marker that starts the stage, seconds budget, Hebrew, English)
+BUILD_STAGES = [
+    ("check", None, 5, "בודקים את הנתונים", "Checking the data"),
+    ("plan", "entering Stage 1", 20, "מתכננים איזה קורס ייכנס לכל סמסטר", "Planning which course goes in each semester"),
+    ("place", "entering weekly solver", 50, "משבצים ימים ושעות", "Placing days and hours"),
+    ("breaks", "STAGE_2_OPTIMIZATION status", 20, "מסדרים הפסקות בין שיעורים", "Arranging breaks between classes"),
+    ("intake", "B_INTEGRATED_SOLVER_START", 65, "מתכננים את מחזור ב׳", "Planning the semester-B intake"),
+    ("save", "weekly solver FEASIBLE", 5, "שומרים את מערכת השעות", "Saving the timetable"),
+]
+# Share of the bar each stage ends at, without and with the semester-B intake.
+BUILD_STAGE_ENDS = {
+    False: {"check": 5, "plan": 12, "place": 72, "breaks": 92, "save": 99},
+    True: {"check": 4, "plan": 10, "place": 55, "breaks": 68, "intake": 92, "save": 99},
+}
+
+
+def _background_builds() -> bool:
+    return app.config.get("BACKGROUND_BUILDS", not app.config.get("TESTING", False))
+
+
+def _workspace_key() -> str:
+    return str(workspace_dir())
+
+
+def _start_build(return_to: str):
+    running = _RUNNING_BUILDS.get(_workspace_key())
+    if running is not None and running.poll() is None:
+        return redirect(url_for("building_page"))
+    BUILD_OUTPUT_FILE.unlink(missing_ok=True)
+    BUILD_ERRORS_FILE.unlink(missing_ok=True)
+    env = dict(os.environ, PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8")
+    with open(BUILD_OUTPUT_FILE, "w", encoding="utf-8") as out, open(BUILD_ERRORS_FILE, "w", encoding="utf-8") as err:
+        process = subprocess.Popen(_backend_command(), cwd=workspace_dir(), stdout=out, stderr=err, env=env)
+    _RUNNING_BUILDS[_workspace_key()] = process
+    BUILD_STATE_FILE.write_text(json.dumps({
+        "state": "running", "started": time.time(), "pid": process.pid, "return_to": return_to,
+        "semester_b": bool(load_config().get("allow_semester_b_start")), "marks": {}, "percent": 0,
+    }), encoding="utf-8")
+    return redirect(url_for("building_page"))
+
+
+def _build_stages(semester_b: bool) -> list[tuple]:
+    return [s for s in BUILD_STAGES if semester_b or s[0] != "intake"]
+
+
+def _build_progress(state: dict, output: str, now: float) -> tuple[str, int]:
+    """The current stage and the bar's percentage (never lower than before)."""
+    stages = _build_stages(state.get("semester_b", False))
+    marks = state.setdefault("marks", {})
+    for key, marker, *_rest in stages:
+        if marker and marker in output and key not in marks:
+            marks[key] = now
+    current = stages[0][0]
+    for key, *_rest in stages:
+        if key == "check" or key in marks:
+            current = key
+    ends = BUILD_STAGE_ENDS[state.get("semester_b", False)]
+    keys = [s[0] for s in stages]
+    index = keys.index(current)
+    start_pct = 0 if index == 0 else ends[keys[index - 1]]
+    budget = stages[index][2]
+    began = marks.get(current, state["started"])
+    fraction = min(0.95, max(0.0, (now - began) / budget))
+    percent = int(start_pct + (ends[current] - start_pct) * fraction)
+    state["percent"] = max(int(state.get("percent", 0)), percent)
+    return current, state["percent"]
+
+
+def _pid_alive(pid: int | None) -> bool:
+    if not pid:
+        return False
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def _advance_build() -> dict:
+    """Check the running build; finish it when its process has ended.
+    Returns {"running": bool, "stage", "percent"} or {"url": next page}."""
+    state = load_json(BUILD_STATE_FILE, None)
+    if not state:
+        return {"url": url_for("guided_setup")}
+    if state["state"] != "running":
+        return {"url": state.get("url") or _return_url(return_to=state.get("return_to"))}
+    now = time.time()
+    output = BUILD_OUTPUT_FILE.read_text(encoding="utf-8", errors="replace") if BUILD_OUTPUT_FILE.exists() else ""
+    process = _RUNNING_BUILDS.get(_workspace_key())
+    if process is not None:
+        code = process.poll()
+    else:   # the app restarted while building: follow the process by its id
+        code = None if _pid_alive(state.get("pid")) else (0 if "Created:" in output else 1)
+    if code is None and now - state["started"] > BUILD_SAFETY_SECONDS:
+        _stop_process(process, state.get("pid"))
+        code, output = 1, output + "\n" + _("The solver exceeded the 3-minute time limit.")
+    if code is None:
+        stage, percent = _build_progress(state, output, now)
+        BUILD_STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
+        return {"running": True, "stage": stage, "percent": percent}
+    _RUNNING_BUILDS.pop(_workspace_key(), None)
+    errors = BUILD_ERRORS_FILE.read_text(encoding="utf-8", errors="replace").strip() if BUILD_ERRORS_FILE.exists() else ""
+    if code == 0:
+        success, details = True, output.strip()
+    else:
+        parts = []
+        if output.strip():
+            parts.append("--- backend stdout ---\n" + output.strip()[-6000:])
+        if errors:
+            parts.append("--- backend stderr ---\n" + errors[-6000:])
+        success, details = False, "\n\n".join(parts) or _("Unknown error.")
+    url = _finish_build(success, details, state.get("return_to") or "")
+    state.update(state="done", url=url, percent=100)
+    BUILD_STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
+    return {"url": url}
+
+
+def _stop_process(process, pid) -> None:
+    try:
+        if process is not None:
+            process.kill()
+            process.wait(timeout=10)
+        elif _pid_alive(pid):
+            os.kill(pid, 9)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@app.route("/building", methods=["GET"])
+def building_page():
+    result = _advance_build()
+    if "url" in result:
+        return redirect(result["url"])
+    state = load_json(BUILD_STATE_FILE, {})
+    config = load_config()
+    catalog = load_json(COURSES_FILE, [])
+    return render_template(
+        "building.html",
+        stages=_build_stages(state.get("semester_b", False)),
+        stage=result["stage"], percent=result["percent"],
+        program_name=config.get("program_name") or "",
+        course_count=len(catalog), years=config.get("degree_years"),
+    )
+
+
+@app.route("/build/status", methods=["GET"])
+def build_status():
+    return jsonify(_advance_build())
+
+
+@app.route("/build/cancel", methods=["POST"])
+def cancel_build():
+    state = load_json(BUILD_STATE_FILE, None)
+    if state and state.get("state") == "running":
+        _stop_process(_RUNNING_BUILDS.pop(_workspace_key(), None), state.get("pid"))
+        state["state"] = "cancelled"
+        state["url"] = _return_url(return_to=state.get("return_to"))
+        BUILD_STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
+        flash("The build was cancelled. Nothing changed; the previous timetable is still there."
+              if select_locale() == "en" else
+              "הבנייה בוטלה. דבר לא השתנה, ומערכת השעות הקודמת נשארה.", "warning")
+        return redirect(state["url"])
+    return redirect(_advance_build().get("url", url_for("guided_setup")))
 
 
 @app.route("/generate", methods=["POST"])

@@ -1,0 +1,82 @@
+{# Full-screen build progress. Context: stages, stage, percent, program_name, course_count, years.
+   The page asks /build/status every second and opens the next page when the build ends. #}
+{% set en = current_lang == 'en' %}
+{% set keys = stages | map(attribute=0) | list %}
+{% set current_index = keys.index(stage) %}
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Building the timetable' if en else 'בונים את מערכת השעות' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+    <noscript><meta http-equiv="refresh" content="3"></noscript>
+</head>
+<body>
+<main id="main-content" class="bp-page">
+    <section class="bp-card" aria-labelledby="bpTitle">
+        <h1 id="bpTitle">{{ 'Building the timetable' if en else 'בונים את מערכת השעות' }}</h1>
+        <p class="bp-lead">
+            {%- if program_name %}<bdi>{{ program_name }}</bdi> · {% endif -%}
+            {%- if en %}{{ course_count }} courses · {{ years }} years{% else %}{{ course_count }} קורסים · {{ years }} שנים{% endif -%}
+        </p>
+
+        <div class="bp-bar" role="progressbar" aria-labelledby="bpTitle" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent }}" id="bpBar">
+            <div class="bp-bar-fill" id="bpFill" style="width: {{ percent }}%"></div>
+        </div>
+        <p class="bp-percent"><span id="bpPercent" dir="ltr">{{ percent }}%</span></p>
+
+        <ol class="bp-steps" id="bpSteps">
+            {% for key, marker, budget, he, en_label in stages %}
+            <li data-stage="{{ key }}" class="{{ 'is-done' if loop.index0 < current_index else ('is-now' if loop.index0 == current_index else '') }}"{% if loop.index0 == current_index %} aria-current="step"{% endif %}>
+                <span class="bp-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <span>{{ en_label if en else he }}</span>
+                {% if key == 'place' %}<small class="bp-longest">{{ 'the longest part' if en else 'החלק הארוך' }}</small>{% endif %}
+            </li>
+            {% endfor %}
+        </ol>
+
+        <div class="bp-foot">
+            <p class="bp-note">{{ "This can take a few minutes. You can leave this page open; the timetable opens by itself when it's ready." if en else 'זה יכול לקחת כמה דקות. אפשר להשאיר את הדף פתוח; מערכת השעות תיפתח לבד כשתהיה מוכנה.' }}</p>
+            <form method="post" action="{{ url_for('cancel_build') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="bp-cancel">{{ 'Cancel the build' if en else 'ביטול הבנייה' }}</button>
+            </form>
+        </div>
+    </section>
+</main>
+<script>
+(function () {
+    const steps = [...document.querySelectorAll('#bpSteps li')];
+    const fill = document.getElementById('bpFill');
+    const bar = document.getElementById('bpBar');
+    const label = document.getElementById('bpPercent');
+    function show(stage, percent) {
+        const now = steps.findIndex(li => li.dataset.stage === stage);
+        steps.forEach((li, i) => {
+            li.classList.toggle('is-done', i < now);
+            li.classList.toggle('is-now', i === now);
+            if (i === now) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+        });
+        fill.style.width = percent + '%';
+        bar.setAttribute('aria-valuenow', percent);
+        label.textContent = percent + '%';
+    }
+    async function poll() {
+        try {
+            const response = await fetch({{ url_for('build_status')|tojson }}, { headers: { 'Accept': 'application/json' } });
+            const data = await response.json();
+            if (data.url) {
+                show('save', 100);
+                window.location.replace(data.url);
+                return;
+            }
+            show(data.stage, data.percent);
+        } catch (error) { /* a missed check is fine: try again */ }
+        setTimeout(poll, 1000);
+    }
+    setTimeout(poll, 1000);
+})();
+</script>
+</body>
+</html>
