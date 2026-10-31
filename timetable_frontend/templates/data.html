@@ -1,0 +1,248 @@
+{# Data: the course file, settings, data check and the course list (last, since it is long).
+   Context: see app.data_page. Panels (column check, year moves) open over this page. #}
+{% set en = current_lang == 'en' %}
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Data' if en else 'נתונים' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+</head>
+<body>
+<div id="loadingOverlay" class="loading-overlay" hidden>
+    <div class="loading-box" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <h2>{{ 'Checking the course file...' if en else 'בודקים את קובץ הקורסים...' }}</h2>
+        <p>{{ 'This takes a few seconds.' if en else 'זה לוקח כמה שניות.' }}</p>
+    </div>
+</div>
+
+{% set all_messages = get_flashed_messages(with_categories=true) %}
+{% set panel_open = column_mapping or year_review %}
+{% set panel_messages = all_messages if panel_open else [] %}
+{% set page_messages = [] if panel_open else all_messages %}
+{% if column_mapping %}{% include "_column_mapping_panel.html" %}
+{% elif year_review %}{% include "_year_review_panel.html" %}{% endif %}
+
+{% set nav_active = 'data' %}{% set nav_inert = panel_open %}
+{% include "_top_nav.html" %}
+
+<main id="main-content" class="dr-page{{ ' behind-panel' if panel_open else '' }}"{% if panel_open %} aria-hidden="true"{% endif %}>
+    <div class="dr-head">
+        <div>
+            <h1>{{ 'Data' if en else 'נתונים' }}</h1>
+            <p class="dr-lead">{{ "The course file, the settings and what was found in the file. Changes here don't affect the timetable until the next build." if en else 'קובץ הקורסים, ההגדרות ומה שנמצא בקובץ. שינוי כאן לא משנה את מערכת השעות עד הבנייה הבאה.' }}</p>
+        </div>
+        {% if has_file %}
+        <form method="post" action="{{ url_for('rebuild_timetable') }}" class="dr-head-action">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="data">
+            <button type="submit" class="gs-button">{{ 'Rebuild the timetable' if en else 'בנייה מחדש של מערכת השעות' }}</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% include "_page_messages.html" %}
+
+    {% if not has_file %}
+    <section class="dr-box dr-empty">
+        <h2>{{ 'No course file yet' if en else 'עדיין אין קובץ קורסים' }}</h2>
+        <p>{{ 'Start with the step-by-step setup: upload the course file, check the settings and build.' if en else 'מתחילים בהגדרה שלב אחר שלב: מעלים את קובץ הקורסים, בודקים את ההגדרות ובונים.' }}</p>
+        <a class="gs-button" href="{{ url_for('guided_setup') }}">{{ 'Go to setup' if en else 'להגדרה' }}</a>
+    </section>
+    {% else %}
+    {% set dc_blocking = data_check | selectattr('severity', 'equalto', 'blocking') | list %}
+    {% set dc_warnings = data_check | selectattr('severity', 'equalto', 'warning') | list %}
+    {% set dc_info = data_check | selectattr('severity', 'equalto', 'info') | list %}
+
+    <div class="dr-cards">
+        <section class="dr-box" aria-labelledby="drFile">
+            <h2 id="drFile">{{ 'Course file' if en else 'קובץ הקורסים' }}</h2>
+            <p class="dr-file"><bdi>{{ file_label }}</bdi><br><span>{% if en %}{{ course_count }} courses · {{ lecturer_count }} lecturers{% else %}{{ course_count }} קורסים · {{ lecturer_count }} מרצים{% endif %}</span></p>
+            <div class="dr-actions">
+                <form method="post" action="{{ url_for('upload_courses_excel') }}" enctype="multipart/form-data" id="replaceForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="return_to" value="data">
+                    <label class="gs-button gs-secondary gs-file-button">
+                        <input class="gs-file-input" type="file" name="courses_excel" accept=".xlsx,.xlsm" required>
+                        <span>{{ 'Replace file' if en else 'החלפת קובץ' }}</span>
+                    </label>
+                    <noscript><button class="gs-button gs-secondary" type="submit">{{ 'Upload' if en else 'העלאה' }}</button></noscript>
+                </form>
+                <a class="gs-button gs-secondary" href="#manual-course" data-open="manual-course">{{ 'Add a course' if en else 'הוספת קורס' }}</a>
+            </div>
+        </section>
+
+        <section class="dr-box" aria-labelledby="drSettings">
+            <h2 id="drSettings">{{ 'Settings' if en else 'הגדרות' }}</h2>
+            <dl class="dr-dl">
+                <dt>{{ 'Program' if en else 'תוכנית' }}</dt><dd>{% if config.program_name %}<bdi>{{ config.program_name }}</bdi>{% else %}<span class="dr-missing">{{ 'not set' if en else 'לא הוגדר' }}</span>{% endif %}</dd>
+                <dt>{{ 'Years' if en else 'שנים' }}</dt><dd>{{ config.degree_years }}{% if config.degree_years_auto %} {{ '(from the file)' if en else '(לפי הקובץ)' }}{% endif %}</dd>
+                <dt>{{ 'Semesters' if en else 'סמסטרים' }}</dt><dd>{{ config.semesters_per_year }} {{ 'a year' if en else 'בשנה' }}</dd>
+                <dt>{{ 'Days' if en else 'ימים' }}</dt>
+                <dd>{% for day in all_days if config.days[day.key].enabled %}<span class="dr-day">{{ day.key if en else day.hebrew }} <bdi dir="ltr" class="time-range">{{ config.days[day.key].start }}–{{ config.days[day.key].end }}</bdi></span>{% endfor %}</dd>
+            </dl>
+            <div class="dr-actions"><a class="gs-button gs-secondary" href="#settings" data-open="settings">{{ 'Edit the settings' if en else 'עריכת ההגדרות' }}</a></div>
+        </section>
+
+        <section class="dr-box" aria-labelledby="drCheck">
+            <h2 id="drCheck">{{ 'Data check' if en else 'בדיקת נתונים' }}</h2>
+            <div class="dr-chips">
+                <span class="dr-chip {{ 'is-blocking' if dc_blocking else 'is-ok' }}">{{ dc_blocking | length }} {{ 'blocking' if en else 'חוסמות' }}</span>
+                <span class="dr-chip {{ 'is-warning' if dc_warnings else 'is-ok' }}">{{ dc_warnings | length }} {{ 'warnings' if en else 'אזהרות' }}</span>
+                <span class="dr-chip is-info">{{ dc_info | length }} {{ 'for information' if en else 'לידיעה' }}</span>
+            </div>
+            <div class="dr-actions"><a class="gs-button gs-secondary" href="#check">{{ 'Details' if en else 'לפירוט' }}</a></div>
+        </section>
+    </div>
+
+    <details class="dr-box dr-fold" id="settings"{% if year_overrides %} data-has-overrides{% endif %}>
+        <summary><h2>{{ 'Edit the settings' if en else 'עריכת ההגדרות' }}</h2></summary>
+        <form method="post" action="{{ url_for('save_settings') }}" class="dr-settings-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="data">
+            <input type="hidden" name="degree_years_auto_shown" value="1">
+            {% include "_settings_fields.html" %}
+
+            {% if year_overrides %}
+            <div class="dr-overrides">
+                <strong>{{ 'Approved study-year changes' if en else 'שינויי שנה שאושרו' }}</strong>
+                {% if config.year_mode == 'strict' %}<small>{{ 'Not used while the rule is "years exactly as in the file".' if en else 'לא בשימוש כל עוד נבחר "שנים בדיוק כמו בקובץ".' }}</small>{% endif %}
+                <ul>
+                    {% for row in year_overrides %}
+                    <li>
+                        <span>{% if row.name %}<bdi>{{ row.name }}</bdi>: {{ 'year' if en else 'שנה' }} {{ row.from_year }} {{ '→' if en else '←' }} {{ row.to_year }}{% else %}{{ row.course_id }} {{ '→' if en else '←' }} {{ row.to_year }} <em>({{ 'not in the current file' if en else 'לא בקובץ הנוכחי' }})</em>{% endif %}</span>
+                        <button type="submit" class="link-button" formaction="{{ url_for('remove_year_override') }}" formnovalidate name="course_id" value="{{ row.course_id }}">{{ 'Undo' if en else 'ביטול' }}</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="dr-form-actions">
+                <button type="submit" class="gs-button" formaction="{{ url_for('generate_timetable') }}">{{ 'Save and rebuild' if en else 'שמירה ובנייה מחדש' }}</button>
+                <button type="submit" class="gs-button gs-secondary">{{ 'Save' if en else 'שמירה' }}</button>
+                <small>{{ '"Save" keeps the current timetable until the next build.' if en else '"שמירה" משאירה את מערכת השעות הנוכחית עד הבנייה הבאה.' }}</small>
+            </div>
+        </form>
+    </details>
+
+    <section class="dr-box" id="check" aria-labelledby="drCheckTitle">
+        <h2 id="drCheckTitle">{{ 'What was found in the file' if en else 'מה נמצא בקובץ' }}</h2>
+        {% if not data_check %}
+        <p class="gs-check-line is-ok"><strong>{{ 'The data looks good.' if en else 'הנתונים תקינים.' }}</strong> <span>{{ 'No problems were found in the course file.' if en else 'לא נמצאו בעיות בקובץ הקורסים.' }}</span></p>
+        {% endif %}
+        <ul class="dr-messages">
+            {% for item in dc_blocking %}<li class="is-blocking"><strong>{{ 'Blocking:' if en else 'חוסם:' }}</strong> {{ item.en if en else item.he }}</li>{% endfor %}
+            {% for item in dc_warnings %}<li class="is-warning"><strong>{{ 'Warning:' if en else 'אזהרה:' }}</strong> {{ item.en if en else item.he }}</li>{% endfor %}
+        </ul>
+        {% if dc_info %}
+        <details class="dr-info">
+            <summary>{{ 'For information' if en else 'לידיעה' }} ({{ dc_info | length }})</summary>
+            <ul class="dr-messages">{% for item in dc_info %}<li class="is-info">{{ item.en if en else item.he }}</li>{% endfor %}</ul>
+        </details>
+        {% endif %}
+    </section>
+
+    <details class="dr-box dr-fold" id="manual-course">
+        <summary><h2>{{ 'Add a course' if en else 'הוספת קורס' }}</h2></summary>
+        <p class="dr-lead">{{ 'Adds one course directly to the course file.' if en else 'מוסיף קורס אחד ישירות לקובץ הקורסים.' }}</p>
+        <form method="post" action="{{ url_for('add_course_manually') }}" class="manual-course-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="data">
+            <label><span>{{ 'Course number' if en else 'מספר קורס' }}</span><input type="number" name="course_id" required></label>
+            <label class="span-2"><span>{{ 'Course name' if en else 'שם הקורס' }}</span><input type="text" name="course_name" required dir="auto"></label>
+            <label><span>{{ 'Study year' if en else 'שנת לימודים' }}</span><input type="number" min="1" name="course_year" required></label>
+            <label><span>{{ 'Fixed semester (optional)' if en else 'סמסטר קבוע (רשות)' }}</span><input type="number" min="1" name="original_semester"></label>
+            <label class="span-2"><span>{{ 'Lecturer' if en else 'מרצה' }}</span><input type="text" name="lecturer" required dir="auto"></label>
+            <label><span>{{ 'Credits' if en else 'נקודות זכות' }}</span><input type="number" min="0.25" step="0.25" name="credits" required></label>
+            <label><span>{{ 'Weekly hours' if en else 'שעות שבועיות' }}</span><input type="number" min="0.25" step="0.25" name="weekly_hours" required></label>
+            <label><span>{{ 'Lesson type' if en else 'סוג שיעור' }}</span>
+                <select name="course_type" required><option value="שעור ותרגול">{{ 'Lecture and tutorial' if en else 'הרצאה ותרגול' }}</option><option value="שעור">{{ 'Lecture only' if en else 'הרצאה בלבד' }}</option></select></label>
+            <label><span>{{ 'Category' if en else 'קטגוריה' }}</span><select name="course_category"><option value="חובה">{{ 'Required' if en else 'חובה' }}</option><option value="כללי">{{ 'General' if en else 'כללי' }}</option><option value="בחירה">{{ 'Elective' if en else 'בחירה' }}</option><option value="סמינר">{{ 'Seminar' if en else 'סמינר' }}</option><option value="פרויקט">{{ 'Project' if en else 'פרויקט' }}</option></select></label>
+            <input type="hidden" name="flexibility" value="auto">
+            <label class="span-2"><span>{{ 'Prerequisites (optional)' if en else 'דרישות קדם (רשות)' }}</span><input type="text" name="prerequisites" dir="auto"><small>{{ 'A + B / C: + means and, / means or' if en else 'א + ב / ג: + פירושו "וגם", / פירושו "או"' }}</small></label>
+            <label class="span-2"><span>{{ 'Parallel requirement (optional)' if en else 'דרישה מקבילה (רשות)' }}</span><input type="text" name="parallel_requirement" dir="auto"></label>
+            <button class="gs-button span-2" type="submit">{{ 'Add the course' if en else 'הוספת הקורס' }}</button>
+        </form>
+    </details>
+
+    <section class="dr-box" aria-labelledby="drCourses">
+        <div class="dr-row">
+            <h2 id="drCourses">{{ 'Course list' if en else 'רשימת הקורסים' }} <span class="dr-count">({{ course_count }})</span></h2>
+            <label class="dr-search"><span class="sr-only">{{ 'Search courses' if en else 'חיפוש קורס' }}</span>
+                <input id="courseSearch" type="search" placeholder="{{ 'Search by name, lecturer or number' if en else 'חיפוש לפי שם, מרצה או מספר' }}"></label>
+        </div>
+        <div class="course-table-wrap dr-table-wrap">
+            <table class="course-data-table" id="courseTable">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ 'Number' if en else 'מספר' }}</th>
+                        <th scope="col">{{ 'Course' if en else 'קורס' }}</th>
+                        <th scope="col">{{ 'Year' if en else 'שנה' }}</th>
+                        <th scope="col">{{ 'Lecturer' if en else 'מרצה' }}</th>
+                        <th scope="col">{{ 'Credits' if en else 'נק״ז' }}</th>
+                        <th scope="col">{{ 'Weekly hours' if en else 'ש״ש' }}</th>
+                        <th scope="col">{{ 'Category' if en else 'קטגוריה' }}</th>
+                        <th scope="col">{{ 'Prerequisites' if en else 'דרישות קדם' }}</th>
+                        <th scope="col">{{ 'Parallel requirement' if en else 'דרישה מקבילה' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td>{{ course.course_id }}</td>
+                        <td><strong><bdi>{{ course.name }}</bdi></strong></td>
+                        <td>{{ course.year }}</td>
+                        <td><bdi>{{ course.lecturer }}</bdi></td>
+                        <td>{{ course.credits }}</td>
+                        <td>{{ course.weekly_hours }}</td>
+                        <td><span class="course-category-badge category-{{ course.course_category }}">{{ course.course_category }}</span></td>
+                        <td><bdi>{{ course.prerequisites or '—' }}</bdi></td>
+                        <td><bdi>{{ course.parallel_requirement or '—' }}</bdi></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="dr-no-match" id="noMatch" hidden>{{ 'No course matches the search.' if en else 'אין קורס שמתאים לחיפוש.' }}</p>
+        </div>
+    </section>
+    {% endif %}
+</main>
+<script>
+(function () {
+    // "Edit the settings" and "Add a course" open their folded section.
+    function openFromHash() {
+        const target = location.hash && document.querySelector(location.hash);
+        if (target && target.tagName === 'DETAILS') target.open = true;
+    }
+    document.querySelectorAll('[data-open]').forEach(link => link.addEventListener('click', () => {
+        const target = document.getElementById(link.dataset.open);
+        if (target) target.open = true;
+    }));
+    window.addEventListener('hashchange', openFromHash);
+    openFromHash();
+
+    // Choosing a replacement file uploads it right away.
+    const replace = document.getElementById('replaceForm');
+    const overlay = document.getElementById('loadingOverlay');
+    if (replace) replace.querySelector('input[type=file]').addEventListener('change', event => {
+        if (event.target.files.length) { overlay.hidden = false; replace.submit(); }
+    });
+    window.addEventListener('pageshow', () => { overlay.hidden = true; });
+
+    const search = document.getElementById('courseSearch');
+    const rows = document.querySelectorAll('#courseTable tbody tr');
+    const none = document.getElementById('noMatch');
+    if (search) search.addEventListener('input', () => {
+        const term = search.value.trim().toLowerCase();
+        let shown = 0;
+        rows.forEach(row => { row.hidden = term && !row.textContent.toLowerCase().includes(term); if (!row.hidden) shown++; });
+        none.hidden = shown > 0;
+    });
+})();
+</script>
+<script src="{{ url_for('static', filename='settings_form.js') }}"></script>
+</body>
+</html>

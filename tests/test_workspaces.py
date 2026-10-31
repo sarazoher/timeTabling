@@ -31,10 +31,10 @@ class WorkspaceTests(AuthFixture, unittest.TestCase):
         self.register("first@example.com")
         self.upload(self.client)
         self.assertTrue((self.workspace("first@example.com") / "courses.xlsx").exists())
-        self.assertIn("מבני נתונים", self.client.get("/").get_data(as_text=True))
+        self.assertIn("מבני נתונים", self.client.get("/data").get_data(as_text=True))
         other = app.app.test_client()
         self.register("second@example.com", client=other)
-        self.assertNotIn("מבני נתונים", other.get("/").get_data(as_text=True))
+        self.assertNotIn("מבני נתונים", other.get("/data").get_data(as_text=True))
         self.assertFalse((self.workspace("second@example.com") / "courses.xlsx").exists())
         # Settings are per account too.
         with other.session_transaction() as sess:

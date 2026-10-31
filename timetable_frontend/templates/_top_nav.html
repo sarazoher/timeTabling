@@ -2,8 +2,8 @@
    Before including, a page sets nav_active to 'home' or 'timetable' (or
    nothing, for a page the menu has no item for yet) and may set nav_inert
    while a panel covers the page.
-   Data and Rules are shown greyed until their own pages exist; for now their
-   content is on the Home page, and the tooltip says so. #}
+   An item whose page cannot be used yet is shown greyed with a tooltip
+   (app-nav-item is-disabled + app-nav-tip), never hidden. #}
 {% set en = current_lang == 'en' %}
 {% set other_lang = 'he' if en else 'en' %}
 <a class="skip-link" href="#main-content">{{ 'Skip to content' if en else 'דילוג לתוכן' }}</a>
@@ -13,12 +13,8 @@
     <nav class="app-nav" aria-label="{{ 'Main' if en else 'ניווט ראשי' }}">
         <a class="app-nav-item" href="{{ url_for('setup_page') }}"{% if nav_active == 'home' %} aria-current="page"{% endif %}>{{ 'Home' if en else 'בית' }}</a>
         <a class="app-nav-item" href="{{ url_for('calendar_page') }}"{% if nav_active == 'timetable' %} aria-current="page"{% endif %}>{{ 'Timetable' if en else 'מערכת השעות' }}</a>
-        {% for key, he_label, en_label in [('data', 'נתונים', 'Data'), ('rules', 'כללים', 'Rules')] %}
-        <span class="app-nav-item is-disabled" tabindex="0" aria-disabled="true" aria-describedby="nav-tip-{{ key }}">
-            {{- en_label if en else he_label -}}
-            <span class="app-nav-tip" role="tooltip" id="nav-tip-{{ key }}">{{ 'Not a separate page yet: for now it is on the Home page' if en else 'עדיין לא עמוד נפרד: בינתיים זה בדף הבית' }}</span>
-        </span>
-        {% endfor %}
+        <a class="app-nav-item" href="{{ url_for('data_page') }}"{% if nav_active == 'data' %} aria-current="page"{% endif %}>{{ 'Data' if en else 'נתונים' }}</a>
+        <a class="app-nav-item" href="{{ url_for('rules_page') }}"{% if nav_active == 'rules' %} aria-current="page"{% endif %}>{{ 'Rules' if en else 'כללים' }}</a>
     </nav>
 
     <div class="app-utilities">

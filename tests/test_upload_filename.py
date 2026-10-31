@@ -114,7 +114,7 @@ class UploadFilenameTests(AuthFixture, unittest.TestCase):
                                 data={"csrf_token": token, "courses_excel": (io.BytesIO(buffer.getvalue()), "c.xlsx")},
                                 content_type="multipart/form-data", follow_redirects=True).get_data(as_text=True)
         self.assertIn('class="flash warning"', page)      # short summary after upload
-        self.assertIn("חסר סוגר", page)                     # the cell itself, in the data check panel
+        self.assertIn("חסר סוגר", self.client.get("/data").get_data(as_text=True))   # the cell itself, in the data check
 
 
 if __name__ == "__main__":

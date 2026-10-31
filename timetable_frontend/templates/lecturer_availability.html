@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
 </head>
 <body>
+{% set nav_active = 'rules' %}
 {% include "_top_nav.html" %}
 <main id="main-content" class="setup-page day-adjustment-page">
     <section class="setup-card day-adjustment-card">

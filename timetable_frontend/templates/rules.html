@@ -1,0 +1,113 @@
+{# Rules: your own rules, lecturer hours, and the built-in rules (folded).
+   Context: see app.rules_page. #}
+{% set en = current_lang == 'en' %}
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Rules' if en else 'כללים' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+</head>
+<body>
+{% set all_messages = get_flashed_messages(with_categories=true) %}
+{% set panel_open = year_review %}
+{% set panel_messages = all_messages if panel_open else [] %}
+{% set page_messages = [] if panel_open else all_messages %}
+{% if year_review %}{% include "_year_review_panel.html" %}{% endif %}
+{% set nav_active = 'rules' %}{% set nav_inert = panel_open %}
+{% include "_top_nav.html" %}
+
+<main id="main-content" class="dr-page{{ ' behind-panel' if panel_open else '' }}"{% if panel_open %} aria-hidden="true"{% endif %}>
+    <div class="dr-head">
+        <div>
+            <h1>{{ 'Rules' if en else 'כללים' }}</h1>
+            <p class="dr-lead">{{ 'Everything the timetable takes into account: your own rules, lecturer hours, and the built-in rules.' if en else 'כל מה שמערכת השעות מתחשבת בו: הכללים שלכם, שעות של מרצים, והכללים הקבועים.' }}</p>
+        </div>
+        {% if has_file %}
+        <form method="post" action="{{ url_for('rebuild_timetable') }}" class="dr-head-action">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="rules">
+            <button type="submit" class="gs-button">{{ 'Rebuild the timetable' if en else 'בנייה מחדש של מערכת השעות' }}</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% include "_page_messages.html" %}
+
+    <section class="dr-box" aria-labelledby="ownRules">
+        <div class="dr-row">
+            <h2 id="ownRules">{{ 'Your own rules' if en else 'הכללים שלכם' }}</h2>
+            <div class="dr-row-actions">
+                <a class="gs-button gs-secondary" href="{{ url_for('setup_page') }}#ai-assistant">{{ 'Add a rule with the assistant' if en else 'הוספת כלל עם העוזר' }}</a>
+                {% if ai_constraints %}
+                <form method="post" action="{{ url_for('clear_ai_requirements') }}" id="clearRules">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="return_to" value="rules">
+                    <button type="submit" class="link-button dr-danger">{{ 'Remove all' if en else 'הסרת כל הכללים' }}</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% if ai_constraints %}
+        <ul class="dr-rules">
+            {% for rule in ai_constraints %}
+            <li>
+                <span class="dr-label {{ 'is-must' if rule.hard else 'is-pref' }}">{{ ('Always' if rule.hard else 'Preferred') if en else ('תמיד' if rule.hard else 'מועדף') }}</span>
+                <div><strong><bdi>{{ rule.description }}</bdi></strong></div>
+                <form method="post" action="{{ url_for('remove_ai_requirement', rule_id=rule.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="return_to" value="rules">
+                    <button type="submit" class="gs-button gs-secondary dr-small-button">{{ 'Remove' if en else 'הסרה' }}<span class="sr-only">: {{ rule.description }}</span></button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="dr-empty-line">{{ 'No rules of your own yet. Tell the assistant what you need in your own words, for example "Dr. Cohen does not teach on Tuesdays".' if en else 'עדיין אין כללים משלכם. אפשר לכתוב לעוזר מה צריך במילים שלכם, למשל "ד"ר כהן לא מלמד בימי שלישי".' }}</p>
+        {% endif %}
+    </section>
+
+    <section class="dr-box" aria-labelledby="lecturerHours">
+        <div class="dr-row">
+            <h2 id="lecturerHours">{{ 'Lecturer hours' if en else 'שעות של מרצים' }}</h2>
+            <a class="gs-button gs-secondary" href="{{ url_for('lecturer_availability_page') }}">{{ "Edit a lecturer's hours" if en else 'עריכת שעות מרצה' }}</a>
+        </div>
+        <p class="dr-lead">{{ 'By default every lecturer is available during all the teaching hours.' if en else 'כברירת מחדל כל מרצה זמין בכל שעות הלימוד.' }}{% if custom_hours %} {{ 'Lecturers with their own hours:' if en else 'מרצים עם שעות משלהם:' }}{% endif %}</p>
+        {% if custom_hours %}
+        <ul class="dr-lecturers">
+            {% for row in custom_hours %}
+            <li><strong><bdi>{{ row.lecturer }}</bdi></strong>
+                <span>{% for label, start, end in row.days %}{{ label }} <bdi dir="ltr" class="time-range">{{ start }}–{{ end }}</bdi>{% if not loop.last %} · {% endif %}{% else %}{{ 'not available on any day' if en else 'לא זמין באף יום' }}{% endfor %}</span></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    <section class="dr-box" aria-labelledby="builtIn">
+        <h2 id="builtIn">{{ 'Built-in rules' if en else 'כללים קבועים' }}</h2>
+        <p class="dr-lead">{% if en %}{{ core_constraints | length }} rules that always apply to every timetable: {{ must_count }} must hold, {{ core_constraints | length - must_count }} are preferred.{% else %}{{ core_constraints | length }} כללים שתמיד חלים על כל מערכת שעות: {{ must_count }} חייבים להתקיים, {{ core_constraints | length - must_count }} מועדפים.{% endif %}</p>
+        <details class="dr-info">
+            <summary>{{ 'Show the built-in rules' if en else 'הצגת הכללים הקבועים' }}</summary>
+            <ul class="dr-rules dr-rules-grid">
+                {% for item in core_constraints %}
+                <li>
+                    <span class="dr-label {{ 'is-must' if item.hard else 'is-pref' }}">{{ ('Always' if item.hard else 'Preferred') if en else ('תמיד' if item.hard else 'מועדף') }}</span>
+                    <div><strong>{{ item.title }}</strong>{% if item.description %}<p>{{ item.description }}</p>{% endif %}</div>
+                </li>
+                {% endfor %}
+            </ul>
+        </details>
+    </section>
+</main>
+<script>
+(function () {
+    const clear = document.getElementById('clearRules');
+    if (clear) clear.addEventListener('submit', event => {
+        const question = {{ ('Remove all your rules? The built-in rules stay.' if en else 'להסיר את כל הכללים שלכם? הכללים הקבועים נשארים.')|tojson }};
+        if (!window.confirm(question)) event.preventDefault();
+    });
+})();
+</script>
+</body>
+</html>

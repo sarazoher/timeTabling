@@ -11,7 +11,7 @@ from auth_support import AuthFixture, app  # noqa: E402
 
 FIXTURE_CS = Path(__file__).resolve().parent / "fixtures" / "cs_courses.xlsx"
 BANNED = re.compile(r"פותר|solver|DEBUG JSON|מחלק|department|infeasib|CP-SAT", re.I)
-PAGES = ["/", "/setup", "/calendar", "/days", "/lecturers"]
+PAGES = ["/", "/setup", "/data", "/rules", "/calendar", "/lecturers"]
 
 
 def visible_text(page: str) -> str:

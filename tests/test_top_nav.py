@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from auth_support import AuthFixture  # noqa: E402
 
-PAGES = {"/": "home", "/calendar": "timetable", "/days": None, "/lecturers": None}
+PAGES = {"/": "home", "/calendar": "timetable", "/data": "data", "/rules": "rules", "/lecturers": "rules", "/setup": None}
 
 
 def nav_of(page):
@@ -40,15 +40,17 @@ class TopNavTests(AuthFixture, unittest.TestCase):
             if active is None:
                 self.assertEqual(current, [], url)
             else:
-                self.assertEqual(current, ["/" if active == "home" else "/calendar"], url)
+                target = {"home": "/", "timetable": "/calendar", "data": "/data", "rules": "/rules"}[active]
+                self.assertEqual(current, [target], url)
 
-    def test_data_and_rules_are_greyed_with_a_reason(self):
+    def test_all_four_items_are_links(self):
         nav = nav_of(self.get("/"))
-        for label in ("נתונים", "כללים"):
-            item = re.search(r'<span class="app-nav-item is-disabled"[^>]*>' + label, nav)
-            self.assertIsNotNone(item, label)
-            self.assertIn('aria-disabled="true"', item.group(0))
-        self.assertEqual(nav.count('role="tooltip"'), 2)
+        for href in ("/", "/calendar", "/data", "/rules"):
+            self.assertIn(f'href="{href}"', nav)
+        self.assertNotIn("is-disabled", nav)
+
+    def test_days_page_now_lives_on_the_data_page(self):
+        self.assertTrue(self.client.get("/days").headers["Location"].endswith("/data#settings"))
 
     def test_old_navigation_is_gone(self):
         for url in PAGES:

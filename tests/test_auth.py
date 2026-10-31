@@ -92,7 +92,7 @@ class AccountTests(AuthFixture, unittest.TestCase):
         self.client.get('/language/en')
         self.assertIn(b'Sign in to your account', self.client.get('/login').data)
         self.register()
-        for path in ['/', '/calendar', '/days', '/lecturers']:
+        for path in ['/', '/setup', '/data', '/rules', '/calendar', '/lecturers']:
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             self.assertIn(b'Sign out', response.data)

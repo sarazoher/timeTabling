@@ -217,7 +217,7 @@ class DashboardPanelTests(unittest.TestCase):
     def page(self, findings):
         self.check_file.write_text(json.dumps(findings, ensure_ascii=False), encoding="utf-8")
         self.fixture.register()
-        return self.fixture.client.get("/").get_data(as_text=True)
+        return self.fixture.client.get("/data").get_data(as_text=True)
 
     def test_panel_lists_findings_by_severity(self):
         html = self.page([
@@ -225,10 +225,10 @@ class DashboardPanelTests(unittest.TestCase):
             {"severity": "warning", "code": "y", "he": "שורה 7 לא נטענה", "en": "w", "course_ids": []},
             {"severity": "info", "code": "z", "he": "פרט לידיעה", "en": "i", "course_ids": []},
         ])
-        self.assertIn('id="data-check"', html)
+        self.assertIn('id="check"', html)
         for text in ("בעיה חוסמת לדוגמה", "שורה 7 לא נטענה", "פרט לידיעה"):
             self.assertIn(text, html)
-        self.assertIn("data-check-group blocking", html)
+        self.assertIn('<li class="is-blocking">', html)
 
     def test_panel_says_so_when_everything_is_used(self):
         self.assertIn("לא נמצאו בעיות", self.page([]))

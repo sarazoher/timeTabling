@@ -10,6 +10,7 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 import copy
+from datetime import datetime
 import re
 import json
 import os
@@ -298,6 +299,10 @@ def _return_url(anchor: str = "", return_to: str | None = None) -> str:
         return_to = request.form.get("return_to") or request.args.get("return_to")
     if return_to == "setup":
         return url_for("guided_setup")
+    if return_to == "data":
+        return url_for("data_page") + anchor
+    if return_to == "rules":
+        return url_for("rules_page") + anchor
     return url_for("setup_page") + anchor
 
 
@@ -500,74 +505,50 @@ def enrich_for_calendar(
     return enriched, slot_labels
 
 
+def _core_constraints(config: dict) -> list[dict]:
+    """The built-in rules in short, plain words (Rules page). "hard" = always
+    holds; otherwise it is a preference the timetable tries to meet."""
+    en = select_locale() == "en"
+    rules = [
+        ("Prerequisites come first", "Always in an earlier semester. In the file, + means and, / means or.",
+         "קורס קדם לפני הקורס שתלוי בו", "תמיד בסמסטר מוקדם יותר. בקובץ, + פירושו \"וגם\" ו־/ פירושו \"או\".", True),
+        ("Parallel requirements in the same semester or earlier", "",
+         "דרישה מקבילה באותו סמסטר או לפניו", "", True),
+        ("Every lecture and tutorial is placed once", "In the semester chosen for its course.",
+         "כל הרצאה וכל תרגול משובצים פעם אחת", "בסמסטר שנבחר לקורס.", True),
+        ("A lecturer never teaches two classes at once", "",
+         "מרצה לא מלמד שני שיעורים בבת אחת", "", True),
+        ("Required and general courses never overlap", "With any other course.",
+         "קורסי חובה וכלליים לא חופפים", "לשום קורס אחר.", True),
+        ("Only inside the teaching hours", "And inside a lecturer's own hours, when they are set.",
+         "רק בשעות הלימוד", "ובשעות של המרצה, אם הוגדרו לו שעות משלו.", True),
+        ("Each course stays in its study year", "A semester set in the file is kept exactly.",
+         "כל קורס בשנת הלימודים שלו", "סמסטר שנקבע בקובץ נשמר בדיוק.", True),
+        ("Electives and seminars at separate times", "They may overlap each other, but it is better if they do not. A project overlaps only another project.",
+         "בחירה וסמינרים בשעות נפרדות", "מותר שיחפפו זה לזה, אבל עדיף שלא. פרויקט חופף רק לפרויקט.", False),
+        ("A balanced load", "No empty or overloaded semesters, and the hours spread across the teaching days.",
+         "עומס מאוזן", "בלי סמסטרים ריקים או עמוסים מדי, והשעות מתחלקות בין ימי הלימוד.", False),
+        ("A 5–30 minute break between classes", "Back-to-back classes and long gaps are avoided where possible.",
+         "הפסקה של 5–30 דקות בין שיעורים", "שיעורים צמודים או הפסקות ארוכות נמנעים ככל האפשר.", False),
+    ]
+    if config.get("allow_semester_b_start", False):
+        rules += [
+            ("Seminars are shared by both intakes", "Same semester, day and time for both.",
+             "סמינרים משותפים לשני המחזורים", "באותו סמסטר, יום ושעה.", True),
+            ("The first intake is not moved for the second", "",
+             "המחזור הראשון לא זז בשביל המחזור השני", "", True),
+            ("The second intake joins the first wherever possible", "A course is opened again only when the second intake's progress needs it.",
+             "המחזור השני לומד יחד עם הראשון ככל האפשר", "קורס נפתח שוב רק כשההתקדמות של המחזור השני מחייבת.", False),
+        ]
+    return [{"title": r[0] if en else r[2], "description": r[1] if en else r[3], "hard": r[4]} for r in rules]
+
+
 @app.route("/", methods=["GET"])
 def setup_page():
     """Department dashboard: AI requests, constraints and course data."""
     catalog = load_course_catalog()   # first: it may update the automatic degree length
     config = load_config()
-    locale = select_locale()
-    if locale == "en":
-        core_constraints = [
-            {"title": "Prerequisites", "description": "A prerequisite course must be scheduled in an earlier semester than the dependent course. In a cell, \" + \" or \"וגם\" means AND and \"/\" or \"או\" means OR (at least one alternative).", "hard": True},
-            {"title": "Parallel requirements", "description": "A parallel requirement must be scheduled in the same semester or an earlier semester.", "hard": True},
-            {"title": "Every event is scheduled", "description": "Every required lecture and tutorial is placed exactly once in the semester selected for its course.", "hard": True},
-            {"title": "Lecturer conflicts", "description": "The same lecturer cannot teach two events at the same time.", "hard": True},
-            {"title": "Required/general course conflicts", "description": "Required (core) and general courses cannot overlap any other course. General courses follow the same overlap rule as required courses.", "hard": True},
-            {"title": "Elective, seminar and project overlap", "description": "Elective/elective, elective/seminar and seminar/seminar overlap is allowed with a penalty; separate times are preferred. Projects may overlap only other projects. Every other category combination is forbidden.", "hard": False},
-            {"title": "Teaching hours and lecturer availability", "description": "Every event must fit inside the teaching hours and, when configured, inside that lecturer’s own working days and hours.", "hard": True},
-            {"title": "Strategic cohort-A curriculum", "description": "An explicit original semester from Excel is fixed. Otherwise cohort A is placed strategically inside the catalog study year so gateway courses can move to shared semesters with cohort B, while flexible non-blocking courses are preferred early for A and may be completed by B in the continuation semester.", "hard": True},
-            {"title": "Comfort-first semester and day balance", "description": "The timetable strongly avoids empty or overloaded semesters, minimizes the heaviest semester, then smooths the load across teaching days. It searches for a comfortable timetable, not merely the first feasible one.", "hard": False},
-            {"title": "Shared seminars", "description": "When cohort B is enabled, each seminar is one shared A+B offering in the same semester, day and time. Prerequisites must be satisfied by both cohorts.", "hard": True},
-            {"title": "Preferred break between classes", "description": "A 5–30 minute break between consecutive classes is preferred. Back-to-back classes and breaks longer than 30 minutes receive a soft penalty. There is no lecture/tutorial ordering or closeness rule.", "hard": False},
-        ]
-    else:
-        core_constraints = [
-            {"title": "סמינרים משותפים", "description": "כאשר מחזור ב׳ פעיל, כל סמינר משובץ כהצעה משותפת לא׳ ולב׳, באותו סמסטר, יום ושעה. דרישות הקדם חייבות להתקיים לשני המחזורים.", "hard": True},
-            {"title": "קורסי קדם", "description": "קורס קדם חייב להיקבע בסמסטר מוקדם יותר מהקורס שתלוי בו. בתא, \" + \" או \"וגם\" פירושם \"וגם\", ו-\"/\" או \"או\" פירושם \"או\" (לפחות אחד מהקורסים).", "hard": True},
-            {"title": "דרישות מקבילות", "description": "קורס שמוגדר כדרישה מקבילה חייב להיקבע באותו סמסטר או בסמסטר מוקדם יותר.", "hard": True},
-            {"title": "שיבוץ כל המפגשים", "description": "כל הרצאה וכל תרגול נדרשים משובצים פעם אחת בדיוק בסמסטר שנבחר עבור הקורס.", "hard": True},
-            {"title": "מניעת חפיפות למרצה", "description": "אותו מרצה לא יכול ללמד שני מפגשים באותה שעה.", "hard": True},
-            {"title": "מניעת חפיפות חובה וכללי", "description": "קורס חובה וקורס כללי אינם יכולים לחפוף לשום קורס אחר. מבחינת חפיפות, קורס כללי מתנהג בדיוק כמו קורס חובה.", "hard": True},
-            {"title": "חפיפות בחירה, סמינרים ופרויקטים", "description": "בחירה ובחירה יכולים לחפוף; בחירה וסמינר יכולים להתקיים באותו זמן; סמינר וסמינר יכולים לחפוף — כולם מותרים עם קנס, ועדיף לשבץ בשעות נפרדות. פרויקט עם פרויקט מותר ואף מועדף. פרויקט עם חובה/כללי/בחירה/סמינר אסור, וחובה/כללי אינם חופפים לקורס אחר.", "hard": False},
-            {"title": "שעות הלימוד וזמינות המרצים", "description": "כל מפגש חייב להיכנס בשעות הלימוד, ואם הוגדרו שעות אישיות למרצה — גם בתוך ימי ושעות העבודה של אותו מרצה.", "hard": True},
-            {"title": "תכנון אסטרטגי של מחזור א׳", "description": "אם הוגדר סמסטר מקורי ב-Excel הוא נשמר בדיוק. אחרת הקורס נשאר בתוך שנת הלימוד שלו, אבל הסמסטר נבחר אסטרטגית: קורסי שער/קדם מרכזיים מועדפים בסמסטר שבו A ו-B יכולים ללמוד יחד, וקורסים גמישים ולא-חוסמים מועדפים מוקדם עבור A ויכולים להידחות לסמסטר ההמשך של B.", "hard": True},
-            {"title": "איזון נוחות בין סמסטרים וימים", "description": "המערכת נותנת עדיפות חזקה למניעת סמסטרים ריקים או עמוסים מאוד, ממזער את העומס בסמסטר הכבד ביותר ורק אחר כך מאזן את העומס בין ימי הלימוד. המטרה היא מערכת נוחה ולא רק פתרון אפשרי.", "hard": False},
-            {"title": "הפסקה מועדפת בין שיעורים", "description": "מועדפת הפסקה של 5–30 דקות בין שיעורים רצופים. שיעורים ללא הפסקה והפסקות ארוכות מ־30 דקות מקבלים קנס רך. אין שום אילוץ על הסדר או הקרבה בין הרצאה לתרגול.", "hard": False},
-        ]
-    if config.get("allow_semester_b_start", False):
-        if locale == "en":
-            core_constraints.append({
-                "title": "Fixed cohort A and flexible semester-B intake",
-                "description": "Cohort A is frozen after the curriculum-planning stage. Cohort B starts one semester later and is the flexible cohort. Year 4 Semester 1 belongs only to B's planned path.",
-                "hard": True,
-            })
-            core_constraints.append({
-                "title": "Maximize A+B sharing and minimize B-only repeats",
-                "description": "For every B course, the timetable first tries to join an existing A offering. B-only repeats carry a dominant penalty and are created only when academic progression prevents sharing. A flexible non-blocking course that A takes in Year 1 Semester 1 is completed by B in the final continuation semester rather than copied automatically into Semester 2.",
-                "hard": False,
-            })
-            core_constraints.append({
-                "title": "B progression and deferred flexible courses",
-                "description": "Prerequisite courses that B cannot share are repeated early enough to keep B progressing. Flexible non-blocking first-semester courses are deferred to B's final semester. Cohort A is not moved to accommodate B.",
-                "hard": False,
-            })
-        else:
-            core_constraints.append({
-                "title": "מחזור א׳ קבוע ומחזור ב׳ גמיש",
-                "description": "מחזור א׳ ננעל אחרי שלב תכנון הסמסטרים. מחזור ב׳ מתחיל סמסטר אחד מאוחר יותר והוא המחזור הגמיש. שנה 4 סמסטר א׳ שייכת רק למסלול המתוכנן של מחזור ב׳.",
-                "hard": True,
-            })
-            core_constraints.append({
-                "title": "מקסום A+B ומזעור פתיחות B בלבד",
-                "description": "לכל קורס של B המערכת מנסה קודם להצטרף לפתיחה קיימת של A. פתיחה B בלבד מקבלת קנס דומיננטי ונוצרת רק אם קורסי הקדם/המקבילה לא מאפשרים שיתוף. קורס גמיש ולא חוסם ש-A לומד בשנה 1 סמסטר א׳ נדחה עבור B לסמסטר ההמשך האחרון ולא משוכפל אוטומטית בסמסטר ב׳.",
-                "hard": False,
-            })
-            core_constraints.append({
-                "title": "התקדמות B ודחיית קורסים גמישים",
-                "description": "קורס קדם ש-B אינו יכול לשתף נפתח עבורו מוקדם מספיק כדי לא לעכב את התואר. קורס גמיש ולא חוסם מהסמסטר הראשון נדחה לסמסטר האחרון של B. מחזור A אינו מוזז כדי להתאים את עצמו ל-B.",
-                "hard": False,
-            })
-
+    core_constraints = _core_constraints(config)
     return render_template(
         "setup.html",
         all_days=ALL_DAYS,
@@ -587,7 +568,74 @@ def setup_page():
         file_years=max((int(c.get("year") or 0) for c in catalog), default=None),
         year_modes=YEAR_MODES,
         return_to="",
+        built_at=(datetime.fromtimestamp(TIMETABLE_FILE.stat().st_mtime).strftime("%d.%m.%Y %H:%M")
+                  if TIMETABLE_FILE.exists() else None),
     )
+
+
+def _catalog_summary(catalog: list[dict]) -> dict:
+    return dict(course_count=len(catalog),
+                lecturer_count=len({str(c.get("lecturer") or "").strip() for c in catalog} - {""}),
+                file_years=max((int(c.get("year") or 0) for c in catalog), default=None))
+
+
+@app.route("/data", methods=["GET"])
+def data_page():
+    """Course file, settings, data check and the course list."""
+    catalog = load_course_catalog()   # first: it may update the automatic degree length
+    config = load_config()
+    from timetable_export import export_filename
+    return render_template(
+        "data.html",
+        config=config, all_days=ALL_DAYS, courses=catalog, year_modes=YEAR_MODES,
+        has_file=COURSES_EXCEL_FILE.exists(),
+        file_label=config.get("course_file_name") or "courses.xlsx",
+        data_check=load_json(DATA_CHECK_FILE, []) if COURSES_EXCEL_FILE.exists() else [],
+        year_overrides=_year_override_rows(config, catalog),
+        export_name=export_filename(config),
+        build_failure=load_json(BUILD_FAILURE_FILE, None),
+        column_mapping=_column_mapping_context(),
+        year_review=_year_review(),
+        return_to="data",
+        **_catalog_summary(catalog),
+    )
+
+
+@app.route("/rules", methods=["GET"])
+def rules_page():
+    """Your own rules, lecturer hours and the built-in rules."""
+    config = load_config()
+    custom_hours = []
+    for lecturer, days in sorted((config.get("lecturer_availability") or {}).items()):
+        open_days = [(day_label_for(key, select_locale()), rule.get("start"), rule.get("end"))
+                     for key, rule in days.items() if rule.get("enabled")]
+        custom_hours.append({"lecturer": lecturer, "days": open_days})
+    core = _core_constraints(config)
+    return render_template(
+        "rules.html",
+        config=config,
+        ai_constraints=config.get("ai_constraints", []),
+        core_constraints=core,
+        must_count=sum(1 for c in core if c["hard"]),
+        custom_hours=custom_hours,
+        build_failure=load_json(BUILD_FAILURE_FILE, None),
+        has_file=COURSES_EXCEL_FILE.exists(),
+        year_review=_year_review(),
+        return_to="rules",
+    )
+
+
+@app.route("/rebuild", methods=["POST"])
+def rebuild_timetable():
+    """Build again with the saved settings (from the Data and Rules pages)."""
+    if not COURSES_EXCEL_FILE.exists():
+        flash("Upload a course file first." if select_locale() == "en" else "יש להעלות קובץ קורסים קודם.", "error")
+        return redirect(url_for("guided_setup"))
+    try:
+        return _build_and_redirect()
+    except Exception as error:  # noqa: BLE001
+        flash(str(error), "error")
+        return redirect(_return_url())
 
 
 SAMPLE_COURSES_FILE = Path(__file__).resolve().parent / "sample" / "sample_courses.xlsx"
@@ -673,12 +721,8 @@ def _year_override_rows(config: dict, catalog: list[dict]) -> list[dict]:
 
 @app.route("/days", methods=["GET"])
 def day_adjustment_page():
-    """Separate page for degree structure and department days/hours."""
-    return render_template(
-        "day_adjustment.html",
-        all_days=ALL_DAYS,
-        config=load_config(),
-    )
+    """Days and hours are edited in the settings on the Data page now."""
+    return redirect(url_for("data_page") + "#settings")
 
 
 @app.route("/days/save", methods=["POST"])
@@ -687,7 +731,7 @@ def save_day_adjustments():
         config = config_from_form()
         save_config(config)
         flash(_("Department days and hours were saved."), "success")
-        return redirect(url_for("setup_page"))
+        return redirect(url_for("data_page") + "#settings")
     except Exception as error:
         flash(str(error), "error")
         return redirect(url_for("day_adjustment_page"))
@@ -811,7 +855,7 @@ def _flash_automatic_year_moves() -> None:
 def _build_and_redirect():
     """Build with the saved configuration: in the background with a progress
     page, or (in tests) right away."""
-    return_to = "setup" if request.form.get("return_to") == "setup" else ""
+    return_to = request.form.get("return_to") if request.form.get("return_to") in ("setup", "data", "rules") else ""
     if _background_builds():
         return _start_build(return_to)
     success, details = run_backend()
@@ -1063,7 +1107,7 @@ def save_settings():
               if select_locale() == "en" else "ההגדרות נשמרו. מערכת השעות לא שונתה; אפשר לבנות כשמוכנים.", "success")
     except Exception as error:
         flash(str(error), "error")
-    return redirect(url_for("setup_page") + "#settings")
+    return redirect(_return_url("#settings"))
 
 
 @app.route("/years/approve", methods=["POST"])
@@ -1109,7 +1153,7 @@ def remove_year_override():
         print(f"Warning: could not refresh the data check: {error}", file=sys.stderr)
     flash(("The course is back in its Excel year." if select_locale() == "en"
            else "הקורס חזר לשנת הלימודים שבקובץ."), "success")
-    return redirect(url_for("setup_page") + "#settings")
+    return redirect(_return_url("#settings"))
 
 
 def load_course_catalog() -> list[dict]:
@@ -1375,7 +1419,7 @@ def remove_ai_requirement(rule_id: str):
     config["ai_constraints"] = after
     if len(after) == len(before):
         flash(_("That AI requirement was already removed."), "error")
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_return_url("#ai-assistant"))
 
     config.setdefault("ai_chat", []).append({
         "role": "assistant",
@@ -1383,8 +1427,9 @@ def remove_ai_requirement(rule_id: str):
         "status": "applied",
     })
     save_config(config)
-    flash("Rule removed. Existing timetable unchanged; rebuild when ready.", "success")
-    return redirect(url_for("setup_page") + "#ai-assistant")
+    flash("Rule removed. The timetable was not changed; rebuild when ready." if select_locale() == "en"
+          else "הכלל הוסר. מערכת השעות לא שונתה; אפשר לבנות מחדש כשמוכנים.", "success")
+    return redirect(_return_url("#ai-assistant"))
 
 
 @app.route("/assistant/clear", methods=["POST"])
@@ -1397,8 +1442,9 @@ def clear_ai_requirements():
         "status": "applied",
     })
     save_config(config)
-    flash("Rules cleared. Existing timetable unchanged; rebuild when ready.", "success")
-    return redirect(url_for("setup_page") + "#ai-assistant")
+    flash("All your rules were removed. The timetable was not changed; rebuild when ready." if select_locale() == "en"
+          else "כל הכללים שלכם הוסרו. מערכת השעות לא שונתה; אפשר לבנות מחדש כשמוכנים.", "success")
+    return redirect(_return_url("#ai-assistant"))
 
 
 
@@ -1422,12 +1468,12 @@ def _flash_data_check_summary() -> None:
     en = select_locale() == "en"
     if blocking:
         text = (f"Data check: {blocking} problem(s) make a timetable impossible and {warnings} warning(s). "
-                "See 'Data check' below before building." if en else
+                "See the data check on the Data page before building." if en else
                 f"בדיקת נתונים: {blocking} בעיות שמונעות בניית מערכת ו-{warnings} אזהרות. "
-                "כדאי לעבור על 'בדיקת נתונים' למטה לפני הבנייה.")
+                "כדאי לעבור על בדיקת הנתונים בעמוד הנתונים לפני הבנייה.")
     else:
-        text = (f"Data check: {warnings} warning(s) about data that is not being used. See 'Data check' below."
-                if en else f"בדיקת נתונים: {warnings} אזהרות על נתונים שלא נעשה בהם שימוש. פירוט ב'בדיקת נתונים' למטה.")
+        text = (f"Data check: {warnings} warning(s) about data that is not being used. See the Data page."
+                if en else f"בדיקת נתונים: {warnings} אזהרות על נתונים שלא נעשה בהם שימוש. הפירוט בעמוד הנתונים.")
     flash(text, "warning")
 
 
@@ -1759,7 +1805,7 @@ def add_course_manually():
         flash(_("Course added to catalog. Existing timetable was not changed; build when ready."), "success")
     except Exception as error:
         flash(str(error), "error")
-    return redirect(url_for("setup_page") + "#manual-course")
+    return redirect(_return_url("#manual-course"))
 
 
 

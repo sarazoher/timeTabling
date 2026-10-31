@@ -101,76 +101,7 @@
                 <h2 id="gsStep2">{{ 'Settings' if en else 'הגדרות' }}</h2>
                 <p class="gs-sub">{{ 'Check that everything is right. The settings are saved when you build.' if en else 'בדקו שהכול נכון. ההגדרות נשמרות עם הבנייה.' }}</p></div></div>
             <div class="gs-body">
-                <label class="gs-field">
-                    <span>{{ 'Program name' if en else 'שם התוכנית' }}</span>
-                    <input type="text" name="program_name" id="programName" maxlength="80" value="{{ config.program_name or '' }}" autocomplete="off" dir="auto">
-                    <small class="gs-hint">{{ 'Download file name:' if en else 'שם הקובץ להורדה:' }} <bdi id="exportName" dir="rtl">{{ export_name }}</bdi></small>
-                </label>
-
-                <div class="gs-row2">
-                    <div class="gs-field">
-                        <label for="degreeYears">{{ 'Years of study' if en else 'שנות לימוד' }}</label>
-                        <input type="number" id="degreeYears" name="degree_years" min="1" max="10" value="{{ config.degree_years }}" required {% if config.degree_years_auto %}readonly{% endif %}>
-                        <label class="gs-check gs-small">
-                            <input type="checkbox" id="degreeYearsAuto" name="degree_years_auto" {% if config.degree_years_auto %}checked{% endif %} data-file-years="{{ file_years or '' }}">
-                            <span>{% if file_years %}{{ ('From the course file (its highest year is %s)' % file_years) if en else ('לפי קובץ הקורסים (השנה הגבוהה בו היא %s)' % file_years) }}{% else %}{{ 'From the course file' if en else 'לפי קובץ הקורסים' }}{% endif %}</span>
-                        </label>
-                    </div>
-                    <label class="gs-field">
-                        <span>{{ 'Semesters per year' if en else 'סמסטרים בשנה' }}</span>
-                        <input type="number" name="semesters_per_year" min="1" max="4" value="{{ config.semesters_per_year }}" required>
-                    </label>
-                </div>
-
-                <fieldset class="gs-field gs-days">
-                    <legend>{{ 'Teaching days and hours' if en else 'ימים ושעות לימוד' }}</legend>
-                    <table>
-                        <thead><tr>
-                            <th scope="col">{{ 'Day' if en else 'יום' }}</th>
-                            <th scope="col">{{ 'From' if en else 'מ־' }}</th>
-                            <th scope="col">{{ 'To' if en else 'עד' }}</th>
-                        </tr></thead>
-                        <tbody>
-                        {% for day in all_days %}
-                        {% set values = config.days[day.key] %}
-                        {% set label = day.key if en else day.hebrew %}
-                        <tr class="{{ '' if values.enabled else 'is-off' }}">
-                            <td><label class="gs-check"><input type="checkbox" name="enabled_{{ day.key }}" {% if values.enabled %}checked{% endif %} data-day-toggle><span>{{ label }}</span></label></td>
-                            <td><input class="gs-time" type="text" name="start_{{ day.key }}" value="{{ values.start }}" inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" dir="ltr" required aria-label="{{ (label ~ ', from') if en else (label ~ ', משעה') }}"></td>
-                            <td><input class="gs-time" type="text" name="end_{{ day.key }}" value="{{ values.end }}" inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" dir="ltr" required aria-label="{{ (label ~ ', to') if en else (label ~ ', עד שעה') }}"></td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                    <small class="gs-hint">{{ '24-hour times, for example 08:00 or 17:30.' if en else 'שעות בפורמט 24 שעות, למשל 08:00 או 17:30.' }}</small>
-                </fieldset>
-
-                <details class="gs-advanced"{% if config.allow_semester_b_start or config.year_mode != 'suggest' %} open{% endif %}>
-                    <summary>{{ 'Advanced: starting in semester B, study-year changes, lecturer hours' if en else 'מתקדם: התחלה בסמסטר ב׳, שינוי שנות לימוד, שעות מרצים' }}</summary>
-                    <label class="gs-check">
-                        <input type="checkbox" name="allow_semester_b_start" {% if config.allow_semester_b_start %}checked{% endif %}>
-                        <span><strong>{{ 'Also students who start in semester B' if en else 'גם סטודנטים שמתחילים בסמסטר ב׳' }}</strong>
-                        <small>{{ 'Adds a second intake one semester later, sharing classes with the first intake wherever possible.' if en else 'מוסיף מחזור שני שמתחיל סמסטר אחד מאוחר יותר, ולומד יחד עם המחזור הראשון ככל האפשר.' }}</small></span>
-                    </label>
-                    {% set mode_text = {
-                        'strict': ('Years exactly as in the file', 'The build stops and explains which course chain does not fit.',
-                                   'שנים בדיוק כמו בקובץ', 'הבנייה נעצרת ומסבירה איזו שרשרת קורסים לא נכנסת.'),
-                        'suggest': ('Suggest moves, I approve', 'Shows the fewest courses to move to a later year; nothing changes until you approve.',
-                                    'להציע העברות, אני מאשר/ת', 'מוצגים הקורסים המעטים ביותר שצריך להעביר לשנה מאוחרת יותר; דבר לא משתנה לפני האישור.'),
-                        'auto': ('Move them automatically and report', 'The fewest needed moves are applied and listed after the build.',
-                                 'להעביר אוטומטית ולדווח', 'ההעברות ההכרחיות המעטות ביותר מופעלות ומפורטות אחרי הבנייה.'),
-                    } %}
-                    <fieldset class="gs-modes">
-                        <legend>{{ "When a prerequisite chain doesn't fit its study year" if en else 'כששרשרת קדם לא נכנסת בשנת הלימודים שלה' }}</legend>
-                        {% for mode in year_modes %}{% set t = mode_text[mode] %}
-                        <label class="gs-check">
-                            <input type="radio" name="year_mode" value="{{ mode }}" {% if config.year_mode == mode %}checked{% endif %}>
-                            <span><strong>{{ t[0] if en else t[2] }}</strong><small>{{ t[1] if en else t[3] }}</small></span>
-                        </label>
-                        {% endfor %}
-                    </fieldset>
-                    <p class="gs-small"><a href="{{ url_for('lecturer_availability_page') }}">{{ "Set a lecturer's own working hours" if en else 'הגדרת שעות עבודה למרצה מסוים' }}</a></p>
-                </details>
+                {% include "_settings_fields.html" %}
             </div>
         </section>
 
@@ -244,30 +175,8 @@
         });
     }
 
-    // Years from the file: the number is read-only while the box is ticked.
-    const yearsAuto = document.getElementById('degreeYearsAuto');
-    const years = document.getElementById('degreeYears');
-    const name = document.getElementById('programName');
-    const exportName = document.getElementById('exportName');
-    function updateExportName() {
-        if (!exportName) return;
-        const n = (name.value || '').replace(/[\\/:*?"<>|]+/g, ' ').trim().replace(/\s+/g, ' ');
-        const y = parseInt(years.value, 10) || 3;
-        exportName.textContent = (n ? `מערכת שעות ${n} — ${y} שנים` : `מערכת שעות — ${y} שנים`) + '.html';
-    }
-    if (yearsAuto && years) yearsAuto.addEventListener('change', () => {
-        years.readOnly = yearsAuto.checked;
-        if (yearsAuto.checked && yearsAuto.dataset.fileYears) years.value = yearsAuto.dataset.fileYears;
-        updateExportName();
-    });
-    if (name) name.addEventListener('input', updateExportName);
-    if (years) years.addEventListener('input', updateExportName);
-
-    // A day that is off greys out its hours.
-    document.querySelectorAll('[data-day-toggle]').forEach(box => box.addEventListener('change', () => {
-        box.closest('tr').classList.toggle('is-off', !box.checked);
-    }));
 })();
 </script>
+<script src="{{ url_for('static', filename='settings_form.js') }}"></script>
 </body>
 </html>

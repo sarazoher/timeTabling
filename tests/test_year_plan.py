@@ -183,6 +183,8 @@ class DashboardFlowTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         tmp = Path(self.tmp.name)
         self.config_file = tmp / "schedule_config.json"
+        self.courses_file = tmp / "courses.xlsx"          # the Data page needs a course file to exist
+        self.courses_file.write_bytes(b"")
         base = dict(app_module.DEFAULT_CONFIG)
         self.config_file.write_text(json.dumps(base, ensure_ascii=False), encoding="utf-8")
         self.moves_file = tmp / "year_moves.json"
@@ -192,6 +194,7 @@ class DashboardFlowTests(unittest.TestCase):
             patch.object(app_module, "YEAR_MOVES_FILE", self.moves_file),
             patch.object(app_module, "BUILD_FAILURE_FILE", tmp / "last_build_failure.json"),
             patch.object(app_module, "DATA_CHECK_FILE", tmp / "data_check.json"),
+            patch.object(app_module, "COURSES_EXCEL_FILE", self.courses_file),
             patch.object(app_module, "load_course_catalog",
                          lambda: [{"course_id": 4, "name": "D", "year": 2}, {"course_id": 5, "name": "E", "year": 2}]),
             patch.object(app_module, "_refresh_course_catalog_only", lambda: None),
@@ -261,7 +264,7 @@ class DashboardFlowTests(unittest.TestCase):
         # A form without the field (the days page) keeps it.
         self.client.post("/settings", data=self.settings_form())
         self.assertEqual(self.config()["program_name"], "מדעי המחשב")
-        self.assertIn('name="program_name" maxlength="80" value="מדעי המחשב"', self.client.get("/").get_data(as_text=True))
+        self.assertIn('id="programName" maxlength="80" value="מדעי המחשב"', self.client.get("/data").get_data(as_text=True))
 
     def test_settings_years_from_file_checkbox(self):
         self.client.post("/settings", data=self.settings_form(degree_years_auto_shown="1", degree_years="5"))
@@ -271,7 +274,7 @@ class DashboardFlowTests(unittest.TestCase):
         # A form without the checkbox (the days page) keeps the saved choice.
         self.client.post("/settings", data=self.settings_form())
         self.assertTrue(self.config()["degree_years_auto"])
-        page = self.client.get("/").get_data(as_text=True)
+        page = self.client.get("/data").get_data(as_text=True)
         self.assertIn('id="degreeYearsAuto" name="degree_years_auto" checked', page)
         self.assertIn('data-file-years="2"', page)                  # highest year in the catalog
 
@@ -282,13 +285,13 @@ class DashboardFlowTests(unittest.TestCase):
         config = self.config()
         config["year_overrides"] = {"4": 3}
         self.config_file.write_text(json.dumps(config), encoding="utf-8")
-        page = self.client.get("/").get_data(as_text=True)
-        self.assertIn("D: שנה 2 → 3", page)
+        page = self.client.get("/data").get_data(as_text=True)
+        self.assertIn("<bdi>D</bdi>: שנה 2 ← 3", page)
         self.client.post("/years/override/remove", data={"csrf_token": self.token(), "course_id": "4"})
         self.assertEqual(self.config()["year_overrides"], {})
 
     def test_settings_section_offers_the_three_rules(self):
-        page = self.client.get("/").get_data(as_text=True)
+        page = self.client.get("/data").get_data(as_text=True)
         for mode in ("strict", "suggest", "auto"):
             self.assertIn(f'name="year_mode" value="{mode}"', page)
         self.assertIn('value="suggest" checked', page)            # default
