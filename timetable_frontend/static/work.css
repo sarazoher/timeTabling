@@ -107,10 +107,52 @@
 .wk-builtin-list strong { font-weight: 700; }
 .wk-builtin-list span { color: var(--tt-muted); font-size: 14.5px; }
 
+/* Timetable: a glass week grid, shaded closed hours, glass year overview. */
+.wk-head-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; }
+.wk-days { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 18px; font-weight: 800; }
+.wk-days > span:first-child { margin-inline-end: 4px; }
+.is-light-page .availability-chip { background: rgba(255, 255, 255, .7); border: 1px solid #fff; border-radius: 999px; padding: 6px 14px; font-weight: 600; box-shadow: 0 8px 18px -14px rgba(60, 20, 90, .5); }
+.wk-cal-empty { text-align: center; padding: 48px 24px; }
+.wk-cal-empty h2 { margin: 0 0 8px; }
+.wk-cal-empty p { margin: 0 0 20px; color: var(--tt-muted); }
+
+.wk-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 12px 18px; margin-bottom: 18px; border-radius: 18px; }
+.wk-controls select { min-height: 46px; min-width: 240px; padding: 0 14px; border-radius: 12px; border: 1px solid #e3d3e8; background-color: #fff; font: inherit; font-weight: 700; color: var(--tt-plum-deep); }
+.wk-controls select:focus-visible { outline: 3px solid var(--tt-lilac); outline-offset: 2px; }
+.wk-legend { margin: 0; margin-inline-start: auto; display: flex; flex-wrap: wrap; gap: 6px 16px; font-weight: 600; font-size: 14.5px; }
+.wk-legend .legend-color { width: 14px; height: 14px; border-radius: 4px; }
+
+.is-light-page .calendar-wrapper { background: rgba(255, 255, 255, .55); backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2); border: 1px solid rgba(255, 255, 255, .9); border-radius: 22px; box-shadow: 0 24px 48px -28px rgba(60, 20, 90, .45), inset 0 1px 0 #fff; padding: 14px; }
+.is-light-page .corner-cell, .is-light-page .day-header, .is-light-page .time-label { background: transparent; border: 0; color: var(--tt-plum-deep); }
+.is-light-page .day-header { font-size: 17px; font-weight: 900; border-bottom: 1px solid rgba(117, 68, 154, .14); }
+.is-light-page .day-header small { color: var(--tt-muted); font-weight: 600; }
+.is-light-page .corner-cell { color: var(--tt-muted); font-size: 13px; }
+.is-light-page .time-label { color: var(--tt-muted); font-variant-numeric: tabular-nums; font-weight: 600; }
+.is-light-page .day-column-lines { border-left: 0; border-right: 0; border-inline-start: 1px solid rgba(117, 68, 154, .1); background:
+    repeating-linear-gradient(to bottom, transparent 0, transparent 47px, rgba(117, 68, 154, .12) 47px, rgba(117, 68, 154, .12) 48px); }
+.day-closed { pointer-events: none; border-radius: 10px; margin: 2px 4px; background: repeating-linear-gradient(135deg, rgba(117, 68, 154, .07) 0 6px, transparent 6px 12px); }
+.is-light-page .course-card { border-radius: 10px; box-shadow: 0 8px 18px -12px rgba(37, 4, 51, .45); z-index: 1; }
+.is-light-page .course-card:hover, .is-light-page .course-card:focus-within { z-index: 5; }
+
+.is-light-page .all-semesters-heading h2 { font-size: clamp(24px, 2.6vw, 30px); font-weight: 900; letter-spacing: -.02em; margin: 6px 0 4px; }
+.is-light-page .all-semesters-heading p { color: var(--tt-muted); }
+.is-light-page .degree-year-section { background: rgba(255, 255, 255, .5); backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2); border: 1px solid rgba(255, 255, 255, .9); border-radius: 22px; box-shadow: 0 24px 48px -28px rgba(60, 20, 90, .45), inset 0 1px 0 #fff; }
+.is-light-page .degree-year-header h2 { font-size: 22px; font-weight: 900; }
+.is-light-page .dynamic-semester-card { background: rgba(255, 255, 255, .7); border: 1px solid #fff; border-radius: 18px; box-shadow: 0 12px 26px -20px rgba(60, 20, 90, .5); transition: transform .3s var(--tt-ease), box-shadow .3s var(--tt-ease); }
+.is-light-page .dynamic-semester-card:hover { transform: translateY(-3px); box-shadow: 0 20px 36px -22px rgba(60, 20, 90, .6); }
+.is-light-page .dynamic-semester-card:focus-visible { outline: 3px solid var(--tt-lilac); outline-offset: 3px; }
+.is-light-page .dynamic-semester-header h3 { font-weight: 900; }
+.is-light-page .dynamic-day-column { background: transparent; border: 0; }
+.is-light-page .dynamic-day-title { background: var(--tt-lavender); color: var(--tt-plum); border: 0; border-radius: 10px; font-weight: 800; }
+.is-light-page .dynamic-event { border-radius: 10px; box-shadow: 0 6px 14px -12px rgba(37, 4, 51, .5); }
+
 @media (max-width: 900px) {
     .wk-builtin { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
+    .wk-head-actions, .wk-head-actions .gs-button { width: 100%; }
+    .wk-controls select { min-width: 0; flex: 1 1 100%; }
+    .wk-legend { margin-inline-start: 0; }
     .wk-own { padding: 20px 16px; }
     .wk-own-actions { margin-inline-start: 0; width: 100%; }
     .wk-own-actions .gs-button { width: 100%; }
@@ -126,6 +168,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .wk-bar::after { animation: none; display: none; }
-    .is-light-page .gs-button { transition: none; }
+    .is-light-page .gs-button, .is-light-page .dynamic-semester-card { transition: none; }
+    .is-light-page .dynamic-semester-card:hover { transform: none; }
 }
 .wk-lecturers .time-range { white-space: nowrap; }

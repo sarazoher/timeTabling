@@ -329,12 +329,14 @@ html[dir="ltr"] .course-card {
     direction: ltr;
     text-align: left;
     border-right: 0;
-    border-left: 5px solid;
+    border-left-width: 5px;   /* width and style only: the colour comes from the course category */
+    border-left-style: solid;
 }
 
 html[dir="ltr"] .dynamic-event {
     border-right: 0;
-    border-left: 3px solid;
+    border-left-width: 3px;
+    border-left-style: solid;
 }
 
 .setup-page {
@@ -1394,8 +1396,7 @@ html[dir="ltr"] .dynamic-event {
     grid-template-columns: repeat(auto-fit, minmax(100px, 145px));
     justify-content: start;
     gap: 4px;
-    align-items: start;
-    direction: rtl;
+    align-items: start;   /* follows the page direction: Monday first in both languages */
 }
 
 /* Only days that actually contain classes are rendered. */
@@ -1608,8 +1609,7 @@ The overview intentionally does not reserve empty vertical height for them.
     background: #ffffff;
     color: var(--text);
     box-shadow: 0 10px 26px rgba(37, 4, 51, 0.20);
-    direction: rtl;
-    text-align: right;
+    text-align: start;
 }
 
 .course-card:hover .course-hover-details strong {

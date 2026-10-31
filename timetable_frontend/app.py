@@ -2144,9 +2144,8 @@ def calendar_page():
         semester_groups=semester_groups,
         year_groups=year_groups,
         semesters_per_year=semesters_per_year,
-        ai_constraints=config.get("ai_constraints", []),
-        ai_chat=config.get("ai_chat", []),
-        claude_configured=claude_is_configured(),
+        built_at=(datetime.fromtimestamp(TIMETABLE_FILE.stat().st_mtime).strftime("%d.%m.%Y %H:%M")
+                  if TIMETABLE_FILE.exists() and timetable else None),
     )
 
 

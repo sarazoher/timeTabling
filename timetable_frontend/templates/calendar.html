@@ -1,70 +1,56 @@
+{# The timetable, in the frosted light look: one semester as a week grid,
+   or every semester at once grouped by year. Context: see app.calendar_page. #}
+{% set en = current_lang == 'en' %}
 <!DOCTYPE html>
 <html lang="{{ current_lang }}" dir="{{ text_direction }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Timetable') }}</title>
+    <title>{{ 'Timetable' if en else 'מערכת השעות' }} · TimeTabling</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='world.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='work.css') }}">
 {% include "_favicon.html" %}
 </head>
-<body>
+<body class="is-light-page">
+{% set sky = 'light' %}{% include "_sky.html" %}
+{% set page_messages = get_flashed_messages(with_categories=true) %}
 {% set nav_active = 'timetable' %}
 {% include "_top_nav.html" %}
-    <div id="loadingOverlay" class="loading-overlay" hidden>
-        <div class="loading-box">
-            <div class="spinner" aria-hidden="true"></div>
-            <h2>{{ _('Building the timetable...') }}</h2>
-            <p>{{ _('The solver is checking constraints and searching for a suitable timetable. This can take a few seconds.') }}</p>
-        </div>
-    </div>
-    <main id="main-content" class="page">
+    <main id="main-content" class="dr-page wk-cal-page">
 
-        <header class="hero">
+        <div class="dr-head">
             <div>
-                <h1>{{ _('Generated Timetable') }}</h1>
-                <p class="subtitle">
-                    {{ _('This is the result the solver generated based on the configured days and hours.') }}
-                </p>
+                <h1>{{ 'Timetable' if en else 'מערכת השעות' }}</h1>
+                {% if timetable %}
+                <p class="dr-lead">{% if config.program_name %}<bdi>{{ config.program_name }}</bdi> · {% endif %}{% if en %}{{ unique_courses }} courses in {{ semesters|length }} semesters{% else %}{{ unique_courses }} קורסים ב־{{ semesters|length }} סמסטרים{% endif %}{% if built_at %}{{ ', built ' if en else ', נבנתה ב־' }}<bdi>{{ built_at }}</bdi>{% endif %}.</p>
+                {% else %}
+                <p class="dr-lead">{{ 'Nothing has been built yet.' if en else 'עדיין לא נבנתה מערכת שעות.' }}</p>
+                {% endif %}
             </div>
-
-            <div class="hero-actions">
-                <a class="secondary-button" href="{{ url_for('data_page') }}">{{ 'Change data or settings' if current_lang == 'en' else 'שינוי נתונים או הגדרות' }}</a>
-                <a class="secondary-button" href="{{ url_for('export_timetable') }}">{{ 'Download timetable' if current_lang == 'en' else 'הורדת מערכת השעות' }}</a>
-                <div class="summary">
-                    <div class="summary-card">
-                        <span>{{ _('Courses') }}</span>
-                        <strong>{{ unique_courses }}</strong>
-                    </div>
-                    <div class="summary-card">
-                        <span>{{ _('Semesters') }}</span>
-                        <strong>{{ semesters|length }}</strong>
-                    </div>
-                </div>
+            <div class="hero-actions wk-head-actions">
+                {% if timetable %}<a class="gs-button" href="{{ url_for('export_timetable') }}">{{ 'Download timetable' if en else 'הורדת מערכת השעות' }}</a>{% endif %}
+                <a class="gs-button gs-secondary" href="{{ url_for('data_page') }}">{{ 'Change data or settings' if en else 'שינוי נתונים או הגדרות' }}</a>
             </div>
-        </header>
+        </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
+        {% include "_page_messages.html" %}
 
-        <section class="chosen-availability">
-            <strong>{{ _('Department settings:') }}</strong>
+        <p class="wk-days">
+            <span>{{ 'Teaching days' if en else 'ימי לימוד' }}</span>
             {% for day in days %}
-                <span class="availability-chip">
-                    {{ day_label(day.key) }} <bdi dir="ltr" class="time-range">{{ config.days[day.key].start }}–{{ config.days[day.key].end }}</bdi>
-                </span>
+                <span class="availability-chip">{{ day_label(day.key) }} <bdi dir="ltr" class="time-range">{{ config.days[day.key].start }}–{{ config.days[day.key].end }}</bdi></span>
             {% endfor %}
-        </section>
+        </p>
 
         {% if not timetable %}
-            <section class="empty-state">
+            <section class="dr-box wk-cal-empty">
                 <h2>{{ _('No timetable has been generated yet') }}</h2>
-                <a class="primary-link" href="{{ url_for('guided_setup') }}">{{ 'Go to setup to build it' if current_lang == 'en' else 'להגדרה ולבנייה' }}</a>
+                <p>{{ 'Finish the setup and build it; it takes about two minutes.' if en else 'מסיימים את ההגדרה ובונים; זה לוקח בערך שתי דקות.' }}</p>
+                <a class="gs-button" href="{{ url_for('guided_setup') }}">{{ 'Go to setup to build it' if en else 'להגדרה ולבנייה' }}</a>
             </section>
         {% else %}
-            <section class="controls">
+            <section class="controls dr-box wk-controls">
                 <label for="semesterSelect">{{ _('Show timetable for:') }}</label>
                 <select id="semesterSelect">
                     <option value="all">{{ _('All semesters') }}</option>
@@ -73,6 +59,13 @@
                     {% endfor %}
                 </select>
                 <span id="semesterStatus" class="status"></span>
+                <span class="legend category-legend wk-legend">
+                    <span><i class="legend-color required-color"></i> {{ 'Required' if en else 'חובה' }}</span>
+                    <span><i class="legend-color elective-color"></i> {{ 'Elective' if en else 'בחירה' }}</span>
+                    <span><i class="legend-color seminar-color"></i> {{ 'Seminar' if en else 'סמינר' }}</span>
+                    <span><i class="legend-color project-color"></i> {{ 'Project' if en else 'פרויקט' }}</span>
+                    <span><i class="legend-color general-color"></i> {{ 'General' if en else 'כללי' }}</span>
+                </span>
             </section>
 
             <section class="calendar-wrapper" id="singleSemesterView">
@@ -103,10 +96,19 @@
                     {% endfor %}
 
                     {% for day in days %}
+                        {% set column = loop.index + 1 %}
                         <div
                             class="day-column-lines"
-                            style="grid-column: {{ loop.index + 1 }}; grid-row: 2 / span {{ slot_labels|length }};"
+                            style="grid-column: {{ column }}; grid-row: 2 / span {{ slot_labels|length }};"
                         ></div>
+                        {# Hours outside this day's teaching window are shaded (display only). #}
+                        {% set window = namespace(first=0, last=0) %}
+                        {% for label in slot_labels %}
+                            {% if label == config.days[day.key].start %}{% set window.first = loop.index %}{% endif %}
+                            {% if label == config.days[day.key].end %}{% set window.last = loop.index %}{% endif %}
+                        {% endfor %}
+                        {% if window.first > 1 %}<div class="day-closed" aria-hidden="true" style="grid-column: {{ column }}; grid-row: 2 / {{ window.first + 1 }};"></div>{% endif %}
+                        {% if window.last > 0 %}<div class="day-closed" aria-hidden="true" style="grid-column: {{ column }}; grid-row: {{ window.last + 1 }} / {{ slot_labels|length + 2 }};"></div>{% endif %}
                     {% endfor %}
 
                     {% for event in timetable %}
@@ -149,14 +151,6 @@
                         {% endif %}
                     {% endfor %}
                 </div>
-            </section>
-
-            <section class="legend category-legend">
-                <span><i class="legend-color required-color"></i> {{ 'Required' if current_lang == 'en' else 'חובה' }}</span>
-                <span><i class="legend-color elective-color"></i> {{ 'Elective' if current_lang == 'en' else 'בחירה' }}</span>
-                <span><i class="legend-color seminar-color"></i> {{ 'Seminar' if current_lang == 'en' else 'סמינר' }}</span>
-                <span><i class="legend-color project-color"></i> {{ 'Project' if current_lang == 'en' else 'פרויקט' }}</span>
-                <span><i class="legend-color general-color"></i> {{ 'General' if current_lang == 'en' else 'כללי' }}</span>
             </section>
 
             <section class="all-semesters-view" id="allSemestersView" hidden>
@@ -254,13 +248,10 @@
 {% endif %}
     </main>
 
-    
-
     <script>
         const semesterSelect = document.getElementById("semesterSelect");
         const singleSemesterView = document.getElementById("singleSemesterView");
         const allSemestersView = document.getElementById("allSemestersView");
-        const loadingOverlay = document.getElementById("loadingOverlay");
 
         function timeToMinutes(value) {
             const [h, m] = value.split(":").map(Number);
@@ -378,16 +369,6 @@
             });
         });
 
-        // Show loading state whenever the user asks to regenerate the timetable.
-        document.querySelectorAll('form[action*="generate"], form.generate-form').forEach((form) => {
-            form.addEventListener("submit", () => {
-                if (loadingOverlay) loadingOverlay.hidden = false;
-            });
-        });
-
-        window.addEventListener("pageshow", () => {
-            if (loadingOverlay) loadingOverlay.hidden = true;
-        });
     </script>
 
 </body>
