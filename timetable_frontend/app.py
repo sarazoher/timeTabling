@@ -505,9 +505,9 @@ def setup_page():
             {"title": "Lecturer conflicts", "description": "The same lecturer cannot teach two events at the same time.", "hard": True},
             {"title": "Required/general course conflicts", "description": "Required (core) and general courses cannot overlap any other course. General courses follow the same overlap rule as required courses.", "hard": True},
             {"title": "Elective, seminar and project overlap", "description": "Elective/elective, elective/seminar and seminar/seminar overlap is allowed with a penalty; separate times are preferred. Projects may overlap only other projects. Every other category combination is forbidden.", "hard": False},
-            {"title": "Department and lecturer availability", "description": "Every event must fit inside the department hours and, when configured, inside that lecturer’s own working days and hours.", "hard": True},
+            {"title": "Teaching hours and lecturer availability", "description": "Every event must fit inside the teaching hours and, when configured, inside that lecturer’s own working days and hours.", "hard": True},
             {"title": "Strategic cohort-A curriculum", "description": "An explicit original semester from Excel is fixed. Otherwise cohort A is placed strategically inside the catalog study year so gateway courses can move to shared semesters with cohort B, while flexible non-blocking courses are preferred early for A and may be completed by B in the continuation semester.", "hard": True},
-            {"title": "Comfort-first semester and day balance", "description": "The solver strongly avoids empty or overloaded semesters, minimizes the heaviest semester, then smooths the load across teaching days. It searches for a comfortable timetable, not merely the first feasible one.", "hard": False},
+            {"title": "Comfort-first semester and day balance", "description": "The timetable strongly avoids empty or overloaded semesters, minimizes the heaviest semester, then smooths the load across teaching days. It searches for a comfortable timetable, not merely the first feasible one.", "hard": False},
             {"title": "Shared seminars", "description": "When cohort B is enabled, each seminar is one shared A+B offering in the same semester, day and time. Prerequisites must be satisfied by both cohorts.", "hard": True},
             {"title": "Preferred break between classes", "description": "A 5–30 minute break between consecutive classes is preferred. Back-to-back classes and breaks longer than 30 minutes receive a soft penalty. There is no lecture/tutorial ordering or closeness rule.", "hard": False},
         ]
@@ -520,9 +520,9 @@ def setup_page():
             {"title": "מניעת חפיפות למרצה", "description": "אותו מרצה לא יכול ללמד שני מפגשים באותה שעה.", "hard": True},
             {"title": "מניעת חפיפות חובה וכללי", "description": "קורס חובה וקורס כללי אינם יכולים לחפוף לשום קורס אחר. מבחינת חפיפות, קורס כללי מתנהג בדיוק כמו קורס חובה.", "hard": True},
             {"title": "חפיפות בחירה, סמינרים ופרויקטים", "description": "בחירה ובחירה יכולים לחפוף; בחירה וסמינר יכולים להתקיים באותו זמן; סמינר וסמינר יכולים לחפוף — כולם מותרים עם קנס, ועדיף לשבץ בשעות נפרדות. פרויקט עם פרויקט מותר ואף מועדף. פרויקט עם חובה/כללי/בחירה/סמינר אסור, וחובה/כללי אינם חופפים לקורס אחר.", "hard": False},
-            {"title": "זמינות המחלקה והמרצים", "description": "כל מפגש חייב להיכנס בשעות הפעילות של המחלקה, ואם הוגדרו שעות אישיות למרצה — גם בתוך ימי ושעות העבודה של אותו מרצה.", "hard": True},
+            {"title": "שעות הלימוד וזמינות המרצים", "description": "כל מפגש חייב להיכנס בשעות הלימוד, ואם הוגדרו שעות אישיות למרצה — גם בתוך ימי ושעות העבודה של אותו מרצה.", "hard": True},
             {"title": "תכנון אסטרטגי של מחזור א׳", "description": "אם הוגדר סמסטר מקורי ב-Excel הוא נשמר בדיוק. אחרת הקורס נשאר בתוך שנת הלימוד שלו, אבל הסמסטר נבחר אסטרטגית: קורסי שער/קדם מרכזיים מועדפים בסמסטר שבו A ו-B יכולים ללמוד יחד, וקורסים גמישים ולא-חוסמים מועדפים מוקדם עבור A ויכולים להידחות לסמסטר ההמשך של B.", "hard": True},
-            {"title": "איזון נוחות בין סמסטרים וימים", "description": "הפותר נותן עדיפות חזקה למניעת סמסטרים ריקים או עמוסים מאוד, ממזער את העומס בסמסטר הכבד ביותר ורק אחר כך מאזן את העומס בין ימי הלימוד. המטרה היא מערכת נוחה ולא רק פתרון אפשרי.", "hard": False},
+            {"title": "איזון נוחות בין סמסטרים וימים", "description": "המערכת נותנת עדיפות חזקה למניעת סמסטרים ריקים או עמוסים מאוד, ממזער את העומס בסמסטר הכבד ביותר ורק אחר כך מאזן את העומס בין ימי הלימוד. המטרה היא מערכת נוחה ולא רק פתרון אפשרי.", "hard": False},
             {"title": "הפסקה מועדפת בין שיעורים", "description": "מועדפת הפסקה של 5–30 דקות בין שיעורים רצופים. שיעורים ללא הפסקה והפסקות ארוכות מ־30 דקות מקבלים קנס רך. אין שום אילוץ על הסדר או הקרבה בין הרצאה לתרגול.", "hard": False},
         ]
     if config.get("allow_semester_b_start", False):
@@ -534,7 +534,7 @@ def setup_page():
             })
             core_constraints.append({
                 "title": "Maximize A+B sharing and minimize B-only repeats",
-                "description": "For every B course, the solver first tries to join an existing A offering. B-only repeats carry a dominant penalty and are created only when academic progression prevents sharing. A flexible non-blocking course that A takes in Year 1 Semester 1 is completed by B in the final continuation semester rather than copied automatically into Semester 2.",
+                "description": "For every B course, the timetable first tries to join an existing A offering. B-only repeats carry a dominant penalty and are created only when academic progression prevents sharing. A flexible non-blocking course that A takes in Year 1 Semester 1 is completed by B in the final continuation semester rather than copied automatically into Semester 2.",
                 "hard": False,
             })
             core_constraints.append({
@@ -550,7 +550,7 @@ def setup_page():
             })
             core_constraints.append({
                 "title": "מקסום A+B ומזעור פתיחות B בלבד",
-                "description": "לכל קורס של B הפותר מנסה קודם להצטרף לפתיחה קיימת של A. פתיחה B בלבד מקבלת קנס דומיננטי ונוצרת רק אם קורסי הקדם/המקבילה לא מאפשרים שיתוף. קורס גמיש ולא חוסם ש-A לומד בשנה 1 סמסטר א׳ נדחה עבור B לסמסטר ההמשך האחרון ולא משוכפל אוטומטית בסמסטר ב׳.",
+                "description": "לכל קורס של B המערכת מנסה קודם להצטרף לפתיחה קיימת של A. פתיחה B בלבד מקבלת קנס דומיננטי ונוצרת רק אם קורסי הקדם/המקבילה לא מאפשרים שיתוף. קורס גמיש ולא חוסם ש-A לומד בשנה 1 סמסטר א׳ נדחה עבור B לסמסטר ההמשך האחרון ולא משוכפל אוטומטית בסמסטר ב׳.",
                 "hard": False,
             })
             core_constraints.append({

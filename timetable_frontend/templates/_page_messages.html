@@ -16,7 +16,7 @@
                 <p class="diagnosis-hint">{{ 'The study-year rule in Settings is "exactly as in the Excel". Choose "suggest moves" there to see the fewest year changes that fix this.' if en else 'בהגדרות נבחר "שנים בדיוק כמו בקובץ". אפשר לבחור שם "להציע העברות" כדי לראות את מספר שינויי השנה הקטן ביותר שפותר את זה.' }}</p>
                 {% endif %}
                 {% else %}
-                <p>{{ 'No simple cause was found before solving, so the conflict comes from a combination of constraints. The technical details show where the solver stopped.' if en else 'לא נמצאה סיבה פשוטה לפני הפתרון, כך שהסתירה נובעת משילוב של כמה אילוצים. הפרטים הטכניים מראים איפה הפותר נעצר.' }}</p>
+                <p>{{ 'No single cause was found, so the conflict comes from a combination of rules. The technical details are for whoever maintains the app.' if en else 'לא נמצאה סיבה אחת, כך שהסתירה נובעת משילוב של כמה כללים. הפרטים הטכניים מיועדים למי שמתחזק את המערכת.' }}</p>
                 {% endif %}
                 {% if warnings %}
                 <details>
@@ -29,7 +29,6 @@
                 <details>
                     <summary>{{ 'Technical details' if en else 'פרטים טכניים' }}</summary>
                     <pre dir="ltr">{{ build_failure.details }}</pre>
-                    {% if build_failure.debug_url %}<a href="{{ build_failure.debug_url }}">DEBUG JSON</a>{% endif %}
                 </details>
             </div>
             {% else %}

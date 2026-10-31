@@ -168,7 +168,7 @@ class FailureBoxTests(unittest.TestCase):
 
     def test_without_diagnosis_the_generic_explanation_remains(self):
         page = self.build([])
-        self.assertIn("לא נמצאה סיבה פשוטה", page)
+        self.assertIn("לא נמצאה סיבה אחת", page)
 
 
 if __name__ == "__main__":

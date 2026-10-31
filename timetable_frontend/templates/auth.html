@@ -8,12 +8,12 @@
 <section class="auth-intro"><span class="auth-brand">TIMETABLE / מערכת שעות</span>
 <div><p class="auth-eyebrow">{{ auth_text('תכנון אקדמי, במקום אחד', 'ACADEMIC PLANNING, TOGETHER') }}</p>
 <h1>{{ auth_text('המערכת הבאה שלכם מתחילה כאן.', 'Your next timetable starts here.') }}</h1>
-<p>{{ auth_text('קורסים, מרצים ואילוצים — סביבת עבודה משותפת לבניית מערכת שעות למחלקה.', 'Courses, lecturers and constraints — a shared workspace for your department’s timetable.') }}</p></div>
+<p>{{ auth_text('קורסים, מרצים וכללים — הכול במקום אחד לבניית מערכת שעות.', 'Courses, lecturers and rules — everything in one place to build a timetable.') }}</p></div>
 <div class="auth-features"><span>{{ auth_text('תכנון סמסטרים', 'Semester planning') }}</span><span>{{ auth_text('מחזורים א׳ וב׳', 'A & B cohorts') }}</span><span>{{ auth_text('מערכת להורדה', 'Downloadable schedules') }}</span></div></section>
 <section class="auth-panel"><nav class="auth-languages" aria-label="Language"><a href="{{ url_for('set_language', lang_code='he') }}" lang="he">עברית</a><a href="{{ url_for('set_language', lang_code='en') }}" lang="en">English</a></nav>
 <div class="auth-card"><p class="auth-eyebrow">{{ auth_text('ברוכים הבאים', 'WELCOME') }}</p>
 <h2>{{ auth_text('יצירת חשבון' if registering else 'כניסה לחשבון', 'Create your account' if registering else 'Sign in to your account') }}</h2>
-<p class="auth-subtitle">{{ auth_text('החשבון מאפשר גישה למערכת השעות המשותפת של המחלקה.', 'Your account gives you access to the shared department timetable.') }}</p>
+<p class="auth-subtitle">{{ auth_text('כל חשבון שומר קובץ קורסים ומערכת שעות משלו.', 'Each account keeps its own course file and timetable.') }}</p>
 {% if not registering and request.args.get('password_reset') == '1' %}<p class="auth-success" role="status">{{ auth_text('הסיסמה עודכנה. אפשר להתחבר עם הסיסמה החדשה.', 'Password updated. Sign in with your new password.') }}</p>{% endif %}
 {% if error %}<div class="auth-error" role="alert">{{ error }}</div>{% endif %}
 <form method="post" action="{{ url_for('register' if registering else 'login') }}">

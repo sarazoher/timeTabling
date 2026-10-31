@@ -2131,7 +2131,10 @@ html[dir="rtl"] .ai-rules-column { border-left: 0; padding-left: 0; border-right
 .saved-override-badge { padding:.35rem .65rem; border-radius:999px; background:#e8f5ec; font-size:.82rem; font-weight:700; }
 .saved-override-badge.default { background:#f2edf4; }
 .lecturer-availability-row { grid-template-columns: minmax(140px, 1fr) minmax(150px, .8fr) minmax(150px, .8fr) minmax(150px, .8fr); }
-.lecturer-availability-row.department-closed { opacity:.55; }
+/* A day with no teaching: greyed by colour, not opacity, so its note stays readable (5.8:1). */
+.lecturer-availability-row.department-closed { background:#f8f5f9; }
+.lecturer-availability-row.department-closed :is(label, input) { color:#8f7a9e; }
+.lecturer-availability-row.department-closed input { background:#f8f5f9; border-color:#e9e0ec; }
 .department-window-note { align-self:center; color:#6c5a77; white-space:nowrap; }
 .lecturer-reset-form { margin-top: .8rem; }
 @media (max-width: 780px) {

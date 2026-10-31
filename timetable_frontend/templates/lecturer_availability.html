@@ -14,7 +14,7 @@
         <div class="setup-intro">
             <p class="eyebrow">{{ 'LECTURER AVAILABILITY' if current_lang == 'en' else 'זמינות מרצים' }}</p>
             <h1>{{ 'Edit lecturer working hours manually' if current_lang == 'en' else 'עריכת שעות הפעילות של מרצה ידנית' }}</h1>
-            <p class="subtitle">{{ 'These are hard constraints. A lecturer will only be scheduled inside the enabled days and hours below, and always inside the department opening hours.' if current_lang == 'en' else 'אלו אילוצים קשיחים. מרצה ישובץ רק בימים ובשעות שמסומנים כאן, ותמיד בתוך שעות הפעילות של המחלקה.' }}</p>
+            <p class="subtitle">{{ 'A lecturer is scheduled only inside the days and hours ticked below, and always inside the teaching hours.' if current_lang == 'en' else 'מרצה ישובץ רק בימים ובשעות שמסומנים כאן, ותמיד בתוך שעות הלימוד.' }}</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
@@ -34,7 +34,7 @@
             <input type="hidden" name="lecturer" value="{{ selected_lecturer }}">
             <div class="lecturer-current-heading">
                 <div><span>{{ 'Editing' if current_lang == 'en' else 'עורכים כרגע' }}</span><strong>{{ selected_lecturer }}</strong></div>
-                {% if selected_lecturer in saved_overrides %}<span class="saved-override-badge">{{ 'Custom hours active' if current_lang == 'en' else 'שעות אישיות פעילות' }}</span>{% else %}<span class="saved-override-badge default">{{ 'Using department defaults' if current_lang == 'en' else 'כרגע לפי ברירת המחדל של המחלקה' }}</span>{% endif %}
+                {% if selected_lecturer in saved_overrides %}<span class="saved-override-badge">{{ 'Custom hours active' if current_lang == 'en' else 'שעות אישיות פעילות' }}</span>{% else %}<span class="saved-override-badge default">{{ 'Using the teaching hours' if current_lang == 'en' else 'כרגע לפי שעות הלימוד' }}</span>{% endif %}
             </div>
 
             <div class="availability-list">
@@ -46,7 +46,7 @@
                     </label>
                     <div class="time-field"><label for="lecturer_start_{{ day.key }}">{{ 'From' if current_lang == 'en' else 'מ-' }}</label><input id="lecturer_start_{{ day.key }}" type="time" name="lecturer_start_{{ day.key }}" value="{{ values.start }}" min="{{ dept.start }}" max="{{ dept.end }}" step="300" {% if not dept.enabled %}disabled{% endif %}></div>
                     <div class="time-field"><label for="lecturer_end_{{ day.key }}">{{ 'To' if current_lang == 'en' else 'עד' }}</label><input id="lecturer_end_{{ day.key }}" type="time" name="lecturer_end_{{ day.key }}" value="{{ values.end }}" min="{{ dept.start }}" max="{{ dept.end }}" step="300" {% if not dept.enabled %}disabled{% endif %}></div>
-                    <small class="department-window-note">{{ ('Department: ' if current_lang == 'en' else 'מחלקה: ') }}{% if dept.enabled %}<bdi dir="ltr" class="time-range">{{ dept.start }}–{{ dept.end }}</bdi>{% else %}{{ 'closed' if current_lang == 'en' else 'סגור' }}{% endif %}</small>
+                    <small class="department-window-note">{{ ('Teaching hours: ' if current_lang == 'en' else 'שעות הלימוד: ') }}{% if dept.enabled %}<bdi dir="ltr" class="time-range">{{ dept.start }}–{{ dept.end }}</bdi>{% else %}{{ 'closed' if current_lang == 'en' else 'סגור' }}{% endif %}</small>
                 </div>{% endfor %}
             </div>
 
@@ -59,7 +59,7 @@
         <form method="post" action="{{ url_for('reset_lecturer_availability') }}" class="lecturer-reset-form">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="lecturer" value="{{ selected_lecturer }}">
-            <button class="text-button danger" type="submit">{{ 'Reset this lecturer to department hours' if current_lang == 'en' else 'איפוס המרצה לשעות המחלקה' }}</button>
+            <button class="text-button danger" type="submit">{{ 'Reset this lecturer to the teaching hours' if current_lang == 'en' else 'איפוס המרצה לשעות הלימוד' }}</button>
         </form>
         {% else %}
             <div class="empty-state">{{ 'No lecturers were found. Upload or add courses first.' if current_lang == 'en' else 'לא נמצאו מרצים. יש להעלות או להוסיף קורסים קודם.' }}</div>

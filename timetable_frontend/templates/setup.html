@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ 'Department Scheduling Dashboard' if current_lang == 'en' else 'לוח ניהול מערכת השעות' }}</title>
+    <title>{{ 'Timetable dashboard' if current_lang == 'en' else 'לוח ניהול מערכת השעות' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <div class="loading-box">
         <div class="spinner" aria-hidden="true"></div>
         <h2>{{ 'Updating timetable...' if current_lang == 'en' else 'מעדכנים את מערכת השעות...' }}</h2>
-        <p>{{ 'Claude and the solver are processing the request.' if current_lang == 'en' else 'Claude והפותר מעבדים את הבקשה.' }}</p>
+        <p>{{ 'This can take a few minutes.' if current_lang == 'en' else 'זה יכול לקחת כמה דקות.' }}</p>
     </div>
 </div>
 
@@ -31,7 +31,7 @@
     <header class="dashboard-topbar">
         <div>
             <span class="dashboard-kicker">{{ 'University Timetable Scheduler' if current_lang == 'en' else 'מערכת לבניית מערכת שעות אוניברסיטאית' }}</span>
-            <h1>{{ 'Department Scheduling Dashboard' if current_lang == 'en' else 'לוח ניהול מערכת השעות' }}</h1>
+            <h1>{{ 'Timetable dashboard' if current_lang == 'en' else 'לוח ניהול מערכת השעות' }}</h1>
             <p>{{ 'Manage scheduling requests, constraints and course data from one place.' if current_lang == 'en' else 'ניהול בקשות שיבוץ, אילוצים ונתוני קורסים במקום אחד.' }}</p>
         </div>
         <div class="dashboard-top-actions">
@@ -47,9 +47,8 @@
         <section class="ai-assistant-panel dashboard-ai" id="ai-assistant">
             <div class="ai-assistant-header">
                 <div>
-                    <span class="ai-badge">Claude → Solver</span>
                     <h2>{{ 'Tell the scheduler what you need' if current_lang == 'en' else 'כתבו למערכת מה אתם צריכים' }}</h2>
-                    <p>{{ 'Talk with Claude freely. The solver will run only after you review Claude’s proposal and press Apply to timetable.' if current_lang == 'en' else 'נהלו שיחה חופשית עם Claude. הפותר יופעל רק אחרי שתבדקו את ההצעה של Claude ותלחצו על החלה על המערכת.' }}</p>
+                    <p>{{ 'Talk with Claude freely. The timetable does not change until you review Claude’s proposal and press Apply.' if current_lang == 'en' else 'נהלו שיחה חופשית עם Claude. מערכת השעות לא משתנה עד שתבדקו את ההצעה של Claude ותלחצו על "החלה".' }}</p>
                 </div>
                 <span class="claude-status {{ 'ready' if claude_configured else 'not-ready' }}">
                     {{ ('Claude connected' if claude_configured else 'Claude API key required') if current_lang == 'en' else ('Claude מחובר' if claude_configured else 'נדרש מפתח API של Claude') }}
@@ -95,7 +94,7 @@
                         {% if ai_pending.data_actions and not ai_pending.rules %}
                             <button class="primary-button" type="submit">{{ 'Confirm data change' if current_lang == 'en' else 'אישור הוספת הנתונים' }}</button>
                         {% else %}
-                            <button class="primary-button" type="submit">{{ 'Apply to timetable & run solver' if current_lang == 'en' else 'החל על המערכת והפעל את הפותר' }}</button>
+                            <button class="primary-button" type="submit">{{ 'Apply and rebuild the timetable' if current_lang == 'en' else 'החלה ובנייה מחדש של מערכת השעות' }}</button>
                         {% endif %}
                     </form>
                     <small>{{ 'You can also keep chatting instead of applying this proposal.' if current_lang == 'en' else 'אפשר גם להמשיך לדבר עם Claude במקום להחיל את ההצעה כרגע.' }}</small>
@@ -154,7 +153,7 @@
                         <input type="checkbox" name="allow_semester_b_start" {% if config.allow_semester_b_start %}checked{% endif %}>
                         <span>{{ 'Also support students who start in semester B' if en else 'אפשר גם התחלה בסמסטר ב׳' }}</span>
                     </label>
-                    <small>{{ 'Adds a cohort-B path one semester later. The solver shares existing cohort-A offerings whenever possible and repeats only courses that are academically necessary. Any end-of-path continuation is handled logically through the next recurring real offering; no extra physical semester is displayed.' if en else 'מוסיף מחזור ב׳ שמתחיל סמסטר אחד מאוחר יותר. הפותר משתף אותו בפתיחות של מחזור א׳ ככל האפשר, ופותח קורס נוסף רק כשצריך כדי לשמור על קורסי קדם והתקדמות תקינה. השלמה בסוף המסלול מטופלת לוגית דרך הפתיחה האמיתית הבאה של הקורס; לא מוצג סמסטר פיזי נוסף.' }}</small>
+                    <small>{{ 'Adds a second intake that starts one semester later. It shares classes with the first intake wherever possible, and a course is opened again only when that is needed to keep prerequisites and progress on track.' if en else 'מוסיף מחזור שני שמתחיל סמסטר אחד מאוחר יותר. הוא לומד יחד עם המחזור הראשון ככל האפשר, וקורס נפתח שוב רק כשצריך כדי לשמור על דרישות הקדם ועל ההתקדמות בתואר.' }}</small>
                 </div>
 
                 <fieldset class="year-mode-options">
@@ -198,8 +197,8 @@
                     <input type="hidden" name="end_{{ day.key }}" value="{{ values.end }}">
                 {% endfor %}
                 <button class="secondary-button full-width no-loading" type="submit" formaction="{{ url_for('save_settings') }}">{{ 'Save settings' if en else 'שמירת הגדרות' }}</button>
-                <button class="primary-button full-width" type="submit">{{ 'Build / Update Timetable (run solver)' if en else 'צור / עדכן מערכת (הפעלת הפותר)' }}</button>
-                <small style="display:block;margin-top:8px;line-height:1.5">{{ 'Course additions and Claude rules are saved without running the solver. This button runs the full solver; local incremental placement is not yet supported.' if en else 'הוספת קורסים וכללי Claude נשמרים ללא הפעלת הפותר. כפתור זה מריץ פתרון מלא; שיבוץ נקודתי ללא חישוב מחדש עדיין אינו נתמך.' }}</small>
+                <button class="primary-button full-width" type="submit">{{ 'Build / update the timetable' if en else 'בנייה / עדכון של מערכת השעות' }}</button>
+                <small style="display:block;margin-top:8px;line-height:1.5">{{ 'Adding courses or Claude rules does not rebuild the timetable. This button builds the whole timetable again.' if en else 'הוספת קורסים או כללים של Claude לא בונה מחדש את מערכת השעות. הכפתור הזה בונה את כל מערכת השעות מחדש.' }}</small>
             </form>
             <a class="action-card-link" href="{{ url_for('day_adjustment_page') }}">
                 <span>
@@ -222,7 +221,7 @@
         <div class="section-heading-row">
             <div>
                 <span class="section-label">{{ 'CONSTRAINTS' if current_lang == 'en' else 'אילוצים' }}</span>
-                <h2>{{ 'Everything the solver is currently considering' if current_lang == 'en' else 'כל מה שהפותר לוקח כרגע בחשבון' }}</h2>
+                <h2>{{ 'Everything the timetable takes into account' if current_lang == 'en' else 'כל מה שמערכת השעות מתחשבת בו' }}</h2>
             </div>
             <div class="constraint-counts">
                 <span>{{ core_constraints|length }} {{ 'built-in' if current_lang == 'en' else 'מובנים' }}</span>
@@ -232,7 +231,7 @@
 
         <div class="constraints-layout">
             <div class="constraints-column">
-                <h3>{{ 'Built-in solver constraints' if current_lang == 'en' else 'אילוצי הפותר המובנים' }}</h3>
+                <h3>{{ 'Built-in rules' if current_lang == 'en' else 'כללים קבועים' }}</h3>
                 <div class="constraint-grid">
                     {% for item in core_constraints %}
                     <article class="constraint-card">
@@ -248,7 +247,7 @@
 
             <div class="constraints-column ai-rules-column">
                 <div class="active-rules-heading">
-                    <h3>{{ 'Department / AI requirements' if current_lang == 'en' else 'דרישות מחלקה / AI' }}</h3>
+                    <h3>{{ 'Your own rules (through Claude)' if current_lang == 'en' else 'הכללים שלכם (דרך Claude)' }}</h3>
                     {% if ai_constraints %}
                     <form method="post" action="{{ url_for('clear_ai_requirements') }}">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -275,7 +274,7 @@
                 {% else %}
                     <div class="empty-constraints-state">
                         <span>✦</span>
-                        <strong>{{ 'No extra department rules yet' if current_lang == 'en' else 'עדיין אין כללי מחלקה נוספים' }}</strong>
+                        <strong>{{ 'No rules of your own yet' if current_lang == 'en' else 'עדיין אין כללים משלכם' }}</strong>
                         <p>{{ 'Use the Claude box above to add requirements in your own words.' if current_lang == 'en' else 'השתמשו בתיבת Claude למעלה כדי להוסיף דרישות במילים שלכם.' }}</p>
                     </div>
                 {% endif %}
@@ -335,7 +334,7 @@
             <article class="data-action-card" id="manual-course">
                 <span class="data-card-icon">＋</span>
                 <h3>{{ 'Add a course manually' if current_lang == 'en' else 'הוספת קורס ידנית' }}</h3>
-                <p>{{ 'Add one course directly to the same Excel source used by the solver.' if current_lang == 'en' else 'הוסיפו קורס אחד ישירות לאותו מקור Excel שבו משתמש הפותר.' }}</p>
+                <p>{{ 'Add one course directly to the course file.' if current_lang == 'en' else 'הוסיפו קורס אחד ישירות לקובץ הקורסים.' }}</p>
                 <details class="manual-course-details">
                     <summary>{{ 'Open course form' if current_lang == 'en' else 'פתח טופס קורס' }}</summary>
                     <form method="post" action="{{ url_for('add_course_manually') }}" class="manual-course-form generate-form">
@@ -367,7 +366,7 @@
                     <span class="data-card-icon">▤</span>
                     <div>
                         <h3>{{ 'Courses currently loaded from Excel' if current_lang == 'en' else 'הקורסים שנטענו כרגע מקובץ ה-Excel' }}</h3>
-                        <p>{{ 'This table shows the course data the solver is currently using.' if current_lang == 'en' else 'הטבלה מציגה את נתוני הקורסים שבהם הפותר משתמש כרגע.' }}</p>
+                        <p>{{ 'This table shows the course data used to build the timetable.' if current_lang == 'en' else 'הטבלה מציגה את נתוני הקורסים שמשמשים לבניית מערכת השעות.' }}</p>
                     </div>
                 </div>
                 <input id="courseSearch" class="course-search-input" type="search" placeholder="{{ 'Search course, lecturer or ID...' if current_lang == 'en' else 'חיפוש לפי קורס, מרצה או מספר...' }}">

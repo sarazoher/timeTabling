@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-09-07 23:28+0000\n"
 "PO-Revision-Date: 2026-09-07 23:28+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: en <LL@li.org>\n"
 "Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.18.0\n"
 
 #: app.py:154
@@ -41,7 +41,7 @@ msgstr "You must select at least one teaching day."
 
 #: app.py:230
 msgid "The solver exceeded the 3-minute time limit."
-msgstr "The solver exceeded the 3-minute time limit."
+msgstr "The build went over the 3-minute time limit."
 
 #: app.py:234
 msgid "Unknown error."
@@ -61,18 +61,12 @@ msgid "Lecture"
 msgstr "Lecture"
 
 #: app.py:343
-msgid ""
-"We couldn't build a timetable that satisfies all the hard constraints. "
-"Please check the number of semesters, the prerequisite/parallel courses, and"
-" the active days and hours."
-msgstr ""
-"We couldn't build a timetable that satisfies all the hard constraints. "
-"Please check the number of semesters, the prerequisite/parallel courses, and"
-" the active days and hours."
+msgid "We couldn't build a timetable that satisfies all the hard constraints. Please check the number of semesters, the prerequisite/parallel courses, and the active days and hours."
+msgstr "We couldn't build a timetable that satisfies all the hard constraints. Please check the number of semesters, the prerequisite/parallel courses, and the active days and hours."
 
 #: app.py:352
 msgid "The timetable was built successfully by the solver."
-msgstr "The timetable was built successfully by the solver."
+msgstr "The timetable was built."
 
 #: templates/calendar.html:6
 msgid "Timetable"
@@ -83,12 +77,8 @@ msgid "Building the timetable..."
 msgstr "Building the timetable..."
 
 #: templates/calendar.html:14
-msgid ""
-"The solver is checking constraints and searching for a suitable timetable. "
-"This can take a few seconds."
-msgstr ""
-"The solver is checking constraints and searching for a suitable timetable. "
-"This can take a few seconds."
+msgid "The solver is checking constraints and searching for a suitable timetable. This can take a few seconds."
+msgstr "Building the timetable. This can take a few minutes."
 
 #: templates/calendar.html:27
 msgid "Step 2 of 2"
@@ -99,12 +89,8 @@ msgid "Generated Timetable"
 msgstr "Generated Timetable"
 
 #: templates/calendar.html:30
-msgid ""
-"This is the result the solver generated based on the configured days and "
-"hours."
-msgstr ""
-"This is the result the solver generated based on the configured days and "
-"hours."
+msgid "This is the result the solver generated based on the configured days and hours."
+msgstr "Built from the teaching days and hours you set."
 
 #: templates/calendar.html:36
 msgid "Change Days and Hours"
@@ -120,7 +106,7 @@ msgstr "Semesters"
 
 #: templates/calendar.html:58
 msgid "Department settings:"
-msgstr "Department settings:"
+msgstr "Teaching days and hours:"
 
 #: templates/calendar.html:68
 msgid "No timetable has been generated yet"
@@ -160,12 +146,8 @@ msgid "Overview of the entire degree"
 msgstr "Overview of the entire degree"
 
 #: templates/calendar.html:164
-msgid ""
-"Compact view: days without classes take up no space, and breaks are "
-"preserved in the schedule but are not shown as empty space."
-msgstr ""
-"Compact view: days without classes take up no space, and breaks are "
-"preserved in the schedule but are not shown as empty space."
+msgid "Compact view: days without classes take up no space, and breaks are preserved in the schedule but are not shown as empty space."
+msgstr "Compact view: days without classes take up no space, and breaks are preserved in the schedule but are not shown as empty space."
 
 #: templates/calendar.html:174
 #, python-format
@@ -198,15 +180,11 @@ msgstr "No courses in this semester"
 
 #: templates/setup.html:6
 msgid "Configure Department Days and Hours"
-msgstr "Configure Department Days and Hours"
+msgstr "Set teaching days and hours"
 
 #: templates/setup.html:14
-msgid ""
-"The solver is checking all constraints and searching for a suitable "
-"timetable."
-msgstr ""
-"The solver is checking all constraints and searching for a suitable "
-"timetable."
+msgid "The solver is checking all constraints and searching for a suitable timetable."
+msgstr "The solver is checking all constraints and searching for a suitable timetable."
 
 #: templates/setup.html:27
 msgid "Step 1 of 2"
@@ -214,23 +192,15 @@ msgstr "Step 1 of 2"
 
 #: templates/setup.html:28
 msgid "Configure Department Schedule"
-msgstr "Configure Department Schedule"
+msgstr "Set teaching days and hours"
 
 #: templates/setup.html:30
-msgid ""
-"Choose which days the department is active and the allowed hour range for "
-"each day."
-msgstr ""
-"Choose which days the department is active and the allowed hour range for "
-"each day."
+msgid "Choose which days the department is active and the allowed hour range for each day."
+msgstr "Choose the teaching days and the hour range for each day."
 
 #: templates/setup.html:31
-msgid ""
-"Only after clicking \"Build Timetable\" will the solver run and generate the"
-" timetable."
-msgstr ""
-"Only after clicking \"Build Timetable\" will the solver run and generate the"
-" timetable."
+msgid "Only after clicking \"Build Timetable\" will the solver run and generate the timetable."
+msgstr "Only after clicking \"Build Timetable\" will the solver run and generate the timetable."
 
 #: templates/setup.html:44
 msgid "Number of years in the degree"
@@ -246,7 +216,7 @@ msgstr "Total semesters in the program"
 
 #: templates/setup.html:77
 msgid "Department active days and hours"
-msgstr "Department active days and hours"
+msgstr "Teaching days and hours"
 
 #: templates/setup.html:93
 msgid "From"
@@ -261,15 +231,39 @@ msgid "What happens after clicking?"
 msgstr "What happens after clicking?"
 
 #: templates/setup.html:120
-msgid ""
-"The system sends the days and hours to the backend, reads the prerequisite "
-"and parallel requirement courses from the Excel file, and then runs the "
-"solver."
-msgstr ""
-"The system sends the days and hours to the backend, reads the prerequisite "
-"and parallel requirement courses from the Excel file, and then runs the "
-"solver."
+msgid "The system sends the days and hours to the backend, reads the prerequisite and parallel requirement courses from the Excel file, and then runs the solver."
+msgstr "The system sends the days and hours to the backend, reads the prerequisite and parallel requirement courses from the Excel file, and then runs the solver."
 
 #: templates/setup.html:125
 msgid "Build Timetable"
 msgstr "Build Timetable"
+
+#, python-format
+msgid "%(lecturer)s availability on %(day)s must stay inside department hours (%(start)s–%(end)s)."
+msgstr "%(lecturer)s's hours on %(day)s must stay inside the teaching hours (%(start)s–%(end)s)."
+
+#, python-format
+msgid "%(lecturer)s cannot be enabled on %(day)s because the department is closed that day."
+msgstr "%(lecturer)s can't be set for %(day)s, because there is no teaching that day."
+
+msgid "Course data added successfully. The solver was not run."
+msgstr "The course was added. The timetable was not rebuilt."
+
+msgid "Department days and hours were saved."
+msgstr "Teaching days and hours were saved."
+
+msgid "Lecturer availability was reset to the department defaults."
+msgstr "The lecturer's hours were reset to the teaching hours."
+
+msgid "No solver debug JSON exists yet. Run the timetable solver first."
+msgstr "There are no technical details yet. Build the timetable first."
+
+msgid "The backend stopped because of a system/runtime error. This is not being treated as timetable infeasibility. The technical message below identifies the code path that must be fixed."
+msgstr "The build stopped because of an error in the app, not because of your data. The technical details are for whoever maintains the app."
+
+msgid "The course data was added successfully. The solver was not run. You can keep editing data or build the timetable when ready."
+msgstr "The course was added. The timetable was not rebuilt; keep editing and build when ready."
+
+msgid "We couldn't build a timetable that satisfies all the hard constraints, or the solver ran out of time. Please check the number of semesters, prerequisite/parallel courses, and the active days and hours."
+msgstr "We couldn't build a timetable that meets every rule, or the build ran out of time. Check the number of semesters, the prerequisite and parallel courses, and the teaching days and hours."
+

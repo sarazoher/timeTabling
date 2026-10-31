@@ -13,7 +13,7 @@
         <div class="setup-intro">
             <p class="eyebrow">{{ 'Schedule configuration' if current_lang == 'en' else 'הגדרת מערכת' }}</p>
             <h1>{{ 'Adjust teaching days & hours' if current_lang == 'en' else 'התאמת ימי ושעות לימוד' }}</h1>
-            <p class="subtitle">{{ 'These are department-wide availability settings. The main dashboard stays focused on constraints and course data.' if current_lang == 'en' else 'אלו הגדרות זמינות כלל-מחלקתיות. לוח הניהול הראשי נשאר ממוקד באילוצים ובנתוני הקורסים.' }}</p>
+            <p class="subtitle">{{ 'The teaching days and hours used for every course.' if current_lang == 'en' else 'ימי ושעות הלימוד שמשמשים לכל הקורסים.' }}</p>
         </div>
         {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
         <form method="post" action="{{ url_for('save_day_adjustments') }}" class="setup-form">
@@ -30,7 +30,7 @@
                     <small>{{ 'When enabled, required courses are offered again for the later cohort and any required end-of-path completion is handled logically through the next recurring real offering; no extra physical semester is added.' if current_lang == 'en' else 'כאשר האפשרות פעילה, קורסים נפתחים שוב לפי הצורך למחזור המאוחר והשלמה נדרשת בסוף המסלול מטופלת לוגית דרך הפתיחה האמיתית הבאה; לא נוסף סמסטר פיזי.' }}</small>
                 </div>
             </section>
-            <h2 class="availability-title">{{ 'Department active days and hours' if current_lang == 'en' else 'ימי ושעות הפעילות של המחלקה' }}</h2>
+            <h2 class="availability-title">{{ 'Teaching days and hours' if current_lang == 'en' else 'ימי ושעות לימוד' }}</h2>
             <div class="availability-list">
                 {% for day in all_days %}{% set values = config.days[day.key] %}
                 <div class="availability-row">

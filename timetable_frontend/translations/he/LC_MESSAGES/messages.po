@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-09-07 23:28+0000\n"
 "PO-Revision-Date: 2026-09-07 23:28+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: he <LL@li.org>\n"
 "Language: he\n"
+"Language-Team: he <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.18.0\n"
 
 #: app.py:154
@@ -41,7 +41,7 @@ msgstr "יש לבחור לפחות יום לימודים אחד."
 
 #: app.py:230
 msgid "The solver exceeded the 3-minute time limit."
-msgstr "ה־Solver עבר את מגבלת הזמן של 3 דקות."
+msgstr "הבנייה עברה את מגבלת הזמן של 3 דקות."
 
 #: app.py:234
 msgid "Unknown error."
@@ -61,17 +61,12 @@ msgid "Lecture"
 msgstr "הרצאה"
 
 #: app.py:343
-msgid ""
-"We couldn't build a timetable that satisfies all the hard constraints. "
-"Please check the number of semesters, the prerequisite/parallel courses, and"
-" the active days and hours."
-msgstr ""
-"לא הצלחנו ליצור מערכת שעומדת בכל האילוצים הקשיחים. יש לבדוק את מספר "
-"הסמסטרים, קורסי הקדם/המקבילה, הימים ושעות הפעילות."
+msgid "We couldn't build a timetable that satisfies all the hard constraints. Please check the number of semesters, the prerequisite/parallel courses, and the active days and hours."
+msgstr "לא הצלחנו ליצור מערכת שעומדת בכל האילוצים הקשיחים. יש לבדוק את מספר הסמסטרים, קורסי הקדם/המקבילה, הימים ושעות הפעילות."
 
 #: app.py:352
 msgid "The timetable was built successfully by the solver."
-msgstr "המערכת נבנתה בהצלחה על ידי ה־Solver."
+msgstr "מערכת השעות נבנתה בהצלחה."
 
 #: templates/calendar.html:6
 msgid "Timetable"
@@ -82,10 +77,8 @@ msgid "Building the timetable..."
 msgstr "בונה מערכת שעות..."
 
 #: templates/calendar.html:14
-msgid ""
-"The solver is checking constraints and searching for a suitable timetable. "
-"This can take a few seconds."
-msgstr "ה־Solver בודק אילוצים ומחפש מערכת מתאימה. זה יכול לקחת כמה שניות."
+msgid "The solver is checking constraints and searching for a suitable timetable. This can take a few seconds."
+msgstr "בונים את מערכת השעות. זה יכול לקחת כמה דקות."
 
 #: templates/calendar.html:27
 msgid "Step 2 of 2"
@@ -96,10 +89,8 @@ msgid "Generated Timetable"
 msgstr "מערכת השעות שנוצרה"
 
 #: templates/calendar.html:30
-msgid ""
-"This is the result the solver generated based on the configured days and "
-"hours."
-msgstr "זו התוצאה שה־Solver יצר לפי הימים והשעות שהוגדרו."
+msgid "This is the result the solver generated based on the configured days and hours."
+msgstr "נבנתה לפי ימי ושעות הלימוד שהוגדרו."
 
 #: templates/calendar.html:36
 msgid "Change Days and Hours"
@@ -115,7 +106,7 @@ msgstr "סמסטרים"
 
 #: templates/calendar.html:58
 msgid "Department settings:"
-msgstr "הגדרות המחלקה:"
+msgstr "ימי ושעות לימוד:"
 
 #: templates/calendar.html:68
 msgid "No timetable has been generated yet"
@@ -155,12 +146,8 @@ msgid "Overview of the entire degree"
 msgstr "מבט על כל התואר"
 
 #: templates/calendar.html:164
-msgid ""
-"Compact view: days without classes take up no space, and breaks are "
-"preserved in the schedule but are not shown as empty space."
-msgstr ""
-"תצוגה קומפקטית: ימים ללא שיעורים אינם תופסים מקום, והפסקות נשמרות במערכת אך "
-"אינן מוצגות כשטח ריק."
+msgid "Compact view: days without classes take up no space, and breaks are preserved in the schedule but are not shown as empty space."
+msgstr "תצוגה קומפקטית: ימים ללא שיעורים אינם תופסים מקום, והפסקות נשמרות במערכת אך אינן מוצגות כשטח ריק."
 
 #: templates/calendar.html:174
 #, python-format
@@ -193,12 +180,10 @@ msgstr "אין קורסים בסמסטר זה"
 
 #: templates/setup.html:6
 msgid "Configure Department Days and Hours"
-msgstr "הגדרת ימי ושעות המחלקה"
+msgstr "הגדרת ימי ושעות לימוד"
 
 #: templates/setup.html:14
-msgid ""
-"The solver is checking all constraints and searching for a suitable "
-"timetable."
+msgid "The solver is checking all constraints and searching for a suitable timetable."
 msgstr "ה־Solver בודק את כל האילוצים ומחפש מערכת מתאימה."
 
 #: templates/setup.html:27
@@ -207,18 +192,14 @@ msgstr "שלב 1 מתוך 2"
 
 #: templates/setup.html:28
 msgid "Configure Department Schedule"
-msgstr "הגדרת פעילות המחלקה"
+msgstr "הגדרת ימי ושעות לימוד"
 
 #: templates/setup.html:30
-msgid ""
-"Choose which days the department is active and the allowed hour range for "
-"each day."
-msgstr "בחרי באילו ימים המחלקה פעילה ומהו טווח השעות המותר בכל יום."
+msgid "Choose which days the department is active and the allowed hour range for each day."
+msgstr "בחרו באילו ימים יש לימודים ומהו טווח השעות בכל יום."
 
 #: templates/setup.html:31
-msgid ""
-"Only after clicking \"Build Timetable\" will the solver run and generate the"
-" timetable."
+msgid "Only after clicking \"Build Timetable\" will the solver run and generate the timetable."
 msgstr "רק לאחר הלחיצה על \"בנה מערכת\" ה־Solver ירוץ וייצר את מערכת השעות."
 
 #: templates/setup.html:44
@@ -235,7 +216,7 @@ msgstr "סה\"כ סמסטרים בתכנית"
 
 #: templates/setup.html:77
 msgid "Department active days and hours"
-msgstr "ימי ושעות פעילות המחלקה"
+msgstr "ימי ושעות לימוד"
 
 #: templates/setup.html:93
 msgid "From"
@@ -250,14 +231,39 @@ msgid "What happens after clicking?"
 msgstr "מה קורה לאחר הלחיצה?"
 
 #: templates/setup.html:120
-msgid ""
-"The system sends the days and hours to the backend, reads the prerequisite "
-"and parallel requirement courses from the Excel file, and then runs the "
-"solver."
-msgstr ""
-"המערכת שולחת את הימים והשעות ל־Backend, קוראת מה־Excel את קורסי הקדם ואת "
-"התנאים המקבילים, ואז מריצה את ה־Solver."
+msgid "The system sends the days and hours to the backend, reads the prerequisite and parallel requirement courses from the Excel file, and then runs the solver."
+msgstr "המערכת שולחת את הימים והשעות ל־Backend, קוראת מה־Excel את קורסי הקדם ואת התנאים המקבילים, ואז מריצה את ה־Solver."
 
 #: templates/setup.html:125
 msgid "Build Timetable"
 msgstr "בנה מערכת שעות"
+
+#, python-format
+msgid "%(lecturer)s availability on %(day)s must stay inside department hours (%(start)s–%(end)s)."
+msgstr "השעות של %(lecturer)s ביום %(day)s חייבות להיות בתוך שעות הלימוד (%(start)s–%(end)s)."
+
+#, python-format
+msgid "%(lecturer)s cannot be enabled on %(day)s because the department is closed that day."
+msgstr "אי אפשר לסמן את יום %(day)s עבור %(lecturer)s, כי אין לימודים ביום הזה."
+
+msgid "Course data added successfully. The solver was not run."
+msgstr "הקורס נוסף. מערכת השעות לא נבנתה מחדש."
+
+msgid "Department days and hours were saved."
+msgstr "ימי ושעות הלימוד נשמרו."
+
+msgid "Lecturer availability was reset to the department defaults."
+msgstr "שעות המרצה אופסו לשעות הלימוד."
+
+msgid "No solver debug JSON exists yet. Run the timetable solver first."
+msgstr "אין עדיין פרטים טכניים. יש לבנות את מערכת השעות קודם."
+
+msgid "The backend stopped because of a system/runtime error. This is not being treated as timetable infeasibility. The technical message below identifies the code path that must be fixed."
+msgstr "הבנייה נעצרה בגלל תקלה באפליקציה, לא בגלל הנתונים שלכם. הפרטים הטכניים מיועדים למי שמתחזק את המערכת."
+
+msgid "The course data was added successfully. The solver was not run. You can keep editing data or build the timetable when ready."
+msgstr "הקורס נוסף. מערכת השעות לא נבנתה מחדש; אפשר להמשיך לערוך ולבנות כשמוכנים."
+
+msgid "We couldn't build a timetable that satisfies all the hard constraints, or the solver ran out of time. Please check the number of semesters, prerequisite/parallel courses, and the active days and hours."
+msgstr "לא הצלחנו לבנות מערכת שעות שעומדת בכל הכללים, או שנגמר הזמן. כדאי לבדוק את מספר הסמסטרים, את דרישות הקדם והמקבילות, ואת ימי ושעות הלימוד."
+
