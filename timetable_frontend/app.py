@@ -559,12 +559,149 @@ def _core_constraints(config: dict) -> list[dict]:
     return [{"title": r[0] if en else r[2], "description": r[1] if en else r[3], "hard": r[4]} for r in rules]
 
 
+# ---------------------------------------------------------------------------
+# Home (redesign: the dark showcase). What a visitor sees first: the result,
+# checked against the timetable itself, and the rules the app always keeps.
+SLOT_CLASS = {"חובה": "is-required", "בחירה": "is-elective", "סמינר": "is-seminar",
+              "פרויקט": "is-project", "כללי": "is-general"}
+PROTECTED_CATEGORIES = {"חובה", "כללי"}
+
+
+def _overlap_minutes(a: dict, b: dict) -> bool:
+    return max(time_to_minutes(a["start"]), time_to_minutes(b["start"])) < min(
+        time_to_minutes(a["end"]), time_to_minutes(b["end"]))
+
+
+def _home_summary(timetable: list[dict], config: dict) -> dict | None:
+    """Counts for the Home result line and the validity checks, computed from
+    the built timetable (not taken on trust from the solver)."""
+    if not timetable:
+        return None
+    meetings: dict[tuple, dict] = {}
+    for event in timetable:   # a course shared by both intakes meets once
+        key = (event.get("course_id"), event.get("event_type"), event.get("semester"),
+               event.get("day"), event.get("start"))
+        meetings.setdefault(key, event)
+    events = [e for e in meetings.values() if e.get("start") and e.get("end") and e.get("day")]
+    days = config.get("days", {})
+
+    def outside(event):
+        window = days.get(event["day"]) or {}
+        if not window.get("enabled"):
+            return True
+        return (time_to_minutes(event["start"]) < time_to_minutes(window["start"])
+                or time_to_minutes(event["end"]) > time_to_minutes(window["end"]))
+
+    groups: dict[tuple, list[dict]] = {}
+    for event in events:
+        groups.setdefault((event.get("cohort_label"), event.get("semester"), event["day"]), []).append(event)
+    lecturer_clashes = required_overlaps = 0
+    for group in groups.values():
+        for i, a in enumerate(group):
+            for b in group[i + 1:]:
+                if not _overlap_minutes(a, b):
+                    continue
+                if a.get("lecturer") and a.get("lecturer") == b.get("lecturer"):
+                    lecturer_clashes += 1
+                if (a.get("course_id") != b.get("course_id") and a.get("year") == b.get("year")
+                        and {a.get("course_category"), b.get("course_category")} & PROTECTED_CATEGORIES):
+                    required_overlaps += 1
+    last_semester = int(config.get("degree_years") or 0) * int(config.get("semesters_per_year") or 0)
+    pushed = {e.get("course_id") for e in events
+              if e.get("cohort_label", "A") == "A" and last_semester and int(e.get("semester") or 0) > last_semester}
+    return {
+        "courses": len({e.get("course_id") for e in events}),
+        "meetings": len(events),
+        "years": int(config.get("degree_years") or 0),
+        "checks": [
+            ("outside", sum(1 for e in events if outside(e)), "שיעורים מחוץ לשעות", "lessons outside the hours"),
+            ("lecturers", lecturer_clashes, "התנגשויות מרצים", "lecturer clashes"),
+            ("required", required_overlaps, "חפיפות בקורסי חובה", "required-course overlaps"),
+            ("pushed", len(pushed), "קורסים שנדחו מעבר לתואר", "courses pushed past the degree"),
+        ],
+    }
+
+
+def _build_seconds() -> int | None:
+    """How long the last successful build took, when it is known."""
+    state = load_json(BUILD_STATE_FILE, None)
+    if not state or state.get("state") != "done" or state.get("success") is False:
+        return None
+    started = state.get("started")
+    finished = state.get("finished")
+    if not finished and TIMETABLE_FILE.exists():
+        finished = TIMETABLE_FILE.stat().st_mtime
+    if not started or not finished or not 0 < finished - started < 900:
+        return None
+    return int(round(finished - started))
+
+
+def _home_week_slots(timetable: list[dict], config: dict, limit: int = 10) -> list[dict]:
+    """The lit slots of the Home week grid: the first semester's real lessons,
+    placed by day (column) and time (row)."""
+    days = [d["key"] for d in ALL_DAYS if (config.get("days", {}).get(d["key"]) or {}).get("enabled")][:6]
+    if not timetable or not days:
+        return []
+    windows = [config["days"][d] for d in days]
+    start = min(time_to_minutes(w["start"]) for w in windows)
+    end = max(time_to_minutes(w["end"]) for w in windows)
+    span = max(60, end - start)
+    first = min(int(e.get("semester") or 99) for e in timetable)
+    slots, taken = [], set()
+    for event in sorted(timetable, key=lambda e: (e.get("day", ""), e.get("start", ""))):
+        if int(event.get("semester") or 0) != first or event.get("day") not in days or not event.get("start"):
+            continue
+        row = min(6, int((time_to_minutes(event["start"]) - start) / span * 7))
+        rows = max(1, min(7 - row, round((time_to_minutes(event["end"]) - time_to_minutes(event["start"])) / span * 7)))
+        col = 6 - days.index(event["day"])   # from the far side, away from the text
+        if (col, row) in taken:
+            continue
+        taken.update((col, r) for r in range(row, row + rows))
+        slots.append({"col": col, "row": row + 1, "rows": rows,
+                      "kind": SLOT_CLASS.get(event.get("course_category"), "is-general")})
+        if len(slots) >= limit:
+            break
+    return slots
+
+
+def _showcase_rules() -> dict:
+    """The rules Home shows as cards: five that always hold, four preferences."""
+    en = select_locale() == "en"
+    hard = [
+        ("pre", "Prerequisites come first", "A course always comes after the courses it requires.",
+         "קורס קדם בסמסטר מוקדם יותר", "קורס תמיד בא אחרי הקורסים שהוא דורש, בלי יוצא מן הכלל."),
+        ("lecturer", "A lecturer never teaches twice at once", "Even when they teach in several years.",
+         "מרצה לא מלמד פעמיים באותה שעה", "גם כשאותו מרצה מלמד בכמה שנים."),
+        ("clock", "Only inside the teaching hours", "Every lesson fits the window you set, to the minute.",
+         "רק בימים ובשעות הפעילות", "השיעורים נכנסים לחלון שהגדרתם, עד הדקה."),
+        ("required", "Required courses never overlap", "A student can always attend every required course.",
+         "קורס חובה לא חופף לאף קורס", "סטודנט תמיד יכול להגיע לכל קורסי החובה."),
+        ("year", "Each course in its study year", "The degree finishes on time.",
+         "כל קורס בשנת הלימוד שלו", "התואר נגמר בזמן."),
+    ]
+    soft = [
+        ("break", "Breaks of 5 to 30 minutes", "Not back to back, and no long gaps.",
+         "הפסקות של 5 עד 30 דקות", "לא רצוף מדי, ובלי חורים ארוכים."),
+        ("balance", "A balanced load across days", "No packed day next to an empty one.",
+         "עומס מאוזן בין הימים", "בלי יום אחד עמוס ויום ריק."),
+        ("compact", "Compact teaching days", "Fewer trips to campus.",
+         "ימי לימוד קומפקטיים", "פחות נסיעות לקמפוס."),
+        ("share", "Courses shared between intakes", "The semester-B intake joins existing courses when it can.",
+         "שיתוף קורסים בין המחזורים", "מחזור ב׳ מצטרף לקורסים קיימים כשאפשר."),
+    ]
+    def shape(rows):
+        return [{"icon": r[0], "title": r[1] if en else r[3], "text": r[2] if en else r[4]} for r in rows]
+    hard, soft = shape(hard), shape(soft)
+    return {"hard_rows": [hard[:3], hard[3:]], "soft_rows": [soft[:2], soft[2:]]}
+
+
 @app.route("/", methods=["GET"])
 def setup_page():
     """Department dashboard: AI requests, constraints and course data."""
     catalog = load_course_catalog()   # first: it may update the automatic degree length
     config = load_config()
     core_constraints = _core_constraints(config)
+    timetable = load_timetable() if TIMETABLE_FILE.exists() else []
     return render_template(
         "setup.html",
         all_days=ALL_DAYS,
@@ -586,6 +723,15 @@ def setup_page():
         return_to="",
         built_at=(datetime.fromtimestamp(TIMETABLE_FILE.stat().st_mtime).strftime("%d.%m.%Y %H:%M")
                   if TIMETABLE_FILE.exists() else None),
+        stale=(COURSES_EXCEL_FILE.exists() and TIMETABLE_FILE.exists()
+               and COURSES_EXCEL_FILE.stat().st_mtime > TIMETABLE_FILE.stat().st_mtime + 1),
+        file_changed_at=(datetime.fromtimestamp(COURSES_EXCEL_FILE.stat().st_mtime).strftime("%d.%m.%Y %H:%M")
+                         if COURSES_EXCEL_FILE.exists() else None),
+        summary=_home_summary(timetable, config),
+        build_seconds=_build_seconds(),
+        week_slots=_home_week_slots(timetable, config),
+        showcase=_showcase_rules(),
+        has_sample=SAMPLE_COURSES_FILE.exists(),
     )
 
 
@@ -1047,7 +1193,7 @@ def _advance_build() -> dict:
             parts.append("--- backend stderr ---\n" + errors[-6000:])
         success, details = False, "\n\n".join(parts) or _("Unknown error.")
     url = _finish_build(success, details, state.get("return_to") or "")
-    state.update(state="done", url=url, percent=100)
+    state.update(state="done", url=url, percent=100, finished=now, success=success)
     BUILD_STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
     return {"url": url}
 

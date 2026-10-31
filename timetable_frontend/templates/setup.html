@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ 'Home' if current_lang == 'en' else 'בית' }} · {{ 'Timetable builder' if current_lang == 'en' else 'בניית מערכת שעות' }}</title>
+    <title>{{ 'Home' if current_lang == 'en' else 'בית' }} · TimeTabling</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='world.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
 {% include "_favicon.html" %}
 </head>
-<body>
+<body class="home-body is-dark-page">
+{% set sky = 'dark' %}{% include "_sky.html" %}
 <div id="loadingOverlay" class="loading-overlay" hidden>
     <div class="loading-box">
         <div class="spinner" aria-hidden="true"></div>
@@ -27,64 +30,143 @@
 
 {% set nav_active = 'home' %}{% set nav_inert = panel_open %}
 {% include "_top_nav.html" %}
+{% macro rule_icon(name) %}<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if name == 'pre' %}<path d="M4 6h7v5H4zM13 13h7v5h-7z"/><path d="M11 8.5h3.5V13"/>{% endif %}{% if name == 'lecturer' %}<circle cx="12" cy="7" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/>{% endif %}{% if name == 'clock' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>{% endif %}{% if name == 'required' %}<rect x="4" y="5" width="16" height="5" rx="1.5"/><rect x="4" y="14" width="16" height="5" rx="1.5"/>{% endif %}{% if name == 'year' %}<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>{% endif %}{% if name == 'break' %}<path d="M7 4v16M17 4v16M10 12h4"/>{% endif %}{% if name == 'balance' %}<path d="M12 4v16M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z"/>{% endif %}{% if name == 'compact' %}<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 15h10"/>{% endif %}{% if name == 'share' %}<circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M4 19c.6-3 2.8-4.5 5.5-4.5h5c2.7 0 4.9 1.5 5.5 4.5"/>{% endif %}</svg>{% endmacro %}
+{% set en = current_lang == 'en' %}
+{% set has_file = courses_excel_exists %}
+{% set built = built_at is not none %}
+<main id="main-content" class="hm{{ ' behind-panel' if panel_open else '' }}"{% if panel_open %} aria-hidden="true"{% endif %}>
+    <div class="hm-messages">{% include "_page_messages.html" %}</div>
 
-<main id="main-content" class="home-page{{ ' behind-panel' if panel_open else '' }}"{% if panel_open %} aria-hidden="true"{% endif %}>
-    {% set en = current_lang == 'en' %}
-    <h1 class="home-title">{{ 'Hello, ' if en else 'שלום, ' }}<bdi>{{ current_user.name if current_user else '' }}</bdi></h1>
-    <p class="home-lead">
-        {%- if built_at -%}
-            {% if config.program_name %}{{ 'The timetable for ' if en else 'מערכת השעות של ' }}<bdi>{{ config.program_name }}</bdi>{{ ' is ready.' if en else ' מוכנה.' }}{% else %}{{ 'Your timetable is ready.' if en else 'מערכת השעות שלכם מוכנה.' }}{% endif %}
-        {%- elif courses_excel_exists -%}
-            {{ 'The file is loaded. Check the settings, then build.' if en else 'הקובץ נטען. נשאר לבדוק את ההגדרות ולבנות.' }}
-        {%- else -%}
-            {{ 'Build a timetable for a whole degree from one Excel file.' if en else 'בונים מערכת שעות לתואר שלם מקובץ Excel אחד.' }}
-        {%- endif -%}
-    </p>
-
-    {% include "_page_messages.html" %}
-
-    <section class="home-status-card" aria-labelledby="homeStatusTitle">
-        <h2 id="homeStatusTitle" class="sr-only">{{ 'Where things stand' if en else 'איפה הדברים עומדים' }}</h2>
-        <ul class="home-rows">
-            <li class="{{ 'is-done' if courses_excel_exists else '' }}">
-                <span class="home-mark" aria-hidden="true"></span>
-                <div><strong>{{ 'Course file' if en else 'קובץ הקורסים' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if courses_excel_exists else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
-                <span class="home-value">{% if courses_excel_exists %}<bdi>{{ config.course_file_name or 'courses.xlsx' }}</bdi> · {{ courses|length }} {{ 'courses' if en else 'קורסים' }}{% else %}{{ 'Not uploaded yet' if en else 'עדיין לא הועלה' }}{% endif %}</span></div>
-                {% if courses_excel_exists %}<a class="home-link" href="{{ url_for('data_page') }}">{{ 'Data' if en else 'נתונים' }}</a>{% endif %}
-            </li>
-            <li class="{{ 'is-done' if courses_excel_exists else '' }}">
-                <span class="home-mark" aria-hidden="true"></span>
-                <div><strong>{{ 'Settings' if en else 'הגדרות' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if courses_excel_exists else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
-                <span class="home-value">{% if courses_excel_exists %}{% if config.program_name %}<bdi>{{ config.program_name }}</bdi> · {% endif %}{{ config.degree_years }} {{ 'years' if en else 'שנים' }} · {% for day in all_days if config.days[day.key].enabled %}{{ day.key if en else day.hebrew }}{{ ', ' if not loop.last }}{% endfor %}{% else %}{{ 'After the file is loaded' if en else 'אחרי שהקובץ ייטען' }}{% endif %}</span></div>
-                {% if courses_excel_exists %}<a class="home-link" href="{{ url_for('data_page') }}#settings">{{ 'Edit' if en else 'עריכה' }}</a>{% endif %}
-            </li>
-            <li class="{{ 'is-done' if built_at else '' }}">
-                <span class="home-mark" aria-hidden="true"></span>
-                <div><strong>{{ 'Timetable' if en else 'מערכת השעות' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if built_at else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
-                <span class="home-value">{% if built_at %}{{ 'Built on ' if en else 'נבנתה ב־' }}<bdi dir="ltr">{{ built_at }}</bdi>{% else %}{{ 'Not built yet' if en else 'עדיין לא נבנתה' }}{% endif %}</span></div>
-            </li>
-        </ul>
-        <div class="home-cta">
-            {% if built_at %}
-                <a class="home-main-button" href="{{ url_for('calendar_page') }}">{{ 'Open the timetable' if en else 'פתיחת מערכת השעות' }}</a>
-                <form method="post" action="{{ url_for('rebuild_timetable') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="home-second-button" type="submit">{{ 'Rebuild' if en else 'בנייה מחדש' }}</button>
-                </form>
-                <a class="home-second-button" href="{{ url_for('export_timetable') }}">{{ 'Download' if en else 'הורדה' }}</a>
-            {% elif courses_excel_exists %}
-                <a class="home-main-button" href="{{ url_for('guided_setup') }}#gsStep2">{{ 'Continue setup' if en else 'המשך להגדרה' }}</a>
-            {% else %}
-                <a class="home-main-button" href="{{ url_for('guided_setup') }}">{{ 'Start' if en else 'התחלה' }}</a>
-                <span class="home-hint">{{ 'Three steps, a few minutes.' if en else 'שלושה שלבים, כמה דקות.' }}</span>
+    <section class="hm-hero{{ ' is-new' if not has_file else '' }}" aria-labelledby="hmTitle">
+        {% if has_file %}
+        <div class="hm-week tt-week{{ ' is-faded' if stale else '' }}" aria-hidden="true">
+            {%- for col in range(1, 7) %}{% for row in range(1, 8) %}<span class="cell" style="grid-column:{{ col }};grid-row:{{ row }}"></span>{% endfor %}{% endfor -%}
+            {%- for slot in week_slots %}<span class="slot {{ slot.kind }}" style="grid-column:{{ slot.col }};grid-row:{{ slot.row }} / span {{ slot.rows }};animation-delay:{{ '%.2f' % (0.4 + loop.index0 * 0.3) }}s"></span>{% endfor -%}
+        </div>
+        {% else %}
+        <div class="hm-drop tt-glass-dark">
+            <form method="post" action="{{ url_for('upload_courses_excel') }}" enctype="multipart/form-data" id="homeUpload">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="return_to" value="setup">
+                <div class="hm-drop-zone" id="homeDrop">
+                    <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3-3 3 3"/></svg>
+                    <strong>{{ 'Drag the course file here' if en else 'גררו לכאן את קובץ הקורסים' }}</strong>
+                    <span>{{ 'An Excel file: courses, lecturers, credits, prerequisites.' if en else 'קובץ Excel: קורסים, מרצים, נק״ז, דרישות קדם.' }}</span>
+                    <label class="tt-btn tt-btn-main-dark hm-file-button">
+                        <input class="hm-file-input" type="file" name="courses_excel" accept=".xlsx,.xlsm" required>
+                        <span>{{ 'Choose a file' if en else 'בחירת קובץ' }}</span>
+                    </label>
+                    <noscript><button class="tt-btn tt-btn-glass-dark" type="submit">{{ 'Upload' if en else 'העלאה' }}</button></noscript>
+                </div>
+            </form>
+            {% if has_sample %}
+            <form method="post" action="{{ url_for('load_sample_data') }}" class="hm-sample">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {{ 'No file at hand?' if en else 'אין קובץ בהישג יד?' }}
+                <button type="submit" class="hm-link-button">{{ 'Try it with sample data' if en else 'לנסות עם נתוני דוגמה' }}</button>
+            </form>
             {% endif %}
         </div>
+        {% endif %}
+
+        <div class="hm-copy">
+            <p class="hm-hello">{{ 'Hello, ' if en else 'שלום, ' }}<bdi>{{ current_user.name if current_user else '' }}</bdi></p>
+            {% if stale %}
+            <p class="hm-notice" role="status">{{ 'The course file was replaced. The current timetable was built from the previous file.' if en else 'הקובץ הוחלף. מערכת השעות הנוכחית נבנתה מהקובץ הקודם.' }}</p>
+            <h1 id="hmTitle" class="hm-title">{% if en %}A new file is loaded: <span class="hm-n">{{ courses|length }}</span> courses.{% else %}קובץ חדש נטען: <span class="hm-n">{{ courses|length }}</span> קורסים.{% endif %}</h1>
+            <p class="hm-lede">{{ 'Check the settings and build again. Until then, the previous timetable can still be opened.' if en else 'בדקו את ההגדרות ובנו מחדש. עד אז אפשר עדיין לפתוח את מערכת השעות הקודמת.' }}</p>
+            {% elif built and summary %}
+            <h1 id="hmTitle" class="hm-title">{% if config.program_name %}{% if en %}The <bdi class="hm-em">{{ config.program_name }}</bdi> timetable is ready.{% else %}מערכת השעות של <bdi class="hm-em">{{ config.program_name }}</bdi> מוכנה.{% endif %}{% else %}{{ 'Your timetable is ready.' if en else 'מערכת השעות שלכם מוכנה.' }}{% endif %}</h1>
+            <p class="hm-lede">
+                {%- if en -%}
+                <span class="hm-n">{{ summary.courses }}</span> courses and <span class="hm-n">{{ summary.meetings }}</span> weekly meetings were placed across {{ summary.years }} study years{% if build_seconds %}, in <span class="hm-n">{{ '%d:%02d' % (build_seconds // 60, build_seconds % 60) }}</span> minutes{% endif %}.
+                {%- else -%}
+                <span class="hm-n">{{ summary.courses }}</span> קורסים ו־<span class="hm-n">{{ summary.meetings }}</span> מפגשים שבועיים שובצו ל־{{ summary.years }} שנות תואר{% if build_seconds %}, תוך <span class="hm-n">{{ '%d:%02d' % (build_seconds // 60, build_seconds % 60) }}</span> דקות{% endif %}.
+                {%- endif -%}
+            </p>
+            {% elif has_file %}
+            <h1 id="hmTitle" class="hm-title">{{ 'The file is loaded. Check the settings, then build.' if en else 'הקובץ נטען. נשאר לבדוק את ההגדרות ולבנות.' }}</h1>
+            <p class="hm-lede">{% if en %}<span class="hm-n">{{ courses|length }}</span> courses are ready to be placed.{% else %}<span class="hm-n">{{ courses|length }}</span> קורסים מחכים לשיבוץ.{% endif %}</p>
+            {% else %}
+            <h1 id="hmTitle" class="hm-title">{{ 'A whole degree’s timetable, from one Excel file.' if en else 'מערכת שעות לתואר שלם, מקובץ Excel אחד.' }}</h1>
+            <p class="hm-lede">{{ 'Upload the course file, pick the days and hours, and in about a minute and a half you get a timetable that keeps every rule.' if en else 'מעלים את קובץ הקורסים, בוחרים ימים ושעות, ותוך כדקה וחצי מקבלים מערכת שעות שעומדת בכל הכללים.' }}</p>
+            {% endif %}
+
+            <div class="hm-ctas">
+                {% if stale %}
+                <form method="post" action="{{ url_for('rebuild_timetable') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="home-main-button tt-btn tt-btn-main-dark" type="submit">{{ 'Build with the new file' if en else 'בנייה עם הקובץ החדש' }}</button></form>
+                <a class="tt-btn tt-btn-glass-dark" href="{{ url_for('calendar_page') }}">{{ 'Open the previous timetable' if en else 'פתיחת המערכת הקודמת' }}</a>
+                {% elif built %}
+                <a class="home-main-button tt-btn tt-btn-main-dark" href="{{ url_for('calendar_page') }}">{{ 'Open the timetable' if en else 'פתיחת מערכת השעות' }}</a>
+                <form method="post" action="{{ url_for('rebuild_timetable') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="tt-btn tt-btn-glass-dark" type="submit">{{ 'Rebuild' if en else 'בנייה מחדש' }}</button></form>
+                <a class="tt-btn tt-btn-glass-dark" href="{{ url_for('export_timetable') }}">{{ 'Download' if en else 'הורדה' }}</a>
+                {% elif has_file %}
+                <a class="home-main-button tt-btn tt-btn-main-dark" href="{{ url_for('guided_setup') }}#gsStep2">{{ 'Continue setup' if en else 'המשך להגדרה' }}</a>
+                {% else %}
+                <a class="home-main-button tt-btn tt-btn-glass-dark" href="{{ url_for('guided_setup') }}">{{ 'Step-by-step setup' if en else 'הגדרה שלב אחר שלב' }}</a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if summary and built and not stale %}
+        <div class="hm-ledger" aria-label="{{ 'Validity check of the built timetable' if en else 'בדיקת תקינות של מערכת השעות' }}">
+            <span class="hm-ledger-title"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> {{ 'Validity check' if en else 'בדיקת תקינות' }}</span>
+            {% for key, count, he, en_label in summary.checks %}
+            <span class="hm-chip{{ ' is-warn' if count else '' }}"><b>{{ count }}</b><span>{{ en_label if en else he }}</span></span>
+            {% endfor %}
+        </div>
+        {% endif %}
     </section>
 
-    <section class="ai-assistant-panel dashboard-ai" id="ai-assistant">
+    <section class="hm-status" aria-labelledby="hmStatusTitle">
+        <h2 id="hmStatusTitle" class="hm-h2">{{ 'Where things stand' if en else 'איפה הדברים עומדים' }}</h2>
+        <ul class="home-rows tt-glass-dark">
+            <li class="{{ 'is-done' if has_file else '' }}">
+                <span class="home-mark" aria-hidden="true"></span>
+                <div><strong>{{ 'Course file' if en else 'קובץ הקורסים' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if has_file else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
+                <span class="home-value">{% if has_file %}<bdi>{{ config.course_file_name or 'courses.xlsx' }}</bdi> · {{ courses|length }} {{ 'courses' if en else 'קורסים' }}{% else %}{{ 'Not uploaded yet' if en else 'עדיין לא הועלה' }}{% endif %}</span></div>
+                {% if has_file %}<a class="home-link" href="{{ url_for('data_page') }}">{{ 'Data' if en else 'נתונים' }}</a>{% endif %}
+            </li>
+            <li class="{{ 'is-warn' if stale else ('is-done' if has_file else '') }}">
+                <span class="home-mark" aria-hidden="true"></span>
+                <div><strong>{{ 'Settings' if en else 'הגדרות' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if has_file else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
+                <span class="home-value">{% if stale %}{{ 'Worth a check against the new file' if en else 'כדאי לבדוק מול הקובץ החדש' }} · {% endif %}{% if has_file %}{% if config.program_name %}<bdi>{{ config.program_name }}</bdi> · {% endif %}{{ config.degree_years }} {{ 'years' if en else 'שנים' }} · {% for day in all_days if config.days[day.key].enabled %}{{ day.key if en else day.hebrew }}{{ ', ' if not loop.last }}{% endfor %}{% else %}{{ 'After the file is loaded' if en else 'אחרי שהקובץ ייטען' }}{% endif %}</span></div>
+                {% if has_file %}<a class="home-link" href="{{ url_for('data_page') }}#settings">{{ 'Edit' if en else 'עריכה' }}</a>{% endif %}
+            </li>
+            <li class="{{ 'is-warn' if stale else ('is-done' if built else '') }}">
+                <span class="home-mark" aria-hidden="true"></span>
+                <div><strong>{{ 'Timetable' if en else 'מערכת השעות' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if built else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
+                <span class="home-value">{% if stale %}{{ 'Built from the previous file, on ' if en else 'נבנתה מהקובץ הקודם, ב־' }}<bdi dir="ltr">{{ built_at }}</bdi>{% elif built %}{{ 'Built on ' if en else 'נבנתה ב־' }}<bdi dir="ltr">{{ built_at }}</bdi>{% else %}{{ 'Not built yet' if en else 'עדיין לא נבנתה' }}{% endif %}</span></div>
+            </li>
+        </ul>
+    </section>
+
+    <section class="hm-rules" aria-labelledby="hmRulesTitle">
+        <h2 id="hmRulesTitle" class="hm-h2 is-big">{{ 'What the app keeps for you' if en else 'מה המערכת שומרת בשבילכם' }}</h2>
+        <p class="hm-sub">{{ 'In every build, without you having to set anything.' if en else 'בכל בנייה, בלי שתצטרכו להגדיר דבר.' }}</p>
+        <div class="hm-group">
+            <h3>{{ 'Always' if en else 'תמיד' }}<small>{{ 'Rules no timetable will break' if en else 'חוקים שאף מערכת שעות לא תפר' }}</small></h3>
+            {% for row in showcase.hard_rows %}
+            <div class="hm-rrow" data-from="{{ 'start' if loop.index is odd else 'end' }}">
+                {% for rule in row %}<div class="hm-rule tt-glass-dark"><span class="hm-ri">{{ rule_icon(rule.icon) }}</span><strong>{{ rule.title }}</strong><span>{{ rule.text }}</span></div>{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="hm-group is-soft">
+            <h3>{{ 'As far as possible' if en else 'עד כמה שאפשר' }}<small>{{ 'Preferences the app improves in every build' if en else 'העדפות שהמערכת משפרת בכל בנייה' }}</small></h3>
+            {% for row in showcase.soft_rows %}
+            <div class="hm-rrow" data-from="{{ 'start' if loop.index is odd else 'end' }}">
+                {% for rule in row %}<div class="hm-rule tt-glass-dark"><span class="hm-ri">{{ rule_icon(rule.icon) }}</span><strong>{{ rule.title }}</strong><span>{{ rule.text }}</span></div>{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <p class="hm-all-rules"><a href="{{ url_for('rules_page') }}">{{ 'All the rules, and your own' if en else 'כל הכללים, כולל שלכם' }}</a></p>
+    </section>
+
+    <section class="ai-assistant-panel dashboard-ai hm-assistant tt-glass-dark" id="ai-assistant" aria-labelledby="hmAssistantTitle">
             <div class="ai-assistant-header">
                 <div>
-                    <h2>{{ 'Tell the scheduler what you need' if current_lang == 'en' else 'כתבו למערכת מה אתם צריכים' }}</h2>
+                    <h2 id="hmAssistantTitle">{{ 'Tell the scheduler what you need' if current_lang == 'en' else 'כתבו למערכת מה אתם צריכים' }}</h2>
                     <p>{{ 'Talk with Claude freely. The timetable does not change until you review Claude’s proposal and press Apply.' if current_lang == 'en' else 'נהלו שיחה חופשית עם Claude. מערכת השעות לא משתנה עד שתבדקו את ההצעה של Claude ותלחצו על "החלה".' }}</p>
                 </div>
                 <span class="claude-status {{ 'ready' if claude_configured else 'not-ready' }}">
@@ -104,8 +186,10 @@
 
             <form class="assistant-compose generate-form dashboard-compose" method="post" action="{{ url_for('apply_ai_requirement') }}">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <textarea name="assistant_text" rows="4" required placeholder="{{ 'Example: Professor Sela cannot teach on Tuesdays. Make Wednesday lighter for second-year students.' if current_lang == 'en' else 'לדוגמה: פרופ׳ סלע לא יכול ללמד בימי שלישי. הפוך את יום רביעי לקל יותר עבור שנה ב׳.' }}"></textarea>
-                <button class="primary-button" type="submit">{{ 'Send to Claude' if current_lang == 'en' else 'שלח ל-Claude' }}</button>
+                <label class="sr-only" for="assistantText">{{ 'What would you like to change?' if current_lang == 'en' else 'מה תרצו לשנות?' }}</label>
+                <textarea id="assistantText" name="assistant_text" rows="3" required placeholder="{{ 'Write here what you would like to change…' if current_lang == 'en' else 'כתבו כאן מה תרצו לשנות…' }}"{% if not claude_configured %} disabled aria-describedby="assistantOff"{% endif %}></textarea>
+                <button class="primary-button" type="submit"{% if not claude_configured %} disabled{% endif %}>{{ 'Send' if current_lang == 'en' else 'שליחה' }}</button>
+                {% if not claude_configured %}<p class="hm-assistant-off" id="assistantOff">{{ 'The assistant is not connected on this computer. Everything else works as usual.' if current_lang == 'en' else 'העוזר לא מחובר במחשב הזה. כל השאר עובד כרגיל.' }}</p>{% endif %}
             </form>
 
             {% if ai_pending %}
@@ -139,6 +223,7 @@
             {% endif %}
         </section>
 </main>
+<a class="hm-bubble" href="#ai-assistant"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>{{ 'Want to change something? Write here' if en else 'רוצים לשנות משהו? כתבו כאן' }}</span></a>
 <script>
     // Sending a request to the assistant can take a while: show the loading box.
     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -146,6 +231,30 @@
         form.addEventListener('submit', () => { if (loadingOverlay) loadingOverlay.hidden = false; });
     });
     window.addEventListener('pageshow', () => { if (loadingOverlay) loadingOverlay.hidden = true; });
+
+    // New account: choosing or dropping a file uploads it at once.
+    const homeUpload = document.getElementById('homeUpload');
+    const homeFile = homeUpload && homeUpload.querySelector('input[type=file]');
+    if (homeFile) homeFile.addEventListener('change', () => { if (homeFile.files.length) homeUpload.submit(); });
+    const homeDrop = document.getElementById('homeDrop');
+    if (homeDrop && homeFile) {
+        ['dragenter', 'dragover'].forEach(n => homeDrop.addEventListener(n, e => { e.preventDefault(); homeDrop.classList.add('is-over'); }));
+        ['dragleave', 'drop'].forEach(n => homeDrop.addEventListener(n, e => { e.preventDefault(); homeDrop.classList.remove('is-over'); }));
+        homeDrop.addEventListener('drop', e => { if (e.dataTransfer.files.length) { homeFile.files = e.dataTransfer.files; homeUpload.submit(); } });
+    }
+
+    // The rule cards slide in row by row, from alternating sides, as they come into view.
+    const rows = document.querySelectorAll('.hm-rrow');
+    if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('hm-animate');
+        const io = new IntersectionObserver(entries => entries.forEach(entry => {
+            if (entry.isIntersecting) { entry.target.classList.add('is-in'); io.unobserve(entry.target); }
+        }), { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+        rows.forEach(row => {
+            [...row.children].forEach((card, i) => { card.style.transitionDelay = (i * 140) + 'ms'; });
+            io.observe(row);
+        });
+    }
 </script>
 </body>
 </html>
