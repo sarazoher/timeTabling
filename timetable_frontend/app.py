@@ -1000,7 +1000,8 @@ def reset_lecturer_availability():
     config = load_config()
     config.setdefault("lecturer_availability", {}).pop(lecturer, None)
     save_config(config)
-    flash(_("Lecturer availability was reset to the department defaults."), "success")
+    flash("This lecturer is back on the teaching hours. Rebuild the timetable to apply it." if select_locale() == "en"
+          else "המרצה חזר לשעות הלימוד. כדי שזה ייכנס למערכת השעות צריך לבנות מחדש.", "success")
     return redirect(url_for("lecturer_availability_page", lecturer=lecturer))
 
 

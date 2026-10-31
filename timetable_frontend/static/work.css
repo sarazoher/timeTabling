@@ -146,10 +146,64 @@
 .is-light-page .dynamic-day-title { background: var(--tt-lavender); color: var(--tt-plum); border: 0; border-radius: 10px; font-weight: 800; }
 .is-light-page .dynamic-event { border-radius: 10px; box-shadow: 0 6px 14px -12px rgba(37, 4, 51, .5); }
 
+/* Lecturer hours: a lecturer picker, then one glass row per day. */
+.wk-narrow { max-width: 860px; }
+.wk-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-bottom: 4px; color: var(--tt-plum); font-weight: 700; text-decoration: none; }
+.wk-back:hover { text-decoration: underline; text-underline-offset: 4px; }
+[dir="ltr"] .wk-back svg { transform: scaleX(-1); }
+.wk-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 14px 18px; margin-bottom: 16px; font-weight: 800; }
+.wk-picker select { flex: 1 1 260px; min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid #e3d3e8; background-color: #fff; font: inherit; font-weight: 700; color: var(--tt-plum-deep); }
+.wk-picker select:focus-visible, .wk-time input:focus-visible, .wk-day-check input:focus-visible { outline: 3px solid var(--tt-lilac); outline-offset: 2px; }
+.wk-hours-title { margin: 0 0 14px; font-size: 22px !important; font-weight: 900 !important; }
+.wk-days-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.wk-days-list li { display: grid; grid-template-columns: 120px auto auto minmax(0, 1fr); align-items: center; gap: 10px 18px; padding: 10px 14px; border-radius: 14px; background: rgba(255, 255, 255, .72); border: 1px solid #fff; }
+.wk-days-list li.is-closed { background: transparent; border: 1px dashed rgba(117, 68, 154, .22); color: var(--tt-muted); }
+.wk-days-list small { color: var(--tt-muted); font-size: 13.5px; }
+.wk-days-list .wk-day-off { grid-column: 2 / -1; }
+.wk-day-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 800; cursor: pointer; }
+.wk-day-check input { width: 20px; height: 20px; accent-color: var(--tt-plum); }
+.is-closed .wk-day-check { cursor: default; }
+.wk-time { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.wk-time input { min-height: 42px; padding: 0 10px; border-radius: 10px; border: 1px solid #e3d3e8; background: #fff; font: inherit; font-variant-numeric: tabular-nums; color: var(--tt-plum-deep); }
+.wk-hours-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(117, 68, 154, .12); }
+.wk-reset { margin: 14px 0 0; }
+
+/* Guided setup: three glass steps with plum numbers. */
+.is-light-page .gs-page { max-width: 880px; padding: 40px 20px 140px; }
+.is-light-page .gs-page h1 { font-size: clamp(34px, 4.4vw, 52px); font-weight: 900; letter-spacing: -.03em; line-height: 1.05; margin-bottom: 10px; }
+.is-light-page .gs-lead { color: var(--tt-muted); text-wrap: pretty; }
+.is-light-page .gs-step { background: rgba(255, 255, 255, .58); backdrop-filter: blur(22px) saturate(1.25); -webkit-backdrop-filter: blur(22px) saturate(1.25); border: 1px solid rgba(255, 255, 255, .88); border-radius: 22px; box-shadow: 0 24px 48px -28px rgba(60, 20, 90, .45), inset 0 1px 0 #fff; }
+.is-light-page .gs-step.is-waiting { background: rgba(255, 255, 255, .22); border: 1.5px dashed rgba(117, 68, 154, .25); box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.is-light-page .gs-num { background: linear-gradient(135deg, var(--tt-glow), var(--tt-plum)); color: #fff; box-shadow: 0 8px 18px -8px var(--tt-plum); font-weight: 900; }
+.is-light-page .gs-step.is-waiting .gs-num { background: var(--tt-lavender); color: var(--tt-plum); box-shadow: none; }
+.is-light-page .gs-step.is-done .gs-num { background: #1c6247; color: #fff; box-shadow: 0 8px 18px -10px #1c6247; }
+.is-light-page .gs-step h2 { font-size: 22px; font-weight: 900; }
+.is-light-page .gs-step.is-waiting h2 { color: var(--tt-muted); }
+.is-light-page .gs-sub { color: var(--tt-muted); }
+.is-light-page .gs-drop { background: rgba(255, 255, 255, .5); border: 2px dashed rgba(117, 68, 154, .32); border-radius: 18px; transition: background .3s var(--tt-ease), border-color .3s var(--tt-ease); }
+.is-light-page .gs-drop.is-over { background: rgba(230, 201, 245, .5); border-color: var(--tt-plum); }
+.is-light-page .gs-filerow { padding: 12px 16px; border-radius: 14px; background: rgba(255, 255, 255, .72); }
+.is-light-page .gs-field input[type=text], .is-light-page .gs-field input[type=number], .is-light-page .gs-field select { border-radius: 12px; border: 1px solid #e3d3e8; background: #fff; }
+.is-light-page .gs-field input[readonly] { background: rgba(255, 255, 255, .5); }
+.is-light-page .gs-check input { accent-color: var(--tt-plum); }
+.is-light-page .gs-check-line { border-radius: 14px; border: 1px solid rgba(255, 255, 255, .8); }
+.is-light-page .gs-button[disabled] { background: #e9e0ec; color: #7d6a8c; box-shadow: none; transform: none; }
+
+/* The short wait after an upload: a glass card over a softly blurred page. */
+.is-light-page .loading-overlay { background: rgba(244, 238, 250, .55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.is-light-page .loading-box { background: rgba(255, 255, 255, .85); border: 1px solid #fff; border-radius: 22px; box-shadow: 0 30px 70px -30px rgba(37, 4, 51, .55); color: var(--tt-plum-deep); }
+.is-light-page .loading-box p { color: var(--tt-muted); }
+.is-light-page .spinner { border-color: var(--tt-lavender); border-top-color: var(--tt-plum); }
+
 @media (max-width: 900px) {
     .wk-builtin { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
+    .wk-days-list li { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .wk-days-list .wk-day-off { grid-column: 1; }
+    .wk-time { justify-content: space-between; }
+    .wk-time input { flex: 1; min-width: 0; }
+    .wk-hours-actions .gs-button { flex: 1 1 100%; }
     .wk-head-actions, .wk-head-actions .gs-button { width: 100%; }
     .wk-controls select { min-width: 0; flex: 1 1 100%; }
     .wk-legend { margin-inline-start: 0; }
@@ -168,7 +222,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .wk-bar::after { animation: none; display: none; }
-    .is-light-page .gs-button, .is-light-page .dynamic-semester-card { transition: none; }
+    .is-light-page .gs-button, .is-light-page .dynamic-semester-card, .is-light-page .gs-drop { transition: none; }
     .is-light-page .dynamic-semester-card:hover { transform: none; }
 }
 .wk-lecturers .time-range { white-space: nowrap; }

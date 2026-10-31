@@ -95,6 +95,13 @@ class GuidedSetupTests(AuthFixture, unittest.TestCase):
         self.assertIn("gs-check-line", page)
         self.assertIn("מערכת שעות מדעי המחשב (דוגמה) — 3 שנים.html", page)
 
+    def test_setup_is_in_the_light_look_and_points_to_the_data_check(self):
+        self.assertIn('<body class="is-light-page">', self.page())
+        self.client.post("/setup/sample", data={"csrf_token": self.token()})
+        page = self.page()
+        self.assertIn('href="/static/work.css"', page)
+        self.assertNotIn('href="/#data-check"', page)
+
     def test_a_badly_written_time_is_explained(self):
         self.client.post("/setup/sample", data={"csrf_token": self.token()})
         response = self.client.post("/generate", data=self.build_form(start_Monday="7"))

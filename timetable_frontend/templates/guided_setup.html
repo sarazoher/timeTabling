@@ -6,11 +6,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ 'Set up the timetable' if en else 'הגדרת מערכת השעות' }}</title>
+    <title>{{ 'Set up the timetable' if en else 'הגדרת מערכת השעות' }} · TimeTabling</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='world.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='work.css') }}">
 {% include "_favicon.html" %}
 </head>
-<body>
+<body class="is-light-page">
+{% set sky = 'light' %}{% include "_sky.html" %}
 <div id="loadingOverlay" class="loading-overlay" hidden>
     <div class="loading-box" role="status" aria-live="polite">
         <div class="spinner" aria-hidden="true"></div>
@@ -111,7 +114,7 @@
             <div class="gs-step-head"><span class="gs-num" aria-hidden="true">3</span><div>
                 <h2 id="gsStep3">{{ 'Check and build' if en else 'בדיקה ובנייה' }}</h2></div></div>
             <div class="gs-body">
-                {% set details_url = url_for('setup_page') + '#data-check' %}
+                {% set details_url = url_for('data_page') + '#check' %}
                 {% if check.blocking %}
                 {% set first = check.blocking_items[0] %}
                 <p class="gs-check-line is-blocking" role="alert">

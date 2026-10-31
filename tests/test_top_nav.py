@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from auth_support import AuthFixture  # noqa: E402
 
-PAGES = {"/": "home", "/calendar": "timetable", "/data": "data", "/rules": "rules", "/lecturers": "rules", "/setup": None}
+PAGES = {"/": "home", "/calendar": "timetable", "/data": "data", "/rules": "rules", "/lecturers": "data", "/setup": None}
 
 
 def nav_of(page):

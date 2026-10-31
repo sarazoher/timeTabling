@@ -1,5 +1,6 @@
 """The Data and Rules pages: what is on them, and that their forms come back to them."""
 import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -99,6 +100,15 @@ class DataRulesPagesTests(AuthFixture, unittest.TestCase):
         self.assertIn('<body class="is-light-page">', page)
         self.assertIn('class="tt-sky is-light"', page)
         self.assertIn('href="/static/work.css"', page)
+
+    def test_lecturer_hours_page_belongs_to_data(self):
+        self.load_sample()
+        page = self.client.get("/lecturers").get_data(as_text=True)
+        self.assertIn('<body class="is-light-page">', page)
+        self.assertIn('class="wk-back" href="/data"', page)
+        self.assertIn('href="/data">ביטול</a>', page)
+        self.assertEqual(len(re.findall(r'name="lecturer_enabled_\w+"', page)), 7)
+        self.assertNotIn('name="lecturer_start_Sunday"', page)           # not a teaching day: nothing to send
 
     def test_rules_page_is_light_and_leaves_lecturer_hours_to_data(self):
         self.load_sample()
