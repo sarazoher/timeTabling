@@ -60,6 +60,8 @@ RECENT CHAT (use this to understand follow-up answers and corrections):
 {json.dumps((recent_chat or [])[-10:], ensure_ascii=False)}
 
 The degree has {semesters_per_year} semesters per academic year.
+SEMESTER NUMBERS in allowed_semesters / forbidden_semesters are counted across the whole degree: study year Y, semester k of that year is number (Y-1)*{semesters_per_year} + k. Semester A/B/C ("סמסטר א/ב/ג") of a course means semester 1/2/3 OF THAT COURSE'S study year (its "year" in the catalog), never of another year. Example with {semesters_per_year} semesters a year: a year-2 course "in semester B" is semester {semesters_per_year} + 2. A course can only be placed inside its own study year, so never propose a semester outside it; if the user asks for that, explain it and ask instead.
+Moving a course to a later semester also moves every course that requires it (a prerequisite must be in an EARLIER semester); mention this in assistant_message when it applies.
 Canonical day names are: {DAY_NAMES}.
 Times must be HH:MM.
 

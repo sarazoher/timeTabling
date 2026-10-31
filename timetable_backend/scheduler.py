@@ -249,6 +249,92 @@ def get_requirement_notes(courses: list[Course], availability: dict | None = Non
     return _requirement_set(courses, availability).notes
 
 
+def _apply_assistant_semester_rules(model, courses, choose, sem_expr, availability, objective) -> list[dict]:
+    """Stage 1 part of the assistant's rules: semester choices and semester
+    order between two courses. Day and hour parts stay in Stage 2.
+
+    Semesters are counted across the whole degree (year 2, semester 1 of 3 is
+    semester 4), as in Stage 2. A hard rule removes the semesters it forbids;
+    a soft one costs weight x 1000 when broken, below the planner's strategic
+    costs. Returns the rules that were applied, for error messages."""
+    aliases = _course_aliases(availability)
+    applied: list[dict] = []
+
+    def scoped(scope: dict | None) -> list[int]:
+        scope = scope or {}
+        ids = {int(v) for v in scope.get("course_ids", []) if str(v).strip().lstrip("-").isdigit()}
+        names = {_normalize_course_name(v, aliases) for v in scope.get("course_names", [])}
+        lecturers = {str(v).strip() for v in scope.get("lecturers", [])}
+        years = {int(v) for v in scope.get("years", []) if str(v).strip().isdigit()}
+        types = set(scope.get("event_types") or [])
+        found = []
+        for i, course in enumerate(courses):
+            if ids and course.course_id not in ids:
+                continue
+            if names and _normalize_course_name(course.name, aliases) not in names:
+                continue
+            if lecturers and course.lecturer not in lecturers:
+                continue
+            if years and course.year not in years:
+                continue
+            # A rule only for tutorials says nothing about a course without one.
+            if types and types <= {"Tutorial"} and not course.tutorial_hours:
+                continue
+            found.append(i)
+        return found
+
+    def weight(rule: dict) -> int:
+        try:
+            return max(1, min(10000, int(rule.get("weight", 50)))) * 1000
+        except (TypeError, ValueError):
+            return 50_000
+
+    by_id = {course.course_id: i for i, course in enumerate(courses)}
+    for rule in availability.get("ai_constraints", []) or []:
+        hard = bool(rule.get("hard", True))
+        if rule.get("kind") == "placement_filter":
+            allowed = {int(v) for v in (rule.get("allowed_semesters") or [])}
+            forbidden = {int(v) for v in (rule.get("forbidden_semesters") or [])}
+            if not (allowed or forbidden):
+                continue
+            used = False
+            for i in scoped(rule.get("scope")):
+                for (course_index, sem), var in choose.items():
+                    if course_index != i or not ((allowed and sem not in allowed) or sem in forbidden):
+                        continue
+                    used = True
+                    if hard:
+                        model.Add(var == 0)
+                    else:
+                        objective.append(var * weight(rule))
+            if used:
+                applied.append(rule)
+        elif rule.get("kind") == "course_relation" and rule.get("relation") in {
+                "before_semester", "after_semester", "same_semester", "different_semester"}:
+            try:
+                left, right = by_id.get(int(rule.get("left_course_id"))), by_id.get(int(rule.get("right_course_id")))
+            except (TypeError, ValueError):
+                continue
+            if left is None or right is None or left == right:
+                continue
+            a, b = sem_expr[left], sem_expr[right]
+            relation = rule["relation"]
+            broken = None if hard else model.NewBoolVar(f"a_plan_ai_rel_{left}_{right}_{len(applied)}")
+            if relation in {"before_semester", "after_semester", "same_semester"}:
+                constraint = model.Add(a < b if relation == "before_semester" else a > b if relation == "after_semester" else a == b)
+                if broken is not None:
+                    constraint.OnlyEnforceIf(broken.Not())
+            else:
+                lower = model.NewBoolVar(f"a_plan_ai_ne_{left}_{right}_{len(applied)}")
+                keep = [] if broken is None else [broken.Not()]
+                model.Add(a < b).OnlyEnforceIf([lower] + keep)
+                model.Add(a > b).OnlyEnforceIf([lower.Not()] + keep)
+            if broken is not None:
+                objective.append(broken * weight(rule))
+            applied.append(rule)
+    return applied
+
+
 def plan_baseline_a(
     courses: list[Course],
     availability: dict | None = None,
@@ -303,6 +389,14 @@ def plan_baseline_a(
         sem_expr[i] = sum(sem * choose[(i, sem)] for sem in range(first, last + 1))
 
 
+    # Assistant rules that pick or forbid semesters, or order two courses by
+    # semester, must shape the semester plan itself: Stage 2 keeps every
+    # course in the semester chosen here, so a rule applied only in Stage 2
+    # contradicts this plan and makes it infeasible at once.
+    objective = []
+    assistant_semester_rules = _apply_assistant_semester_rules(
+        model, courses, choose, sem_expr, availability, objective)
+
     # Academic progression for cohort A is hard.
     for i, prereqs in prereq_map.items():
         for pidx in prereqs:
@@ -326,8 +420,6 @@ def plan_baseline_a(
         stage1_project_anchor = stage1_project_indexes[0]
         for other_project in stage1_project_indexes[1:]:
             model.Add(sem_expr[other_project] == sem_expr[stage1_project_anchor])
-
-    objective = []
 
     # Reverse prerequisite graph and transitive descendant counts.  A course
     # that unlocks many later courses is a gateway course.  When B starts in
@@ -830,9 +922,11 @@ def plan_baseline_a(
             "This is a Stage-1 search timeout, not a proven curriculum infeasibility."
         )
     if status == cp_model.INFEASIBLE:
+        named = "; ".join(str(rule.get("description") or rule.get("id")) for rule in assistant_semester_rules)
         raise RuntimeError(
             "Could not build cohort A's curriculum inside the catalog study years. "
             "Stage 1 is proven infeasible. Check prerequisite/parallel relationships, meeting durations, department/lecturer availability, and shared A+B seminars."
+            + (f" Assistant rules that fix semesters are active and may be the cause: {named}." if named else "")
         )
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         raise RuntimeError(f"Stage 1 stopped with unexpected CP-SAT status {solver.StatusName(status)}.")
