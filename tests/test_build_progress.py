@@ -82,6 +82,9 @@ class BuildProgressTests(AuthFixture, unittest.TestCase):
             self.assertIn("משבצים ימים ושעות", page)
             self.assertNotIn("מחזור ב׳", page)                      # sample has no semester-B intake
             self.assertIn("ביטול הבנייה", page)
+            self.assertIn('<body class="is-dark-page bd-body">', page)
+            self.assertIn('class="tt-sky is-dark"', page)
+            self.assertEqual(page.count('<rect style="--i:'), 6)          # the course chain
             url, seen = self.wait_for_result()
         self.assertTrue(url.endswith("/calendar"))
         self.assertEqual(seen, sorted(seen))                         # the bar never goes back
