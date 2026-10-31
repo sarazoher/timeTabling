@@ -21,8 +21,11 @@ class SignInShowcaseTests(AuthFixture, unittest.TestCase):
             for title in ("קובץ אחד נכנס, מערכת שלמה יוצאת", "הכללים נשמרים בשבילכם",
                           "משנים במילים פשוטות", "מורידים ומשתפים"):
                 self.assertIn(title, page)
-            self.assertEqual(len(re.findall(r'class="auth-week-block ', page)), 6)
-            self.assertIn('class="auth-week" aria-hidden="true"', page)
+            self.assertEqual(len(re.findall(r'class="auth-week-block slot is-', page)), 6)
+            self.assertIn('class="auth-week tt-week" aria-hidden="true"', page)
+            self.assertIn('href="/static/world.css"', page)
+            self.assertIn('class="tt-sky is-dark"', page)
+            self.assertNotIn("auth-eyebrow", page)
             self.assertNotIn('class="auth-features"', page)
 
     def test_english(self):
@@ -31,7 +34,7 @@ class SignInShowcaseTests(AuthFixture, unittest.TestCase):
         self.assertIn("Your next timetable starts here.", page)
         self.assertIn("A whole degree’s timetable, from one Excel file.", page)
         self.assertIn("No lecturer booked twice at once".lower(), page.lower())
-        self.assertIn(">Mon<", page)
+        self.assertIn('<a href="/language/en" lang="en" aria-current="true">', page)
 
     def test_sign_in_form_still_works_beside_it(self):
         page = self.page("/login")

@@ -1,0 +1,74 @@
+/* TimeTabling visual world (see DESIGN.md): the shared pieces every page
+   in the new look uses. Showcase pages (sign-in, Home, building) are dark;
+   work pages (Data, Rules, timetable) are frosted light. Page-specific
+   layout stays in that page's stylesheet. */
+
+:root {
+    --tt-night: #14031d;
+    --tt-plum-deep: #250433;
+    --tt-plum: #75449a;
+    --tt-glow: #8b4fc9;
+    --tt-glow-deep: #5a2a86;
+    --tt-lavender: #e6c9f5;
+    --tt-lilac: #c7a3cd;
+    --tt-wash: #f4eefa;
+    --tt-muted: #6c5a77;
+    --tt-on-dark: #e9ddf3;
+    --tt-on-dark-muted: #cfbedb;
+    --tt-ease: cubic-bezier(.16, 1, .3, 1);
+}
+
+::selection { background: var(--tt-lavender); color: var(--tt-plum-deep); }
+
+/* ---- Background: drifting glow behind everything ---- */
+.tt-sky { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+.tt-sky.is-dark { background: radial-gradient(120% 80% at 50% 120%, #2a0a3d 0, var(--tt-night) 60%); }
+.tt-sky.is-light { background: var(--tt-wash); }
+.tt-blob { position: absolute; border-radius: 50%; will-change: transform; }
+.is-dark .tt-blob { filter: blur(90px); opacity: .85; }
+.is-dark .tt-blob.b1 { width: 62vw; height: 62vw; inset-inline-end: -18vw; bottom: -30vw; background: radial-gradient(circle, var(--tt-glow) 0, var(--tt-glow-deep) 45%, transparent 70%); animation: tt-drift1 26s var(--tt-ease) infinite alternate; }
+.is-dark .tt-blob.b2 { width: 44vw; height: 44vw; inset-inline-start: -10vw; top: -22vw; background: radial-gradient(circle, var(--tt-glow-deep) 0, #3a0f55 50%, transparent 70%); animation: tt-drift2 32s ease-in-out infinite alternate; }
+.is-dark .tt-blob.b3 { width: 30vw; height: 30vw; inset-inline-end: 30vw; top: 30vh; background: radial-gradient(circle, #c7a3cd55 0, transparent 65%); animation: tt-drift3 22s ease-in-out infinite alternate; }
+.is-light .tt-blob { filter: blur(80px); }
+.is-light .tt-blob.b1 { width: 55vw; height: 55vw; inset-inline-end: -20vw; bottom: -28vw; background: radial-gradient(circle, var(--tt-glow) 0, #a26be0aa 35%, transparent 70%); animation: tt-drift1 28s ease-in-out infinite alternate; }
+.is-light .tt-blob.b2 { width: 48vw; height: 48vw; inset-inline-start: -16vw; top: -24vw; background: radial-gradient(circle, #9b5fd8 0, #c9a6ee99 40%, transparent 70%); animation: tt-drift2 34s ease-in-out infinite alternate; }
+.is-light .tt-blob.b3 { width: 34vw; height: 34vw; inset-inline-end: 34vw; top: 22vh; background: radial-gradient(circle, #e7d6f7 0, transparent 70%); }
+@keyframes tt-drift1 { to { transform: translate(-8vw, -6vh) scale(1.08); } }
+@keyframes tt-drift2 { to { transform: translate(6vw, 8vh) scale(.94); } }
+@keyframes tt-drift3 { to { transform: translate(10vw, 6vh); } }
+
+/* Fine grain over the glow, so gradients look printed rather than flat. */
+.tt-grain { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 60; }
+.is-dark-page .tt-grain { opacity: .10; mix-blend-mode: overlay; }
+.is-light-page .tt-grain { opacity: .07; mix-blend-mode: multiply; }
+
+/* ---- The signature pattern: a fading week grid with lit course slots ---- */
+.tt-week { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(var(--tt-rows, 7), 1fr); gap: 8px; pointer-events: none; }
+.tt-week .cell { border: 1px solid rgba(255, 255, 255, .09); border-radius: 10px; }
+.tt-week .slot { border: 1px solid; border-radius: 10px; opacity: 0; animation: tt-light 1.2s var(--tt-ease) forwards; }
+.tt-week .is-required { background: #3b82f633; border-color: #93c5fd; box-shadow: 0 0 24px #3b82f655; }
+.tt-week .is-elective { background: #22c55e2e; border-color: #86efac; box-shadow: 0 0 24px #22c55e44; }
+.tt-week .is-seminar  { background: #ec48992e; border-color: #f9a8d4; box-shadow: 0 0 24px #ec489944; }
+.tt-week .is-project  { background: #f59e0b2e; border-color: #fcd34d; box-shadow: 0 0 24px #f59e0b44; }
+.tt-week .is-general  { background: #8b5cf633; border-color: #c4b5fd; box-shadow: 0 0 24px #8b5cf655; }
+@keyframes tt-light { from { opacity: 0; transform: scale(.92); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+
+/* ---- Buttons on dark ---- */
+.tt-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; padding: 0 26px; border-radius: 14px; font: inherit; font-weight: 800; font-size: 17px; text-decoration: none; cursor: pointer; transition: transform .3s var(--tt-ease), box-shadow .3s var(--tt-ease), background .3s; }
+.tt-btn-main-dark { border: 0; background: #fff; color: var(--tt-plum-deep); box-shadow: 0 18px 40px -16px rgba(199, 163, 205, .7); }
+.tt-btn-main-dark:hover { transform: translateY(-2px); box-shadow: 0 24px 50px -16px rgba(199, 163, 205, .9); }
+.tt-btn-glass-dark { color: #fff; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .22); backdrop-filter: blur(10px); }
+.tt-btn-glass-dark:hover { background: rgba(255, 255, 255, .14); }
+.tt-btn:focus-visible { outline: 3px solid var(--tt-lilac); outline-offset: 2px; }
+
+/* ---- Glass on dark ---- */
+.tt-glass-dark { background: linear-gradient(160deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .03)); border: 1px solid rgba(255, 255, 255, .13); backdrop-filter: blur(14px); border-radius: 24px; }
+
+.tt-brand { display: inline-flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-weight: 800; font-size: 20px; letter-spacing: -.3px; }
+.tt-brand img { width: 36px; height: 36px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .tt-blob, .tt-week .slot { animation: none !important; }
+    .tt-week .slot { opacity: 1; }
+    .tt-btn { transition: none; }
+}

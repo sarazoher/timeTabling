@@ -1,0 +1,4 @@
+{# The drifting glow and grain behind a page in the new look.
+   Set sky = 'dark' (showcase pages) or 'light' (work pages) before including. #}
+<div class="tt-sky is-{{ sky or 'dark' }}" aria-hidden="true"><div class="tt-blob b1"></div><div class="tt-blob b2"></div><div class="tt-blob b3"></div></div>
+<svg class="tt-grain" aria-hidden="true" focusable="false"><filter id="ttGrain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0"/></filter><rect width="100%" height="100%" filter="url(#ttGrain)"/></svg>
