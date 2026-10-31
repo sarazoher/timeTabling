@@ -2480,20 +2480,6 @@ a.app-nav-item:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
 .app-nav-item.is-disabled:focus-visible .app-nav-tip { display: block; }
 
 .app-utilities { margin-inline-start: auto; display: flex; align-items: center; gap: 8px; }
-.app-assistant {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 14px;
-    border: 1px solid #8f6aa8;
-    border-radius: 10px;
-    background: transparent;
-    color: #ffffff;
-    font-weight: 600;
-    text-decoration: none;
-}
-.app-assistant:hover { background: rgba(255, 255, 255, 0.12); }
 .app-lang {
     display: inline-flex;
     align-items: center;
@@ -2574,11 +2560,6 @@ a.app-nav-item:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
     .app-nav-item.is-disabled { position: static; }
     .app-nav-tip { inset-inline: 0; width: auto; max-width: none; }
     .app-nav-item { padding: 0 12px; }
-    .app-assistant { padding: 0 12px; }
-    .app-assistant-label {
-        position: absolute; width: 1px; height: 1px; overflow: hidden;
-        clip: rect(0 0 0 0); white-space: nowrap;
-    }
 }
 
 @media print {

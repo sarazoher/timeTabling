@@ -13,7 +13,6 @@
 .is-light-page a.app-nav-item:hover { background: rgba(117, 68, 154, .1); color: var(--tt-plum-deep); }
 .is-light-page .app-nav-item[aria-current="page"] { background: var(--tt-plum); color: #fff; box-shadow: 0 8px 18px -8px var(--tt-plum); }
 .is-light-page .app-nav-item.is-disabled { color: #8a7898; }
-.is-light-page .app-assistant { color: var(--tt-plum-deep); border-color: rgba(117, 68, 154, .3); background: rgba(255, 255, 255, .5); }
 .is-light-page .app-lang { color: var(--tt-plum-deep); }
 .is-light-page .app-avatar { background: var(--tt-plum); color: #fff; }
 
@@ -76,6 +75,48 @@
 .is-light-page .course-data-table td:last-child { border-start-end-radius: 12px; border-end-end-radius: 12px; }
 .is-light-page .course-data-table tbody tr:hover td { background: #fff; }
 .is-light-page .dr-search input { background: rgba(255, 255, 255, .75); border: 1px solid #eadff2; border-radius: 12px; }
+
+/* Rules: your own rules first, then the two groups the app always keeps. */
+.wk-own { padding: 26px 28px; margin-bottom: 40px; }
+.wk-own-head { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin-bottom: 18px; }
+.wk-own-head h2 { margin: 0; font-size: 22px !important; font-weight: 900 !important; display: flex; align-items: center; gap: 10px; }
+.wk-own-actions { margin-inline-start: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.wk-own-actions form { margin: 0; }
+.wk-count { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 15px; background: var(--tt-lavender); color: var(--tt-plum); font-size: 15px; font-variant-numeric: tabular-nums; }
+.wk-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.wk-rules li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, .72); border: 1px solid #fff; box-shadow: 0 10px 22px -18px rgba(60, 20, 90, .5); }
+.wk-rules li strong { font-weight: 600; line-height: 1.5; }
+.wk-rules form { margin: 0; }
+.wk-pill { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 14px; font-size: 13.5px; font-weight: 800; white-space: nowrap; }
+.wk-pill.is-must { background: var(--tt-plum); color: #fff; }
+.wk-pill.is-pref { background: var(--tt-lavender); color: var(--tt-plum); }
+.wk-own-empty { margin: 0; padding: 22px; border-radius: 16px; border: 1.5px dashed rgba(117, 68, 154, .3); color: var(--tt-muted); line-height: 1.6; text-align: center; text-wrap: pretty; }
+.wk-own-note { margin: 16px 0 0; color: var(--tt-muted); font-size: 14.5px; }
+.wk-own-note a { color: var(--tt-plum); font-weight: 700; text-underline-offset: 4px; }
+
+.wk-section-title { margin: 0 0 16px; font-size: clamp(24px, 2.6vw, 30px); font-weight: 900; letter-spacing: -.02em; }
+.wk-builtin { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.wk-group .wk-card-head { align-items: flex-start; margin-bottom: 14px; }
+.wk-group h3 { margin: 0 0 2px; font-size: 19px; font-weight: 900; }
+.wk-group .wk-card-head p { margin: 0; color: var(--tt-muted); font-size: 14.5px; line-height: 1.5; }
+.wk-group.is-must .wk-icon { color: #fff; background: linear-gradient(135deg, var(--tt-glow), var(--tt-plum)); border-color: rgba(255, 255, 255, .5); }
+.wk-builtin-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.wk-builtin-list li { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 11px 14px; padding-inline-start: 24px; border-radius: 14px; background: rgba(255, 255, 255, .6); line-height: 1.5; }
+.wk-builtin-list li::before { content: ""; position: absolute; inset-block: 12px; inset-inline-start: 11px; width: 3px; border-radius: 3px; background: var(--tt-plum); }
+.wk-group.is-pref .wk-builtin-list li::before { background: var(--tt-lilac); }
+.wk-builtin-list strong { font-weight: 700; }
+.wk-builtin-list span { color: var(--tt-muted); font-size: 14.5px; }
+
+@media (max-width: 900px) {
+    .wk-builtin { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+    .wk-own { padding: 20px 16px; }
+    .wk-own-actions { margin-inline-start: 0; width: 100%; }
+    .wk-own-actions .gs-button { width: 100%; }
+    .wk-rules li { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .wk-rules li .wk-pill { justify-self: start; }
+}
 
 @media (max-width: 720px) {
     .is-light-page .app-topbar { margin: 8px; top: 8px; }

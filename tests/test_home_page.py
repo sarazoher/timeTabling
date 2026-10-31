@@ -132,13 +132,14 @@ class HomePageTests(AuthFixture, unittest.TestCase):
         self.assertRegex(page, r'<p class="hm-hello">Hello, <bdi>[^<]+</bdi></p>')
         self.assertIn("What the app keeps for you", page)
 
-    def test_assistant_stays_on_home_and_says_when_it_is_off(self):
+    def test_assistant_is_the_shared_bubble_not_a_section(self):
         page = self.home()
-        self.assertIn('id="ai-assistant"', page)
-        self.assertIn('class="hm-bubble" href="#ai-assistant"', page)
+        self.assertIn('class="as-bubble"', page)
+        self.assertIn('id="ai-assistant"', page)               # the drawer
         self.assertIn("העוזר לא מחובר במחשב הזה", page)
+        self.assertNotIn("hm-bubble", page)
+        self.assertNotIn("hm-assistant", page)
         self.assertNotIn("לדוגמה: פרופ׳ סלע", page)
-
 
 if __name__ == "__main__":
     unittest.main()

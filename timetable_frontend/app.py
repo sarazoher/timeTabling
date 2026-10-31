@@ -154,6 +154,34 @@ def inject_setup_progress():
     return {"nav_has_file": COURSES_EXCEL_FILE.exists(), "nav_has_timetable": TIMETABLE_FILE.exists()}
 
 
+ASSISTANT_PAGES = {"data_page": "data", "rules_page": "rules", "guided_setup": "setup"}
+
+
+@app.context_processor
+def inject_assistant():
+    """The chat drawer on every signed-in page: the conversation, a proposal
+    waiting for approval, and where to come back to after sending."""
+    if not g.get("user"):
+        return {}
+    config = load_config()
+    return {"assistant": {
+        "chat": list(config.get("ai_chat", []))[-20:],
+        "pending": config.get("ai_pending"),
+        "ready": claude_is_configured(),
+        "has_file": COURSES_EXCEL_FILE.exists(),
+        "next": request.path if request.method == "GET" else url_for("setup_page"),
+        "page": ASSISTANT_PAGES.get(request.endpoint or "", ""),
+    }}
+
+
+def _assistant_back() -> str:
+    """After a chat message: back to the page it was sent from, drawer open."""
+    target = request.form.get("next") or ""
+    if not target.startswith("/") or target.startswith("//"):
+        target = url_for("setup_page")
+    return target + "#assistant"
+
+
 @app.route("/favicon.ico")
 def favicon():
     """Browsers ask for /favicon.ico on their own, also for pages without a template."""
@@ -708,9 +736,6 @@ def setup_page():
         config=config,
         courses=catalog,
         ai_constraints=config.get("ai_constraints", []),
-        ai_chat=config.get("ai_chat", []),
-        ai_pending=config.get("ai_pending"),
-        claude_configured=claude_is_configured(),
         core_constraints=core_constraints,
         courses_excel_exists=COURSES_EXCEL_FILE.exists(),
         build_failure=load_json(BUILD_FAILURE_FILE, None),
@@ -776,17 +801,14 @@ def data_page():
 
 @app.route("/rules", methods=["GET"])
 def rules_page():
-    """Your own rules, lecturer hours and the built-in rules."""
+    """Your own rules (added through the assistant) and the built-in rules.
+    Lecturer hours are on Data."""
     config = load_config()
-    custom_hours = _lecturer_hours(config)
-    core = _core_constraints(config)
     return render_template(
         "rules.html",
         config=config,
         ai_constraints=config.get("ai_constraints", []),
-        core_constraints=core,
-        must_count=sum(1 for c in core if c["hard"]),
-        custom_hours=custom_hours,
+        core_constraints=_core_constraints(config),
         build_failure=load_json(BUILD_FAILURE_FILE, None),
         has_file=COURSES_EXCEL_FILE.exists(),
         year_review=_year_review(),
@@ -1394,13 +1416,13 @@ def apply_ai_requirement():
     user_text = (request.form.get("assistant_text") or "").strip()
     if not user_text:
         flash(_("Write a scheduling request first."), "error")
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_assistant_back())
 
     config = load_config()
     catalog = load_course_catalog()
     if not catalog:
         flash(_("Add or upload courses before adding AI requirements."), "error")
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_assistant_back())
 
     try:
         chat = config.setdefault("ai_chat", [])
@@ -1430,13 +1452,13 @@ def apply_ai_requirement():
             chat.append({"role": "assistant", "text": message, "status": "proposal"})
 
         save_config(config)
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_assistant_back())
     except Exception as error:
         config.setdefault("ai_chat", []).append({"role": "user", "text": user_text})
         config["ai_chat"].append({"role": "assistant", "text": str(error), "status": "error"})
         save_config(config)
         flash(str(error), "error")
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_assistant_back())
 
 
 def _refresh_course_catalog_only() -> None:
@@ -1540,7 +1562,7 @@ def confirm_ai_requirement():
     pending = config.get("ai_pending")
     if not pending:
         flash(_("There is no Claude proposal waiting to be applied."), "error")
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_assistant_back())
 
     data_actions = list(pending.get("data_actions", []))
     if data_actions and not pending.get("rules") and not pending.get("remove_rule_ids") and not pending.get("clear_all"):
@@ -1558,7 +1580,7 @@ def confirm_ai_requirement():
             config.setdefault("ai_chat", []).append({"role": "assistant", "text": str(error), "status": "error"})
             save_config(config)
             flash(str(error), "error")
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_assistant_back())
 
     previous_rules = list(config.get("ai_constraints", []))
     rules = [] if pending.get("clear_all") else list(previous_rules)
@@ -1581,13 +1603,13 @@ def confirm_ai_requirement():
     if not COURSES_EXCEL_FILE.exists():
         flash("The rule was saved. Upload a course file to build." if en
               else "הכלל נשמר. כדי לבנות צריך קודם להעלות קובץ קורסים.", "success")
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_assistant_back())
     # The button says "apply and rebuild": build now, like the Rebuild button.
     try:
         return _build_and_redirect()
     except Exception as error:  # noqa: BLE001
         flash(str(error), "error")
-        return redirect(url_for("setup_page") + "#ai-assistant")
+        return redirect(_assistant_back())
 
 
 @app.route("/assistant/remove/<rule_id>", methods=["POST"])
@@ -1598,7 +1620,7 @@ def remove_ai_requirement(rule_id: str):
     config["ai_constraints"] = after
     if len(after) == len(before):
         flash(_("That AI requirement was already removed."), "error")
-        return redirect(_return_url("#ai-assistant"))
+        return redirect(_return_url("#ownRules"))
 
     config.setdefault("ai_chat", []).append({
         "role": "assistant",
@@ -1609,7 +1631,7 @@ def remove_ai_requirement(rule_id: str):
     save_config(config)
     flash("Rule removed. The timetable was not changed; rebuild when ready." if select_locale() == "en"
           else "הכלל הוסר. מערכת השעות לא שונתה; אפשר לבנות מחדש כשמוכנים.", "success")
-    return redirect(_return_url("#ai-assistant"))
+    return redirect(_return_url("#ownRules"))
 
 
 @app.route("/assistant/clear", methods=["POST"])
@@ -1624,7 +1646,7 @@ def clear_ai_requirements():
     save_config(config)
     flash("All your rules were removed. The timetable was not changed; rebuild when ready." if select_locale() == "en"
           else "כל הכללים שלכם הוסרו. מערכת השעות לא שונתה; אפשר לבנות מחדש כשמוכנים.", "success")
-    return redirect(_return_url("#ai-assistant"))
+    return redirect(_return_url("#ownRules"))
 
 
 

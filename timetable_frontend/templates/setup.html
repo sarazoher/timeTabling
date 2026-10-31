@@ -11,13 +11,6 @@
 </head>
 <body class="home-body is-dark-page">
 {% set sky = 'dark' %}{% include "_sky.html" %}
-<div id="loadingOverlay" class="loading-overlay" hidden>
-    <div class="loading-box">
-        <div class="spinner" aria-hidden="true"></div>
-        <h2>{{ 'Updating timetable...' if current_lang == 'en' else 'מעדכנים את מערכת השעות...' }}</h2>
-        <p>{{ 'This can take a few minutes.' if current_lang == 'en' else 'זה יכול לקחת כמה דקות.' }}</p>
-    </div>
-</div>
 
 {# A panel that needs an answer (column check, year moves) sits over the
    dashboard like the loading box; its messages are shown inside it. #}
@@ -163,75 +156,8 @@
         <p class="hm-all-rules"><a href="{{ url_for('rules_page') }}">{{ 'All the rules, and your own' if en else 'כל הכללים, כולל שלכם' }}</a></p>
     </section>
 
-    <section class="ai-assistant-panel dashboard-ai hm-assistant tt-glass-dark" id="ai-assistant" aria-labelledby="hmAssistantTitle">
-            <div class="ai-assistant-header">
-                <div>
-                    <h2 id="hmAssistantTitle">{{ 'Tell the scheduler what you need' if current_lang == 'en' else 'כתבו למערכת מה אתם צריכים' }}</h2>
-                    <p>{{ 'Talk with Claude freely. The timetable does not change until you review Claude’s proposal and press Apply.' if current_lang == 'en' else 'נהלו שיחה חופשית עם Claude. מערכת השעות לא משתנה עד שתבדקו את ההצעה של Claude ותלחצו על "החלה".' }}</p>
-                </div>
-                <span class="claude-status {{ 'ready' if claude_configured else 'not-ready' }}">
-                    {{ ('Claude connected' if claude_configured else 'Claude API key required') if current_lang == 'en' else ('Claude מחובר' if claude_configured else 'נדרש מפתח API של Claude') }}
-                </span>
-            </div>
-
-            {% if ai_chat %}
-                <div class="assistant-chat-history dashboard-chat-history">
-                    {% for message in ai_chat[-6:] %}
-                        <div class="chat-row {{ message.role }}">
-                            <div class="chat-bubble {{ message.status or '' }}">{{ message.text }}</div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            <form class="assistant-compose generate-form dashboard-compose" method="post" action="{{ url_for('apply_ai_requirement') }}">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <label class="sr-only" for="assistantText">{{ 'What would you like to change?' if current_lang == 'en' else 'מה תרצו לשנות?' }}</label>
-                <textarea id="assistantText" name="assistant_text" rows="3" required placeholder="{{ 'Write here what you would like to change…' if current_lang == 'en' else 'כתבו כאן מה תרצו לשנות…' }}"{% if not claude_configured %} disabled aria-describedby="assistantOff"{% endif %}></textarea>
-                <button class="primary-button" type="submit"{% if not claude_configured %} disabled{% endif %}>{{ 'Send' if current_lang == 'en' else 'שליחה' }}</button>
-                {% if not claude_configured %}<p class="hm-assistant-off" id="assistantOff">{{ 'The assistant is not connected on this computer. Everything else works as usual.' if current_lang == 'en' else 'העוזר לא מחובר במחשב הזה. כל השאר עובד כרגיל.' }}</p>{% endif %}
-            </form>
-
-            {% if ai_pending %}
-                <div class="ai-proposal-card">
-                    <strong>{{ 'Claude’s proposed change' if current_lang == 'en' else 'השינוי ש-Claude מציע' }}</strong>
-                    <p>{{ ai_pending.message }}</p>
-                    {% if ai_pending.rules %}
-                        <ul>
-                            {% for rule in ai_pending.rules %}
-                                <li>{{ rule.description }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                    {% if ai_pending.data_actions %}
-                        <ul>
-                            {% for action in ai_pending.data_actions %}
-                                <li>{{ ('Add course: ' if current_lang == 'en' else 'הוספת קורס: ') }}{{ action.name }} — {{ action.lecturer }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                    <form method="post" action="{{ url_for('confirm_ai_requirement') }}">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        {% if ai_pending.data_actions and not ai_pending.rules %}
-                            <button class="primary-button" type="submit">{{ 'Confirm data change' if current_lang == 'en' else 'אישור הוספת הנתונים' }}</button>
-                        {% else %}
-                            <button class="primary-button" type="submit">{{ 'Apply and rebuild the timetable' if current_lang == 'en' else 'החלה ובנייה מחדש של מערכת השעות' }}</button>
-                        {% endif %}
-                    </form>
-                    <small>{{ 'You can also keep chatting instead of applying this proposal.' if current_lang == 'en' else 'אפשר גם להמשיך לדבר עם Claude במקום להחיל את ההצעה כרגע.' }}</small>
-                </div>
-            {% endif %}
-        </section>
 </main>
-<a class="hm-bubble" href="#ai-assistant"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>{{ 'Want to change something? Write here' if en else 'רוצים לשנות משהו? כתבו כאן' }}</span></a>
 <script>
-    // Sending a request to the assistant can take a while: show the loading box.
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    document.querySelectorAll('.generate-form').forEach(form => {
-        form.addEventListener('submit', () => { if (loadingOverlay) loadingOverlay.hidden = false; });
-    });
-    window.addEventListener('pageshow', () => { if (loadingOverlay) loadingOverlay.hidden = true; });
-
     // New account: choosing or dropping a file uploads it at once.
     const homeUpload = document.getElementById('homeUpload');
     const homeFile = homeUpload && homeUpload.querySelector('input[type=file]');

@@ -1,0 +1,121 @@
+{# The assistant: a chat bubble on every signed-in page that opens a drawer
+   from the end side. Included by _top_nav.html. Context: `assistant` from
+   app.inject_assistant. The drawer opens by itself when the address ends in
+   #assistant (after sending a message, the page comes back with it open). #}
+{% if assistant %}
+{% set en = current_lang == 'en' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='assistant.css') }}">
+<button class="as-bubble" type="button" aria-controls="ai-assistant" aria-expanded="false" data-assistant-open>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>{{ 'Want to change something? Write here' if en else 'רוצים לשנות משהו? כתבו כאן' }}</span>
+</button>
+<div class="as-backdrop" data-assistant-close hidden></div>
+<aside class="as-drawer" id="ai-assistant" role="dialog" aria-modal="true" aria-labelledby="asTitle" hidden>
+    <header class="as-head">
+        <div>
+            <h2 id="asTitle" tabindex="-1">{{ 'The assistant' if en else 'העוזר' }}</h2>
+            <p>{{ 'Write what to change in your own words. Nothing changes until you approve.' if en else 'כתבו במילים שלכם מה לשנות. שום דבר לא משתנה עד שמאשרים.' }}</p>
+        </div>
+        <button class="as-close" type="button" data-assistant-close aria-label="{{ 'Close' if en else 'סגירה' }}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </header>
+
+    <div class="as-history" id="asHistory" aria-live="polite">
+        {% for message in assistant.chat %}
+        <div class="as-row is-{{ message.role }}"><p dir="auto" class="as-msg {{ 'is-' ~ message.status if message.status else '' }}">{{ message.text }}</p></div>
+        {% else %}
+        <p class="as-empty">{{ 'No conversation yet.' if en else 'עדיין אין שיחה.' }}</p>
+        {% endfor %}
+    </div>
+
+    {% set pending = assistant.pending %}
+    {% if pending %}
+    <div class="as-proposal">
+        <strong>{{ 'Proposed change' if en else 'השינוי המוצע' }}</strong>
+        {% if pending.rules %}<ul>{% for rule in pending.rules %}<li><bdi>{{ rule.description }}</bdi></li>{% endfor %}</ul>{% endif %}
+        {% if pending.data_actions %}<ul>{% for action in pending.data_actions %}<li>{{ 'Add course: ' if en else 'הוספת קורס: ' }}<bdi>{{ action.name }}</bdi> · <bdi>{{ action.lecturer }}</bdi></li>{% endfor %}</ul>{% endif %}
+        {% if pending.clear_all %}<ul><li>{{ 'Remove all your rules' if en else 'הסרת כל הכללים שלכם' }}</li></ul>
+        {% elif pending.remove_rule_ids %}<ul><li>{{ ('Remove rules: ' if en else 'הסרת כללים: ') ~ pending.remove_rule_ids | length }}</li></ul>{% endif %}
+        <form method="post" action="{{ url_for('confirm_ai_requirement') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ assistant.next }}">
+            <input type="hidden" name="return_to" value="{{ assistant.page }}">
+            {% if pending.data_actions and not pending.rules %}
+            <button class="as-confirm" type="submit">{{ 'Add the course' if en else 'הוספת הקורס' }}</button>
+            {% else %}
+            <button class="as-confirm" type="submit">{{ 'Apply and rebuild the timetable' if en else 'החלה ובנייה מחדש של מערכת השעות' }}</button>
+            {% endif %}
+        </form>
+        <small>{{ 'Or keep writing to change the proposal.' if en else 'או להמשיך לכתוב כדי לשנות את ההצעה.' }}</small>
+    </div>
+    {% endif %}
+
+    <form class="as-compose" method="post" action="{{ url_for('apply_ai_requirement') }}" id="asCompose">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ assistant.next }}">
+        <label class="as-sr" for="assistantText">{{ 'What would you like to change?' if en else 'מה תרצו לשנות?' }}</label>
+        <textarea id="assistantText" name="assistant_text" rows="3" required placeholder="{{ 'Write here what you would like to change…' if en else 'כתבו כאן מה תרצו לשנות…' }}"{% if not assistant.ready or not assistant.has_file %} disabled aria-describedby="assistantOff"{% endif %}></textarea>
+        <button class="as-send" type="submit"{% if not assistant.ready or not assistant.has_file %} disabled{% endif %}><span>{{ 'Send' if en else 'שליחה' }}</span></button>
+        {% if not assistant.ready %}
+        <p class="as-off" id="assistantOff">{{ 'The assistant is not connected on this computer. Everything else works as usual.' if en else 'העוזר לא מחובר במחשב הזה. כל השאר עובד כרגיל.' }}</p>
+        {% elif not assistant.has_file %}
+        <p class="as-off" id="assistantOff">{{ 'Upload a course file first; the assistant works on its courses.' if en else 'קודם מעלים קובץ קורסים; העוזר עובד על הקורסים שבו.' }}</p>
+        {% endif %}
+    </form>
+    <a class="as-rules-link" href="{{ url_for('rules_page') }}">{{ 'Your rules' if en else 'הכללים שלכם' }}</a>
+</aside>
+<script>
+(function () {
+    var drawer = document.getElementById('ai-assistant');
+    if (!drawer) return;
+    var backdrop = document.querySelector('.as-backdrop');
+    var bubble = document.querySelector('.as-bubble');
+    var log = document.getElementById('asHistory');
+    var lastFocus = null;
+    function open() {
+        lastFocus = document.activeElement;
+        drawer.hidden = false; backdrop.hidden = false;
+        requestAnimationFrame(function () { drawer.classList.add('is-open'); backdrop.classList.add('is-open'); });
+        bubble.setAttribute('aria-expanded', 'true');
+        log.scrollTop = log.scrollHeight;
+        var field = document.getElementById('assistantText');
+        (field && !field.disabled ? field : document.getElementById('asTitle')).focus();
+    }
+    function close() {
+        drawer.classList.remove('is-open'); backdrop.classList.remove('is-open');
+        bubble.setAttribute('aria-expanded', 'false');
+        setTimeout(function () { drawer.hidden = true; backdrop.hidden = true; }, 320);
+        if ((location.hash === '#assistant' || location.hash === '#ai-assistant') && window.history.replaceState) window.history.replaceState(null, '', location.pathname + location.search);
+        (lastFocus && lastFocus.focus ? lastFocus : bubble).focus();
+    }
+    // Delegated, so buttons further down the page (parsed after this script) open it too.
+    document.addEventListener('click', function (event) {
+        var trigger = event.target.closest('[data-assistant-open], a[href$="#assistant"], a[href$="#ai-assistant"]');
+        if (trigger) {
+            var href = trigger.getAttribute('href');
+            if (href && href.split('#')[0] && href.split('#')[0] !== location.pathname) return;   // another page: follow the link
+            event.preventDefault(); open(); return;
+        }
+        if (event.target.closest('[data-assistant-close]')) close();
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !drawer.hidden) close();
+        if (event.key === 'Tab' && !drawer.hidden) {   // keep the keyboard inside the drawer
+            var items = drawer.querySelectorAll('button:not([disabled]), textarea:not([disabled]), a[href]');
+            if (!items.length) return;
+            var first = items[0], last = items[items.length - 1];
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }
+    });
+    var compose = document.getElementById('asCompose');
+    if (compose) compose.addEventListener('submit', function () {
+        var send = compose.querySelector('.as-send');
+        send.disabled = true; send.classList.add('is-busy');
+        send.querySelector('span').textContent = {{ ('Thinking…' if en else 'חושב…')|tojson }};
+    });
+    function fromHash() { if ((location.hash === '#assistant' || location.hash === '#ai-assistant') && drawer.hidden) open(); }
+    window.addEventListener('hashchange', fromHash);
+    fromHash();
+})();
+</script>
+{% endif %}

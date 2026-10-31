@@ -36,3 +36,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .impeccable/
+
+# Written by test runs at the repository root
+/timetable_debug.json

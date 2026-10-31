@@ -208,7 +208,10 @@ A pill-shaped gradient bar (plum on the start side fading toward the end) with a
 Glass dark, 250×250, centred content: 62px icon box (32px icon, lavender stroke; dashed outline for preferences), title, one line. Rows slide in from alternating sides as they enter the screen, cards in a row 140ms apart.
 
 ### Chat bubble
-Fixed bottom corner on the end side (bottom-left in Hebrew), glow gradient pill with "רוצים לשנות משהו? כתבו כאן", a soft pulsing ring. Round icon-only on phones.
+Fixed bottom corner on the end side (bottom-left in Hebrew), glow gradient pill with "רוצים לשנות משהו? כתבו כאן", a soft pulsing ring. Round icon-only on phones. It is the only way into the assistant and sits on every signed-in page (`_assistant.html`, included by the top menu).
+
+### Assistant drawer
+Milky light glass on both levels, sliding in from the same end side (a bottom sheet on phones) over a lightly blurred page. Your messages sit on the end side in plum, the assistant's on the start side in white. A proposal shows as a white card with one main button. Without a key the drawer still opens; the field is disabled and one plain line says why. After sending, the page you were on reloads with the drawer open (`#assistant`).
 
 ### Week-grid pattern (signature)
 A 6×7 grid of 10px-radius outlines at 9% white; 6–8 slots light up one by one (1.2s ease-out each, 350ms apart) in course colours, then stay lit. On real Home pages the lit slots reflect the actual timetable.

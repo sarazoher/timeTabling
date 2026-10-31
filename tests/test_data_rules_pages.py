@@ -74,7 +74,7 @@ class DataRulesPagesTests(AuthFixture, unittest.TestCase):
         self.assertIn("window.confirm", page)                    # "remove all" asks first
         self.assertIn("קורס קדם לפני הקורס שתלוי בו", page)
         response = self.client.post("/assistant/remove/r1", data={"csrf_token": self.token(), "return_to": "rules"})
-        self.assertTrue(response.headers["Location"].endswith("/rules#ai-assistant"))
+        self.assertTrue(response.headers["Location"].endswith("/rules#ownRules"))
         self.assertEqual(self.config()["ai_constraints"], [])
 
     def test_lecturer_hours_card_and_data_check_line_on_the_data_page(self):
@@ -100,14 +100,21 @@ class DataRulesPagesTests(AuthFixture, unittest.TestCase):
         self.assertIn('class="tt-sky is-light"', page)
         self.assertIn('href="/static/work.css"', page)
 
-    def test_lecturer_hours_are_summarised_on_the_rules_page(self):
+    def test_rules_page_is_light_and_leaves_lecturer_hours_to_data(self):
         self.load_sample()
         config = self.config()
         config["lecturer_availability"] = {"ד\"ר נור איגור": {"Monday": {"enabled": True, "start": "17:00", "end": "20:00"}}}
         (self.workspace() / "schedule_config.json").write_text(json.dumps(config, ensure_ascii=False), encoding="utf-8")
         page = self.client.get("/rules").get_data(as_text=True)
-        self.assertIn("נור איגור", page)
-        self.assertIn('<bdi dir="ltr" class="time-range">17:00–20:00</bdi>', page)
+        self.assertIn('<body class="is-light-page">', page)
+        self.assertNotIn("נור איגור", page)
+        self.assertIn('<a href="/data">הנתונים</a>', page)
+        self.assertIn('data-assistant-open aria-controls="ai-assistant"', page)
+        groups = page.split('class="dr-box wk-group ')[1:]
+        self.assertEqual([g.split('"')[0] for g in groups], ["is-must", "is-pref"])
+        self.assertIn("קורס קדם לפני הקורס שתלוי בו", groups[0])
+        self.assertIn("עומס מאוזן", groups[1])
+        self.assertIn("עדיין אין כללים משלכם", page)
 
     def test_timetable_page_links_to_data(self):
         page = self.client.get("/calendar").get_data(as_text=True)
