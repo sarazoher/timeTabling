@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ 'Lecturer Working Hours' if current_lang == 'en' else 'שעות פעילות מרצים' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+{% include "_favicon.html" %}
 </head>
 <body>
 {% set nav_active = 'rules' %}

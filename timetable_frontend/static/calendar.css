@@ -2433,12 +2433,15 @@ html[dir="ltr"] .dynamic-event { border-left-width: 4px; }
 .app-brand {
     display: inline-flex;
     align-items: center;
+    gap: 10px;
     min-height: 44px;
     font-size: 20px;
     font-weight: 800;
+    letter-spacing: -0.3px;
     color: #ffffff;
     text-decoration: none;
 }
+.app-logo { width: 34px; height: 34px; flex: none; }
 .app-nav { display: flex; gap: 4px; }
 .app-nav-item {
     position: relative;

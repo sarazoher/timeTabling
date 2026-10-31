@@ -31,6 +31,7 @@ from flask import (
     session,
     url_for,
     send_file,
+    send_from_directory,
     jsonify,
 )
 from flask_babel import Babel, gettext as _
@@ -151,6 +152,12 @@ def inject_setup_progress():
     if not g.get("user"):
         return {}
     return {"nav_has_file": COURSES_EXCEL_FILE.exists(), "nav_has_timetable": TIMETABLE_FILE.exists()}
+
+
+@app.route("/favicon.ico")
+def favicon():
+    """Browsers ask for /favicon.ico on their own, also for pages without a template."""
+    return send_from_directory(app.static_folder, "favicon.ico", mimetype="image/vnd.microsoft.icon")
 
 
 @app.route("/language/<lang_code>")

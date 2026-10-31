@@ -15,7 +15,7 @@ class AccountTests(AuthFixture, unittest.TestCase):
 
     def test_all_workspace_routes_require_login(self):
         for rule in app.app.url_map.iter_rules():
-            if rule.endpoint in {'login', 'register', 'set_language', 'static', 'forgot_password', 'reset_password'}:
+            if rule.endpoint in {'login', 'register', 'set_language', 'static', 'favicon', 'forgot_password', 'reset_password'}:
                 continue
             path = str(rule).replace('<rule_id>', 'example')
             with self.subTest(route=path):

@@ -1,33 +1,31 @@
 <!doctype html>
 <html lang="{{ current_lang }}" dir="{{ text_direction }}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ auth_text('יצירת חשבון' if registering else 'כניסה לחשבון', 'Create account' if registering else 'Sign in') }} · Timetable</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}"></head>
-<body class="auth-page">
+<title>{{ auth_text('יצירת חשבון' if registering else 'כניסה לחשבון', 'Create account' if registering else 'Sign in') }} · TimeTabling</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='world.css') }}">
+{% include "_favicon.html" %}</head>
+<body class="auth-page is-dark-page">
+{% set sky = 'dark' %}{% include "_sky.html" %}
 <main class="auth-layout">
-<section class="auth-intro" aria-labelledby="authIntroTitle"><span class="auth-brand">{{ auth_text('בניית מערכת שעות', 'Timetable builder') }}</span>
-<div class="auth-showcase">
-<div><h1 id="authIntroTitle">{{ auth_text('המערכת הבאה שלכם מתחילה כאן.', 'Your next timetable starts here.') }}</h1>
+<section class="auth-intro" aria-labelledby="authIntroTitle">
+<a class="tt-brand" href="{{ url_for('login') }}" lang="en" dir="ltr"><img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="36" height="36"><span>TimeTabling</span></a>
+<div class="auth-week tt-week" aria-hidden="true" style="--tt-rows:5"><span class="cell" style="grid-column:1;grid-row:1"></span><span class="cell" style="grid-column:1;grid-row:2"></span><span class="cell" style="grid-column:1;grid-row:3"></span><span class="cell" style="grid-column:1;grid-row:4"></span><span class="cell" style="grid-column:1;grid-row:5"></span><span class="cell" style="grid-column:2;grid-row:1"></span><span class="cell" style="grid-column:2;grid-row:2"></span><span class="cell" style="grid-column:2;grid-row:3"></span><span class="cell" style="grid-column:2;grid-row:4"></span><span class="cell" style="grid-column:2;grid-row:5"></span><span class="cell" style="grid-column:3;grid-row:1"></span><span class="cell" style="grid-column:3;grid-row:2"></span><span class="cell" style="grid-column:3;grid-row:3"></span><span class="cell" style="grid-column:3;grid-row:4"></span><span class="cell" style="grid-column:3;grid-row:5"></span><span class="cell" style="grid-column:4;grid-row:1"></span><span class="cell" style="grid-column:4;grid-row:2"></span><span class="cell" style="grid-column:4;grid-row:3"></span><span class="cell" style="grid-column:4;grid-row:4"></span><span class="cell" style="grid-column:4;grid-row:5"></span><span class="cell" style="grid-column:5;grid-row:1"></span><span class="cell" style="grid-column:5;grid-row:2"></span><span class="cell" style="grid-column:5;grid-row:3"></span><span class="cell" style="grid-column:5;grid-row:4"></span><span class="cell" style="grid-column:5;grid-row:5"></span><span class="cell" style="grid-column:6;grid-row:1"></span><span class="cell" style="grid-column:6;grid-row:2"></span><span class="cell" style="grid-column:6;grid-row:3"></span><span class="cell" style="grid-column:6;grid-row:4"></span><span class="cell" style="grid-column:6;grid-row:5"></span><span class="auth-week-block slot is-required" style="grid-column:2;grid-row:1 / span 2;animation-delay:0.50s"></span><span class="auth-week-block slot is-general" style="grid-column:4;grid-row:2 / span 1;animation-delay:0.85s"></span><span class="auth-week-block slot is-elective" style="grid-column:5;grid-row:4 / span 2;animation-delay:1.20s"></span><span class="auth-week-block slot is-seminar" style="grid-column:1;grid-row:4 / span 1;animation-delay:1.55s"></span><span class="auth-week-block slot is-project" style="grid-column:6;grid-row:1 / span 1;animation-delay:1.90s"></span><span class="auth-week-block slot is-required" style="grid-column:3;grid-row:5 / span 1;animation-delay:2.25s"></span></div>
+<div class="auth-copy"><h1 id="authIntroTitle">{{ auth_text('המערכת הבאה שלכם מתחילה כאן.', 'Your next timetable starts here.') }}</h1>
 <p class="auth-lead">{{ auth_text('מערכת שעות לתואר שלם, מקובץ Excel אחד.', 'A whole degree’s timetable, from one Excel file.') }}</p></div>
-<div class="auth-week" aria-hidden="true">
-<div class="auth-week-head"><span>{{ auth_text('שני', 'Mon') }}</span><span>{{ auth_text('חמישי', 'Thu') }}</span><span>{{ auth_text('שישי', 'Fri') }}</span></div>
-<div class="auth-week-grid">
-<div class="auth-week-col"><span class="auth-week-block is-required" style="grid-row:1 / span 2">{{ auth_text('מבני נתונים', 'Data structures') }}</span><span class="auth-week-block is-elective" style="grid-row:4 / span 2">{{ auth_text('למידת מכונה', 'Machine learning') }}</span></div>
-<div class="auth-week-col"><span class="auth-week-block is-general" style="grid-row:2 / span 2">{{ auth_text('אלגברה לינארית', 'Linear algebra') }}</span><span class="auth-week-block is-seminar" style="grid-row:5 / span 1">{{ auth_text('סמינר', 'Seminar') }}</span></div>
-<div class="auth-week-col"><span class="auth-week-block is-required" style="grid-row:1 / span 2">{{ auth_text('מערכות הפעלה', 'Operating systems') }}</span><span class="auth-week-block is-project" style="grid-row:3 / span 2">{{ auth_text('פרויקט', 'Project') }}</span></div>
-</div></div>
 <ul class="auth-feats">
-<li><span class="auth-feat-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span>
+<li><span class="auth-feat-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span>
 <div><strong>{{ auth_text('קובץ אחד נכנס, מערכת שלמה יוצאת', 'One file in, a full timetable out') }}</strong><span>{{ auth_text('מעלים את קובץ הקורסים, בוחרים ימים ושעות, ובונים.', 'Upload the course file, pick days and hours, and build.') }}</span></div></li>
-<li><span class="auth-feat-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+<li><span class="auth-feat-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
 <div><strong>{{ auth_text('הכללים נשמרים בשבילכם', 'The rules are kept for you') }}</strong><span>{{ auth_text('דרישות קדם, שנות לימוד, ואף מרצה לא משובץ פעמיים באותה שעה.', 'Prerequisites, study years, and no lecturer booked twice at once.') }}</span></div></li>
-<li><span class="auth-feat-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+<li><span class="auth-feat-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
 <div><strong>{{ auth_text('משנים במילים פשוטות', 'Change things in plain words') }}</strong><span>{{ auth_text('כותבים לעוזר מה צריך, ושום דבר לא משתנה עד שמאשרים.', 'Tell the assistant what you need. Nothing changes until you approve.') }}</span></div></li>
-<li><span class="auth-feat-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
+<li><span class="auth-feat-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
 <div><strong>{{ auth_text('מורידים ומשתפים', 'Download and share') }}</strong><span>{{ auth_text('מערכת השעות המוכנה יורדת כקובץ אחד, מוכן להדפסה.', 'The finished timetable downloads as one print-ready file.') }}</span></div></li>
-</ul></div></section>
-<section class="auth-panel"><nav class="auth-languages" aria-label="Language"><a href="{{ url_for('set_language', lang_code='he') }}" lang="he">עברית</a><a href="{{ url_for('set_language', lang_code='en') }}" lang="en">English</a></nav>
-<div class="auth-card"><p class="auth-eyebrow">{{ auth_text('ברוכים הבאים', 'WELCOME') }}</p>
+</ul></section>
+<section class="auth-panel">
+<div class="auth-panel-top"><span class="auth-panel-brand"><a class="tt-brand" href="{{ url_for('login') }}" lang="en" dir="ltr"><img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="36" height="36"><span>TimeTabling</span></a></span><nav class="auth-languages" aria-label="{{ auth_text('שפה', 'Language') }}"><a href="{{ url_for('set_language', lang_code='he') }}" lang="he"{% if current_lang == 'he' %} aria-current="true"{% endif %}>עברית</a><a href="{{ url_for('set_language', lang_code='en') }}" lang="en"{% if current_lang == 'en' %} aria-current="true"{% endif %}>English</a></nav></div>
+<div class="auth-card tt-glass-dark">
 <h2>{{ auth_text('יצירת חשבון' if registering else 'כניסה לחשבון', 'Create your account' if registering else 'Sign in to your account') }}</h2>
 <p class="auth-subtitle">{{ auth_text('כל חשבון שומר קובץ קורסים ומערכת שעות משלו.', 'Each account keeps its own course file and timetable.') }}</p>
 {% if not registering and request.args.get('password_reset') == '1' %}<p class="auth-success" role="status">{{ auth_text('הסיסמה עודכנה. אפשר להתחבר עם הסיסמה החדשה.', 'Password updated. Sign in with your new password.') }}</p>{% endif %}
@@ -40,8 +38,8 @@
 {% if registering %}<small id="password-help">{{ auth_text('לפחות 10 תווים. אפשר להשתמש במשפט שקל לזכור.', 'At least 10 characters. A memorable passphrase works well.') }}</small>
 <label for="confirm_password">{{ auth_text('אימות סיסמה', 'Confirm password') }}</label><input id="confirm_password" type="password" name="confirm_password" dir="ltr" autocomplete="new-password" minlength="10" maxlength="256" required>{% endif %}
 {% if not registering %}<p class="auth-recovery"><a href="{{ url_for('forgot_password') }}">{{ auth_text('שכחת סיסמה?', 'Forgot password?') }}</a></p>{% endif %}
-<button class="auth-submit" type="submit">{{ auth_text('יצירת חשבון' if registering else 'כניסה', 'Create account' if registering else 'Sign in') }} <span aria-hidden="true">{{ '←' if current_lang == 'he' else '→' }}</span></button>
+<button class="auth-submit tt-btn tt-btn-main-dark" type="submit">{{ auth_text('יצירת חשבון' if registering else 'כניסה', 'Create account' if registering else 'Sign in') }} <span aria-hidden="true">{{ '←' if current_lang == 'he' else '→' }}</span></button>
 </form>
 <p class="auth-alternate">{{ auth_text('כבר יש לך חשבון?' if registering else 'עדיין אין לך חשבון?', 'Already have an account?' if registering else 'New here?') }} <a href="{{ url_for('login' if registering else 'register') }}">{{ auth_text('כניסה לחשבון' if registering else 'יצירת חשבון', 'Sign in' if registering else 'Create an account') }}</a></p>
-</div><p class="auth-footer">{{ auth_text('מערכת לתכנון שעות לימוד', 'University timetable planning') }}</p></section>
+</div></section>
 </main></body></html>

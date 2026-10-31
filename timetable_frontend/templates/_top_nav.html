@@ -10,7 +10,7 @@
 {% set other_lang = 'he' if en else 'en' %}
 <a class="skip-link" href="#main-content">{{ 'Skip to content' if en else 'דילוג לתוכן' }}</a>
 <header class="app-topbar"{% if nav_inert %} inert aria-hidden="true"{% endif %}>
-    <a class="app-brand" href="{{ url_for('setup_page') }}">{{ 'Timetable builder' if en else 'בניית מערכת שעות' }}</a>
+    <a class="app-brand" href="{{ url_for('setup_page') }}" aria-label="{{ 'TimeTabling, home' if en else 'TimeTabling, דף הבית' }}"><img class="app-logo" src="{{ url_for('static', filename='logo.svg') }}" alt="" width="34" height="34"><span lang="en" dir="ltr">TimeTabling</span></a>
 
     <nav class="app-nav" aria-label="{{ 'Main' if en else 'ניווט ראשי' }}">
         <a class="app-nav-item" href="{{ url_for('setup_page') }}"{% if nav_active == 'home' %} aria-current="page"{% endif %}>{{ 'Home' if en else 'בית' }}</a>

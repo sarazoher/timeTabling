@@ -169,7 +169,7 @@ def install_auth(app):
                 g.user = dict(row)
             else:
                 session.pop('auth_token', None)
-        public = {'login', 'register', 'set_language', 'static', 'forgot_password', 'reset_password'}
+        public = {'login', 'register', 'set_language', 'static', 'favicon', 'forgot_password', 'reset_password'}
         if request.endpoint and request.endpoint not in public and g.user is None:
             return redirect(url_for('login', next=request.full_path.rstrip('?')))
         if request.method not in {'GET', 'HEAD', 'OPTIONS'}:

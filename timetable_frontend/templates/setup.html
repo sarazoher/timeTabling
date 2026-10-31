@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ 'Home' if current_lang == 'en' else 'בית' }} · {{ 'Timetable builder' if current_lang == 'en' else 'בניית מערכת שעות' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+{% include "_favicon.html" %}
 </head>
 <body>
 <div id="loadingOverlay" class="loading-overlay" hidden>
