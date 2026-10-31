@@ -1,0 +1,2 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+{% if current_user %}<aside class="account-bar" aria-label="{{ auth_text('החשבון שלך', 'Your account') }}"><span>{{ auth_text('שלום,', 'Hello,') }} <strong>{{ current_user.name }}</strong></span><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">{{ auth_text('יציאה מהחשבון', 'Sign out') }}</button></form></aside>{% endif %}

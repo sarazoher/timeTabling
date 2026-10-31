@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Match Course File Columns' if current_lang == 'en' else 'התאמת עמודות בקובץ הקורסים' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+</head>
+<body>
+{% include "account_bar.html" %}
+{% set en = current_lang == 'en' %}
+<main class="setup-page day-adjustment-page">
+    <section class="setup-card day-adjustment-card column-mapping-card">
+        <div class="setup-nav-row">
+            <a class="back-link" href="{{ url_for('setup_page') }}">← {{ 'Back to dashboard' if en else 'חזרה ללוח הניהול' }}</a>
+            <div class="lang-switcher">
+                {% for code, label in languages.items() %}<a href="{{ url_for('set_language', lang_code=code) }}" class="{{ 'active' if current_lang == code else '' }}">{{ label }}</a>{% endfor %}
+            </div>
+        </div>
+
+        <div class="setup-intro">
+            <p class="eyebrow">{{ 'COURSE FILE' if en else 'קובץ קורסים' }}</p>
+            <h1>{{ 'This is how we read your file' if en else 'כך קראנו את הקובץ שלכם' }}</h1>
+            <p class="subtitle">
+                {% if en %}The column names in sheet <bdi>"{{ sheet }}"</bdi> differ from the app's own names. Check each match below, fix it if needed, and confirm. Nothing is loaded until you confirm.{% else %}שמות העמודות בגיליון <bdi>"{{ sheet }}"</bdi> שונים מהשמות שהמערכת מכירה. בדקו כל התאמה, תקנו אם צריך ואשרו. שום דבר לא נטען לפני האישור.{% endif %}
+            </p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
+
+        <p class="mapping-summary {{ 'complete' if found_required == total_required else 'incomplete' }}">
+            {% if en %}Found {{ found_required }} of {{ total_required }} required fields.{% else %}נמצאו {{ found_required }} מתוך {{ total_required }} שדות חובה.{% endif %}
+            {% if found_required < total_required %}
+            {{ 'The required fields marked "not found" have no matching column: if the file really lacks that data, add it in Excel and upload again.' if en else 'לשדות החובה שמסומנים "לא נמצא" אין עמודה מתאימה. אם הנתונים באמת חסרים בקובץ, יש להוסיף אותם ב-Excel ולהעלות שוב.' }}
+            {% endif %}
+            {% if rows | selectattr('default') | rejectattr('column') | list %}
+            {{ 'Optional fields that are not in the file use the default shown next to them; the data check will list them.' if en else 'שדות רשות שלא נמצאו בקובץ יקבלו את ברירת המחדל שמופיעה לידם, ובדיקת הנתונים תפרט אותם.' }}
+            {% endif %}
+        </p>
+
+        {% if other_sheets %}
+        <p class="mapping-summary incomplete">
+            {% if en %}Only sheet <bdi>"{{ sheet }}"</bdi> will be loaded. Other sheets in this file are ignored: {% for s in other_sheets %}<bdi>"{{ s }}"</bdi>{% if not loop.last %}, {% endif %}{% endfor %}. To load another sheet, save it as its own file and upload it.{% else %}ייטען רק הגיליון <bdi>"{{ sheet }}"</bdi>. גיליונות נוספים בקובץ לא ייטענו: {% for s in other_sheets %}<bdi>"{{ s }}"</bdi>{% if not loop.last %}, {% endif %}{% endfor %}. כדי לטעון גיליון אחר, שמרו אותו כקובץ נפרד והעלו אותו.{% endif %}
+        </p>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('confirm_column_mapping') }}" class="setup-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'Field the app needs' if en else 'שדה שהמערכת צריכה' }}</th>
+                        <th>{{ 'Column in your file' if en else 'עמודה בקובץ שלכם' }}</th>
+                        <th>{{ 'How it was matched' if en else 'איך הותאם' }}</th>
+                        <th>{{ 'Example values' if en else 'ערכים לדוגמה' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in rows %}
+                    <tr class="{{ 'missing' if row.required and not row.column else '' }} {{ 'check' if row.method in ('typo', 'values') else '' }}">
+                        <td>
+                            <strong>{{ row.label }}</strong>
+                            <span class="field-badge {{ 'required' if row.required else 'optional' }}">{{ ('required' if en else 'חובה') if row.required else ('optional' if en else 'רשות') }}</span>
+                        </td>
+                        <td>
+                            <select name="field_{{ loop.index0 }}" aria-label="{{ row.label }}">
+                                <option value="" {% if not row.column %}selected{% endif %}>{{ '— not in the file —' if en else '— לא נמצא בקובץ —' }}</option>
+                                {% if row.empty_allowed %}
+                                <option value="{{ empty_choice }}" {% if row.column == empty_choice %}selected{% endif %}>{{ 'No such column: leave empty' if en else 'אין עמודה כזו: להשאיר ריק' }}</option>
+                                {% endif %}
+                                {% for column in columns %}
+                                <option value="{{ column }}" {% if column == row.column %}selected{% endif %}>{{ column }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="match-method">{% if row.column and row.method_label %}{{ row.method_label }}{% elif row.required %}<span class="not-found">{{ 'not found' if en else 'לא נמצא' }}</span>{% elif row.default %}<span class="uses-default">{{ 'Default:' if en else 'ברירת מחדל:' }} {{ row.default }}</span>{% endif %}</td>
+                        <td class="match-samples">{% for sample in row.samples %}<bdi>{{ sample }}</bdi>{% if not loop.last %} · {% endif %}{% endfor %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            {% if unused %}
+            <p class="mapping-unused">{{ 'Columns that will not be used:' if en else 'עמודות שלא ייעשה בהן שימוש:' }}
+                {% for column in unused %}<bdi>"{{ column }}"</bdi>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+            {% endif %}
+
+            <label class="mapping-remember">
+                <input type="checkbox" name="remember" checked>
+                {% if en %}Remember these column names for {{ department }}, so the next upload is matched automatically{% else %}לזכור את שמות העמודות האלה למחלקת {{ department }}, כדי שההעלאה הבאה תותאם אוטומטית{% endif %}
+            </label>
+
+            <div class="mapping-actions">
+                <button class="primary-button" type="submit" name="action" value="confirm">{{ 'Confirm and load' if en else 'אישור וטעינה' }}</button>
+                <button class="secondary-button" type="submit" name="action" value="cancel" formnovalidate>{{ 'Cancel upload' if en else 'ביטול ההעלאה' }}</button>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

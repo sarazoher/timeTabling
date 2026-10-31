@@ -1,0 +1,2554 @@
+:root {
+    --background: #faf7fb;
+    --surface: #ffffff;
+    --text: #250433;
+    --muted: #6c5a77;
+    --border: #e3d3e8;
+    --primary: #75449a;
+    --lecture: #dcecff;
+    --lecture-border: #4b83c3;
+    --tutorial: #e5f4e8;
+    --tutorial-border: #62a675;
+    --warning-bg: #fff1c7;
+    --warning-text: #7a5700;
+    --error-bg: #fde8e8;
+    --error-text: #8a1c1c;
+    --success-bg: #e5f5e9;
+    --success-text: #236236;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    accent-color: var(--primary);
+    font-family: Arial, "Segoe UI", sans-serif;
+    background: var(--background);
+    color: var(--text);
+}
+
+.page {
+    width: min(1500px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 32px 0 48px;
+}
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+h1 { margin: 0; font-size: clamp(30px, 5vw, 48px); }
+h2 { margin-top: 0; }
+.subtitle, .settings-heading p, .settings-footer p { color: var(--muted); }
+.summary { display: flex; gap: 12px; }
+
+.summary-card {
+    min-width: 120px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.summary-card span { color: var(--muted); display: block; margin-bottom: 6px; }
+.summary-card strong { font-size: 26px; }
+
+.flash {
+    white-space: pre-wrap;
+    padding: 14px 16px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    border: 1px solid transparent;
+}
+.flash.success { background: var(--success-bg); color: var(--success-text); }
+.flash.error { background: var(--error-bg); color: var(--error-text); }
+.flash.warning { background: #fef3c7; color: #92400e; }
+.flash.build-failure { white-space: normal; line-height: 1.6; }
+.flash.build-failure .diagnosis-list { margin: 8px 0 4px; padding-inline-start: 22px; }
+.flash.build-failure .diagnosis-list li { margin-bottom: 6px; }
+.flash.build-failure details { margin-top: 10px; }
+.flash.build-failure summary { cursor: pointer; font-weight: 600; }
+.flash.build-failure pre {
+    direction: ltr; text-align: left; white-space: pre-wrap; word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
+    max-height: 340px; overflow: auto; margin: 8px 0 0; padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.05); border-radius: 8px;
+}
+
+.settings-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.availability-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.day-setting {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+    background: #fdfbfd;
+}
+
+.day-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+}
+
+.day-setting label:not(.day-toggle) {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+}
+
+input[type="time"], select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    font: inherit;
+}
+
+.settings-footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.primary-button {
+    border: 0;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.primary-button:hover { filter: brightness(0.95); }
+
+.controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-weight: 700;
+}
+
+.controls select { min-width: 220px; width: auto; }
+
+.status { padding: 8px 10px; border-radius: 8px; font-size: 14px; }
+.status.warning { background: var(--warning-bg); color: var(--warning-text); }
+
+.calendar-wrapper {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+}
+
+.calendar-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: 82px repeat(var(--day-count), minmax(190px, 1fr));
+    grid-template-rows: 54px repeat(var(--slot-count), 34px);
+    direction: ltr;
+}
+
+.corner-cell,
+.day-header,
+.time-label {
+    background: #f4edf7;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.corner-cell { grid-column: 1; grid-row: 1; }
+.day-header { direction: rtl; }
+.time-label { grid-column: 1; color: var(--muted); font-size: 13px; }
+
+.day-column-lines {
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 33px,
+        #ece4ef 33px,
+        #ece4ef 34px
+    );
+}
+
+.course-card {
+    z-index: 2;
+    margin: 3px 5px;
+    padding: 8px;
+    border-radius: 10px;
+    border-right: 5px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow: hidden;
+    direction: rtl;
+    text-align: right;
+    box-shadow: 0 2px 5px rgba(37, 4, 51, 0.12);
+}
+
+.course-card[hidden] { display: none; }
+.course-card strong { font-size: 13px; }
+.course-card span, .course-card small { font-size: 12px; }
+.course-card.lecture { background: var(--lecture); border-color: var(--lecture-border); }
+.course-card.tutorial { background: var(--tutorial); border-color: var(--tutorial-border); }
+.event-type { font-weight: 700; }
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 16px;
+    color: var(--muted);
+}
+
+.legend span { display: flex; align-items: center; gap: 7px; }
+.legend-color { width: 18px; height: 18px; display: inline-block; border-radius: 5px; }
+.lecture-color { background: var(--lecture); border: 1px solid var(--lecture-border); }
+.tutorial-color { background: var(--tutorial); border: 1px solid var(--tutorial-border); }
+
+.empty-state {
+    padding: 48px;
+    border-radius: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    .hero { align-items: flex-start; flex-direction: column; }
+    .summary { width: 100%; }
+    .summary-card { flex: 1; }
+    .settings-footer { align-items: stretch; flex-direction: column; }
+    .primary-button { width: 100%; }
+}
+
+.day-header { flex-direction: column; gap: 2px; }
+.day-header small { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+/* -------- V8: separate input/setup page -------- */
+.lang-switcher {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.lang-switcher a {
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 12px;
+}
+
+.lang-switcher a.active {
+    color: white;
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+/* -------- Language-direction-aware overrides --------
+   The calendar grid itself is always structurally LTR (see
+   .calendar-grid above) so column math stays correct in both
+   languages; these rules only flip the RTL-specific text alignment
+   and accent-border side that were hardcoded for Hebrew. */
+html[dir="ltr"] .day-header {
+    direction: ltr;
+}
+
+html[dir="ltr"] .course-card {
+    direction: ltr;
+    text-align: left;
+    border-right: 0;
+    border-left: 5px solid;
+}
+
+html[dir="ltr"] .dynamic-event {
+    border-right: 0;
+    border-left: 3px solid;
+}
+
+.setup-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+}
+
+.setup-card {
+    width: min(900px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 28px;
+}
+
+.setup-intro {
+    margin-bottom: 24px;
+}
+
+.setup-intro h1 {
+    margin-bottom: 10px;
+}
+
+.availability-list {
+    display: grid;
+    gap: 12px;
+}
+
+.availability-row {
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr);
+    gap: 16px;
+    align-items: end;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fdfbfd;
+}
+
+.day-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.day-checkbox input {
+    width: 19px;
+    height: 19px;
+}
+
+.time-field {
+    display: grid;
+    gap: 6px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.time-field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    font: inherit;
+}
+
+.solver-note {
+    display: grid;
+    gap: 4px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f4edf7;
+    color: var(--muted);
+}
+
+.solver-note strong {
+    color: var(--text);
+}
+
+.generate-button {
+    width: 100%;
+    margin-top: 18px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    padding: 14px 20px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.secondary-button,
+.primary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border-radius: 12px;
+    padding: 11px 16px;
+    font-weight: 700;
+}
+
+.secondary-button {
+    color: var(--primary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.primary-link {
+    color: white;
+    background: var(--primary);
+}
+
+.chosen-availability {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.availability-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 11px;
+    color: var(--muted);
+}
+
+@media (max-width: 700px) {
+    .availability-row {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .hero-actions {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+
+.degree-settings {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 24px 0 28px;
+}
+
+.setting-field,
+.degree-total {
+    padding: 16px;
+    border: 1px solid var(--border, var(--border));
+    border-radius: 14px;
+    background: #fff;
+}
+
+.setting-field label,
+.degree-total span {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.setting-field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dccbe2;
+    border-radius: 10px;
+    font: inherit;
+}
+
+.degree-total strong {
+    display: block;
+    font-size: 28px;
+    color: var(--primary, var(--primary));
+}
+
+.availability-title {
+    margin: 6px 0 14px;
+}
+
+@media (max-width: 700px) {
+    .degree-settings {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* V10: all-semester overview */
+.all-semesters-view[hidden],
+.calendar-wrapper[hidden] {
+    display: none;
+}
+
+.all-semesters-view {
+    margin-top: 22px;
+}
+
+.all-semesters-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.all-semesters-heading h2 {
+    margin: 0 0 6px;
+}
+
+.all-semesters-heading p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.semester-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.semester-overview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.semester-overview-card > header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.semester-overview-card h3 {
+    margin: 4px 0 0;
+}
+
+.semester-number,
+.course-count {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.course-count {
+    white-space: nowrap;
+}
+
+.semester-event-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.semester-event-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: #f9f6fa;
+}
+
+.semester-event-row > div {
+    min-width: 0;
+}
+
+.semester-event-row strong,
+.semester-event-row small {
+    display: block;
+}
+
+.semester-event-row small,
+.semester-event-row > span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.overflow-card {
+    border-style: dashed;
+}
+
+.overflow-note {
+    margin: 10px 0 0;
+    color: #8a5a00;
+    font-size: 14px;
+}
+
+@media (max-width: 900px) {
+    .semester-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .semester-event-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+
+/* ---------- Loading state ---------- */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(37, 4, 51, 0.48);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.loading-overlay[hidden] {
+    display: none;
+}
+
+.loading-box {
+    width: min(420px, 92vw);
+    background: #fff;
+    border-radius: 18px;
+    padding: 28px;
+    text-align: center;
+    box-shadow: 0 18px 50px rgba(37, 4, 51, 0.24);
+}
+
+.loading-box h2 {
+    margin: 14px 0 8px;
+}
+
+.loading-box p {
+    margin: 0;
+    color: #6c5a77;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+    border: 5px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: timetable-spin 0.8s linear infinite;
+}
+
+@keyframes timetable-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ---------- All semesters compact overview ---------- */
+.all-semesters-view {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+    margin-top: 20px;
+}
+
+.mini-semester {
+    min-width: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 10px;
+}
+
+.mini-semester-header h2 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.mini-calendar {
+    position: relative;
+    display: grid;
+    grid-template-columns: 42px repeat(5, minmax(0, 1fr));
+    grid-template-rows: 28px repeat(24, 15px);
+    direction: ltr;
+    overflow: hidden;
+}
+
+.mini-corner,
+.mini-day,
+.mini-time {
+    background: #f4edf7;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.mini-corner {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.mini-day {
+    direction: rtl;
+}
+
+.mini-time {
+    grid-column: 1;
+    color: #6c5a77;
+    font-weight: 600;
+}
+
+.mini-day-lines {
+    grid-row: 2 / 26;
+    border-left: 1px solid #ece4ef;
+    border-right: 1px solid #ece4ef;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 14px,
+            #f3eef5 14px,
+            #f3eef5 15px
+        );
+}
+
+.mini-course {
+    z-index: 3;
+    margin: 1px;
+    padding: 2px 3px;
+    border-radius: 4px;
+    overflow: hidden;
+    direction: rtl;
+    text-align: right;
+    font-size: 7px;
+    line-height: 1.15;
+    border-right: 3px solid;
+}
+
+.mini-course strong,
+.mini-course span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mini-lecture {
+    background: #dcecff;
+    border-color: #4b83c3;
+}
+
+.mini-tutorial {
+    background: #e3f3e7;
+    border-color: #62a675;
+}
+
+@media (min-width: 1500px) {
+    .all-semesters-view {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    .all-semesters-view {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   V14 — All semesters as real compact weekly timetables
+   ========================================================= */
+
+.all-semesters-view {
+    display: block;
+    margin-top: 20px;
+}
+
+.all-semesters-view[hidden] {
+    display: none;
+}
+
+.all-semesters-heading {
+    margin-bottom: 14px;
+}
+
+.all-semesters-heading h2 {
+    margin: 0 0 5px;
+}
+
+.all-semesters-heading p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.all-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.compact-semester-calendar {
+    min-width: 0;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+}
+
+.compact-semester-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 7px;
+    direction: rtl;
+}
+
+.compact-semester-header span,
+.compact-semester-header small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.compact-semester-header h3 {
+    margin: 2px 0 0;
+    font-size: 14px;
+}
+
+.compact-calendar-scroll {
+    width: 100%;
+    overflow: hidden;
+}
+
+.compact-calendar-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns:
+        36px
+        repeat(var(--compact-day-count), minmax(0, 1fr));
+    grid-template-rows:
+        24px
+        repeat(var(--compact-slot-count), 14px);
+    direction: ltr;
+    width: 100%;
+    min-width: 0;
+}
+
+.compact-corner,
+.compact-day-header,
+.compact-time-label {
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4edf7;
+    border: 1px solid var(--border);
+    font-weight: 700;
+}
+
+.compact-corner {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 8px;
+}
+
+.compact-day-header {
+    grid-row: 1;
+    direction: rtl;
+    font-size: 9px;
+}
+
+.compact-time-label {
+    grid-column: 1;
+    direction: ltr;
+    color: var(--muted);
+    font-size: 7px;
+    font-weight: 600;
+}
+
+.compact-day-lines {
+    z-index: 0;
+    border-left: 1px solid #e9e0ec;
+    border-right: 1px solid #e9e0ec;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 13px,
+            #f3eef5 13px,
+            #f3eef5 14px
+        );
+}
+
+.compact-course-card {
+    z-index: 3;
+    min-width: 0;
+    margin: 1px 2px;
+    padding: 2px 3px;
+    border-radius: 4px;
+    border-right: 3px solid;
+    direction: rtl;
+    text-align: right;
+    overflow: hidden;
+    font-size: 7px;
+    line-height: 1.15;
+}
+
+.compact-course-card.lecture {
+    background: var(--lecture-bg, #dcecff);
+    border-color: var(--lecture-border, #4b83c3);
+}
+
+.compact-course-card.tutorial {
+    background: var(--tutorial-bg, #e3f3e7);
+    border-color: var(--tutorial-border, #62a675);
+}
+
+.compact-course-card strong,
+.compact-course-card span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.compact-course-card strong {
+    font-size: 7px;
+}
+
+.compact-course-card span {
+    font-size: 6.5px;
+}
+
+@media (min-width: 1700px) {
+    .all-calendar-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1100px) {
+    .all-calendar-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .compact-calendar-grid {
+        grid-template-columns:
+            42px
+            repeat(var(--compact-day-count), minmax(70px, 1fr));
+    }
+
+    .compact-calendar-scroll {
+        overflow-x: auto;
+    }
+}
+
+
+/* ============================================================
+   V15 — Degree overview: years as rows, semester schedules
+   ============================================================ */
+
+.degree-overview {
+    display: grid;
+    gap: 24px;
+}
+
+.degree-year-section {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+}
+
+.degree-year-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.degree-year-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.degree-year-header span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.year-semester-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(var(--semesters-this-year), minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.semester-timetable-card {
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: #fff;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.semester-timetable-card:hover,
+.semester-timetable-card:focus-visible {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.semester-timetable-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 42px;
+    margin-bottom: 6px;
+    direction: rtl;
+}
+
+.semester-timetable-header h3 {
+    margin: 1px 0 0;
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.semester-number,
+.semester-timetable-header small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.overview-calendar-frame {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.overview-calendar-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns:
+        34px
+        repeat(var(--overview-day-count), minmax(0, 1fr));
+    grid-template-rows:
+        25px
+        repeat(var(--overview-slot-count), 16px);
+    width: 100%;
+    min-width: 0;
+    direction: ltr;
+}
+
+.overview-corner,
+.overview-day-header,
+.overview-time-label {
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4edf7;
+    border: 1px solid var(--border);
+    font-weight: 700;
+}
+
+.overview-corner {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 8px;
+}
+
+.overview-day-header {
+    grid-row: 1;
+    direction: rtl;
+    font-size: 9px;
+}
+
+.overview-time-label {
+    grid-column: 1;
+    color: var(--muted);
+    font-size: 7px;
+    font-weight: 600;
+}
+
+.overview-time-label.half-hour-label {
+    border-top-color: transparent;
+}
+
+.overview-day-lines {
+    z-index: 0;
+    border-left: 1px solid #e6dbea;
+    border-right: 1px solid #e6dbea;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 15px,
+            #f3eef5 15px,
+            #f3eef5 16px
+        );
+}
+
+.overview-course {
+    z-index: 3;
+    min-width: 0;
+    margin: 1px 2px;
+    padding: 3px 4px;
+    border-radius: 5px;
+    border-right: 3px solid;
+    direction: rtl;
+    text-align: right;
+    overflow: hidden;
+    line-height: 1.15;
+}
+
+.overview-course.lecture {
+    background: var(--lecture-bg, #dcecff);
+    border-color: var(--lecture-border, #4b83c3);
+}
+
+.overview-course.tutorial {
+    background: var(--tutorial-bg, #e3f3e7);
+    border-color: var(--tutorial-border, #62a675);
+}
+
+.overview-course strong {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 8px;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.overview-course span {
+    display: block;
+    margin-top: 1px;
+    overflow: hidden;
+    color: #5a4866;
+    font-size: 7px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* With 3 semesters/year, retain readable widths on normal desktop screens. */
+@media (max-width: 1450px) {
+    .year-semester-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* On smaller screens, show one readable schedule per row instead of crushing text. */
+@media (max-width: 980px) {
+    .year-semester-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .overview-calendar-frame {
+        overflow-x: auto;
+    }
+
+    .overview-calendar-grid {
+        min-width: 720px;
+    }
+}
+
+
+/* ============================================================
+   V16 — Compressed all-semesters view
+   Breaks still exist in the solver, but empty time is not drawn
+   in the degree overview. Events remain in chronological order.
+   ============================================================ */
+
+.compressed-semester-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+    direction: rtl;
+}
+
+.compressed-day-column {
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #faf7fb;
+}
+
+.compressed-day-header {
+    padding: 5px 3px;
+    background: #f4edf7;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.compressed-day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px;
+}
+
+.compressed-course {
+    min-width: 0;
+    padding: 5px 5px 4px;
+    border-radius: 6px;
+    border-right: 3px solid;
+    direction: rtl;
+    text-align: right;
+    overflow: hidden;
+}
+
+.compressed-course.lecture {
+    background: var(--lecture-bg, #dcecff);
+    border-color: var(--lecture-border, #4b83c3);
+}
+
+.compressed-course.tutorial {
+    background: var(--tutorial-bg, #e3f3e7);
+    border-color: var(--tutorial-border, #62a675);
+}
+
+.compressed-course strong {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 9px;
+    line-height: 1.15;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.compressed-course-time {
+    display: block;
+    margin-top: 2px;
+    font-size: 8px;
+    color: #3d2a4b;
+    direction: ltr;
+    text-align: right;
+}
+
+.compressed-course small {
+    display: block;
+    margin-top: 1px;
+    font-size: 7px;
+    color: #6c5a77;
+}
+
+.compressed-empty-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    color: #a594b0;
+    font-size: 10px;
+}
+
+/*
+  In the all-semesters overview we intentionally do NOT reserve vertical
+  height for gaps between classes. A 30-minute or 2-hour break is still
+  respected by the generated timetable and visible in the normal semester
+  view; here we only show the scheduled events and their actual times.
+*/
+
+@media (max-width: 1200px) {
+    .compressed-semester-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .compressed-semester-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+
+/* ============================================================
+   V19 — truly dynamic All Semesters view
+   ============================================================ */
+
+.dynamic-degree-overview {
+    display: grid;
+    gap: 16px;
+}
+
+.dynamic-year-section {
+    padding: 10px;
+}
+
+.dynamic-year-semesters {
+    display: grid;
+    grid-template-columns: repeat(var(--semester-count), minmax(0, 1fr));
+    gap: 8px;
+    align-items: start;
+}
+
+.dynamic-semester-card {
+    min-width: 0;
+    padding: 7px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.dynamic-semester-card:hover,
+.dynamic-semester-card:focus-visible {
+    border-color: var(--primary);
+}
+
+.dynamic-semester-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.dynamic-semester-header h3 {
+    margin: 1px 0 0;
+    font-size: 12px;
+    line-height: 1.15;
+}
+
+.dynamic-semester-header span,
+.dynamic-semester-header small {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.dynamic-days-grid {
+    display: grid;
+    /* Do not let one or two teaching days stretch into huge blocks.
+       The day/course columns stay compact and align from the RTL start. */
+    grid-template-columns: repeat(auto-fit, minmax(100px, 145px));
+    justify-content: start;
+    gap: 4px;
+    align-items: start;
+    direction: rtl;
+}
+
+/* Only days that actually contain classes are rendered. */
+.dynamic-day-column {
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+    background: #faf7fb;
+}
+
+.dynamic-day-title {
+    padding: 4px 3px;
+    background: #f4edf7;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.dynamic-events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 3px;
+}
+
+/*
+Breaks remain real in timetable.json and in the full semester view.
+The overview intentionally does not reserve empty vertical height for them.
+*/
+.dynamic-event {
+    min-width: 0;
+    padding: 4px;
+    border-radius: 5px;
+    border-right: 3px solid;
+    overflow: hidden;
+}
+
+.dynamic-event.lecture {
+    background: var(--lecture-bg, #dcecff);
+    border-color: var(--lecture-border, #4b83c3);
+}
+
+.dynamic-event.tutorial {
+    background: var(--tutorial-bg, #e3f3e7);
+    border-color: var(--tutorial-border, #62a675);
+}
+
+.dynamic-event-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.dynamic-event-top strong {
+    min-width: 0;
+    flex: 1;
+    font-size: 8px;
+    line-height: 1.1;
+}
+
+.dynamic-event-top > span {
+    flex: 0 0 auto;
+    color: #3d2a4b;
+    font-size: 7px;
+    direction: ltr;
+    white-space: nowrap;
+}
+
+.dynamic-event-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 2px;
+    color: #6c5a77;
+    font-size: 6.5px;
+}
+
+.dynamic-event-meta span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dynamic-empty-semester {
+    padding: 14px 8px;
+    border: 1px dashed var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    text-align: center;
+    font-size: 10px;
+}
+
+/* Keep all three semesters on one row on normal desktop widths.
+   The old 1450px breakpoint caused semester 3 to wrap onto a second row. */
+@media (max-width: 1050px) {
+    .dynamic-year-semesters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .dynamic-year-semesters {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* ============================================================
+   V20 — normal timetable readability
+   ============================================================ */
+
+.course-card {
+    position: relative;
+    gap: 2px;
+    padding: 6px 7px;
+}
+
+/* Semester is already selected in the page header, so don't waste
+   precious card height repeating the semester name inside every block. */
+.course-name {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 12px !important;
+    line-height: 1.1;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.course-compact-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    font-size: 10px;
+    line-height: 1.05;
+}
+
+.course-compact-meta span {
+    font-size: 10px !important;
+}
+
+.course-time {
+    direction: ltr;
+    white-space: nowrap;
+}
+
+.lecturer-name {
+    display: block;
+    overflow: hidden;
+    font-size: 10px !important;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Very short events still show course + lecturer in a compact form. */
+.course-card[data-grid-span="1"] {
+    padding: 3px 5px;
+}
+
+.course-card[data-grid-span="1"] .course-name {
+    font-size: 9px !important;
+    -webkit-line-clamp: 1;
+}
+
+.course-card[data-grid-span="1"] .course-compact-meta {
+    display: none;
+}
+
+.course-card[data-grid-span="1"] .lecturer-name {
+    font-size: 8px !important;
+}
+
+.course-card[data-grid-span="2"] .course-name {
+    font-size: 10px !important;
+    -webkit-line-clamp: 1;
+}
+
+.course-card[data-grid-span="2"] .course-compact-meta span,
+.course-card[data-grid-span="2"] .lecturer-name {
+    font-size: 8px !important;
+}
+
+/* Hover/focus gives the full information even when the scheduled block
+   itself is only 30 minutes tall. */
+.course-hover-details {
+    display: none;
+}
+
+.course-card:hover,
+.course-card:focus-within {
+    z-index: 50;
+    overflow: visible;
+}
+
+.course-card:hover .course-hover-details {
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 230px;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #ffffff;
+    color: var(--text);
+    box-shadow: 0 10px 26px rgba(37, 4, 51, 0.20);
+    direction: rtl;
+    text-align: right;
+}
+
+.course-card:hover .course-hover-details strong {
+    font-size: 12px;
+}
+
+.course-card:hover .course-hover-details span,
+.course-card:hover .course-hover-details small {
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+
+/* ============================================================
+   V22 — 15-minute timetable resolution
+   ============================================================ */
+
+.calendar-grid {
+    grid-template-rows: 54px repeat(var(--slot-count), 17px);
+}
+
+.time-label {
+    font-size: 10px;
+}
+
+/* Draw a stronger horizontal guide every 30 minutes while the model itself
+   can schedule on :00 / :15 / :30 / :45 boundaries. */
+.day-column-lines {
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 33px,
+        #ece4ef 33px,
+        #ece4ef 34px
+    );
+}
+
+/* A 15-minute event is tiny, so keep it legible and rely on hover for detail. */
+.course-card[data-grid-span="1"] {
+    min-height: 15px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+}
+
+
+/* ============================================================
+   V23 — precise 15-minute visual alignment
+   ============================================================ */
+
+/*
+The solver works in 15-minute rows, but the left axis is labelled every
+30 minutes. Each visible time label spans exactly two 15-minute rows.
+This makes a 16:00–17:00 class visually cover four rows and end exactly
+on the 17:00 boundary.
+*/
+.time-label {
+    align-items: flex-start;
+    padding-top: 3px;
+    box-sizing: border-box;
+}
+
+/* Show a faint 15-minute line and a stronger 30-minute line. */
+.day-column-lines {
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 16px,
+            rgba(227, 211, 232, 0.45) 16px,
+            rgba(227, 211, 232, 0.45) 17px
+        ),
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 33px,
+            #e0d4e5 33px,
+            #e0d4e5 34px
+        );
+}
+
+/*
+Keep cards almost flush with their true start/end boundaries.
+The old 3px vertical margin made a one-hour card look shorter than its
+actual duration.
+*/
+.course-card {
+    margin: 1px 5px;
+    box-sizing: border-box;
+}
+
+/* Make short cards use the entire available height. */
+.course-card[data-grid-span="1"],
+.course-card[data-grid-span="2"],
+.course-card[data-grid-span="3"],
+.course-card[data-grid-span="4"] {
+    margin-top: 1px;
+    margin-bottom: 1px;
+}
+
+/* ============================================================
+   V24 — natural-language Claude → Solver scheduling assistant
+   ============================================================ */
+.ai-assistant-panel {
+    margin: 0 0 20px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+}
+
+.ai-assistant-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 14px;
+}
+
+.ai-assistant-header h2 {
+    margin: 5px 0 4px;
+    font-size: 22px;
+}
+
+.ai-assistant-header p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.ai-badge,
+.claude-status,
+.rule-strength {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ai-badge {
+    background: #f4edf7;
+    color: var(--primary);
+}
+
+.claude-status.ready {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.claude-status.not-ready {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.assistant-chat-history {
+    display: grid;
+    gap: 8px;
+    max-height: 310px;
+    overflow-y: auto;
+    padding: 10px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #faf7fb;
+}
+
+.chat-row {
+    display: flex;
+}
+
+.chat-row.user { justify-content: flex-end; }
+.chat-row.assistant { justify-content: flex-start; }
+
+.chat-bubble {
+    max-width: min(760px, 88%);
+    padding: 9px 12px;
+    border-radius: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.chat-row.user .chat-bubble {
+    background: #efe4f4;
+}
+
+.chat-row.assistant .chat-bubble {
+    background: #fff;
+    border: 1px solid var(--border);
+}
+
+.chat-bubble.error {
+    background: var(--error-bg);
+    color: var(--error-text);
+}
+
+.assistant-compose {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.assistant-compose textarea {
+    width: 100%;
+    min-height: 82px;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px 12px;
+    font: inherit;
+    color: var(--text);
+    background: #fdfbfd;
+}
+
+.active-ai-rules {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.active-rules-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 9px;
+}
+
+.rule-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 8px;
+}
+
+.rule-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: #fdfbfd;
+    font-size: 13px;
+}
+
+.rule-chip > div {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.rule-strength.hard {
+    background: #fde8e8;
+    color: #8a1c1c;
+}
+
+.rule-strength.soft {
+    background: #f4edf7;
+    color: var(--primary);
+}
+
+.rule-remove,
+.text-button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+}
+
+.rule-remove {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 20px;
+    color: var(--muted);
+}
+
+.rule-remove:hover { background: #f2ecf5; }
+.text-button.danger { color: var(--error-text); font-weight: 700; }
+
+@media (max-width: 700px) {
+    .ai-assistant-header,
+    .assistant-compose {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    .assistant-compose .primary-button {
+        width: 100%;
+    }
+}
+
+/* -------- V11: department dashboard -------- */
+.dashboard-page {
+    width: min(1320px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 28px 0 56px;
+}
+
+.dashboard-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 28px;
+    margin-bottom: 26px;
+}
+.dashboard-topbar h1 { font-size: clamp(30px, 4vw, 44px); margin: 5px 0 8px; }
+.dashboard-topbar p { margin: 0; color: var(--muted); max-width: 720px; line-height: 1.55; }
+.dashboard-kicker, .section-label {
+    display: inline-block;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.dashboard-top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.dashboard-langs { margin: 0; }
+
+.dashboard-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(300px, .7fr);
+    gap: 20px;
+    align-items: stretch;
+    margin-bottom: 22px;
+}
+.dashboard-ai { margin: 0; min-height: 100%; }
+.dashboard-ai h2 { font-size: 27px; margin-bottom: 7px; }
+.dashboard-ai .ai-assistant-header { align-items: flex-start; }
+.dashboard-chat-history { max-height: 220px; }
+.dashboard-compose textarea { min-height: 112px; font-size: 15px; }
+
+.quick-actions-card,
+.dashboard-section,
+.data-action-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(37, 4, 51, .055);
+}
+.quick-actions-card { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.quick-actions-title { display: flex; gap: 12px; align-items: flex-start; }
+.quick-actions-title h2 { margin: 0 0 5px; font-size: 20px; }
+.quick-actions-title p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.section-icon, .data-card-icon {
+    width: 38px; height: 38px; border-radius: 11px; display: inline-grid; place-items: center;
+    background: #f2e9f7; color: var(--primary); font-size: 20px; flex: 0 0 auto;
+}
+.degree-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.metric-tile { padding: 13px; background: #fbf8fc; border: 1px solid #ebe1ef; border-radius: 13px; }
+.metric-tile.wide { grid-column: 1 / -1; }
+.metric-tile span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+.metric-tile strong { font-size: 21px; }
+.action-card-link {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 15px; border: 1px solid var(--border); border-radius: 14px; text-decoration: none;
+    color: var(--text); background: #fdfbfd; transition: .15s ease;
+}
+.action-card-link:hover { transform: translateY(-1px); border-color: #cbb3d6; }
+.action-card-link span { display: flex; flex-direction: column; gap: 3px; }
+.action-card-link small { color: var(--muted); line-height: 1.35; }
+.action-card-link b { color: var(--primary); font-size: 22px; }
+html[dir="rtl"] .action-card-link b { transform: rotate(180deg); }
+.full-width { width: 100%; }
+.dashboard-build-form { margin-top: auto; }
+
+.dashboard-section { padding: 24px; margin-bottom: 22px; }
+.section-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 20px; }
+.section-heading-row h2 { margin: 5px 0 4px; font-size: 24px; }
+.section-heading-row p { margin: 0; color: var(--muted); }
+.constraint-counts { display: flex; gap: 8px; flex-wrap: wrap; }
+.constraint-counts span { background: #f3eef6; color: #5a4866; padding: 7px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.constraints-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(310px, .75fr); gap: 20px; }
+.constraints-column > h3, .active-rules-heading h3 { font-size: 15px; margin: 0 0 12px; }
+.constraint-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.constraint-card { border: 1px solid #e9dfed; background: #fdfbfd; border-radius: 14px; padding: 14px; }
+.constraint-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.constraint-card p { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.ai-rules-column { border-left: 1px solid var(--border); padding-left: 20px; }
+html[dir="rtl"] .ai-rules-column { border-left: 0; padding-left: 0; border-right: 1px solid var(--border); padding-right: 20px; }
+.dashboard-rule-list { display: grid; gap: 9px; }
+.dashboard-rule-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 13px; border: 1px solid #e6d9ec; background: #fbf8fc; border-radius: 13px; }
+.dashboard-rule-copy { min-width: 0; display: grid; gap: 6px; }
+.dashboard-rule-copy strong { font-size: 13px; line-height: 1.4; }
+.dashboard-rule-copy small { color: var(--muted); text-transform: capitalize; }
+.empty-constraints-state { min-height: 190px; display: grid; place-items: center; align-content: center; text-align: center; padding: 24px; border: 1px dashed #ddcde3; border-radius: 15px; background: #fdfbfd; }
+.empty-constraints-state > span { font-size: 26px; color: var(--primary); margin-bottom: 7px; }
+.empty-constraints-state p { max-width: 300px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+.course-file-status { min-width: 120px; text-align: center; border-radius: 14px; padding: 12px 15px; background: #eef8f1; border: 1px solid #cde8d4; }
+.course-file-status strong { display: block; font-size: 25px; }
+.course-file-status span { color: var(--muted); font-size: 11px; }
+.course-file-status.missing { background: #fff7eb; border-color: #f0dfbf; }
+.course-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.data-action-card { padding: 20px; box-shadow: none; }
+.data-action-card h3 { margin: 12px 0 6px; }
+.data-action-card > p { color: var(--muted); font-size: 13px; line-height: 1.5; min-height: 40px; }
+.upload-form { display: grid; gap: 10px; margin-top: 16px; }
+.file-drop-zone { position: relative; padding: 18px; border: 1.5px dashed #d3bfdc; border-radius: 14px; background: #fcfafd; cursor: pointer; display: grid; gap: 5px; text-align: center; }
+.file-drop-zone:hover { border-color: var(--primary); background: #f8f2fa; }
+.file-drop-zone input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+.file-drop-zone strong { color: var(--primary); }
+.file-drop-zone span { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.secondary-solid-button { border: 1px solid #dccbe2; background: #f6f1f8; color: var(--text); padding: 10px 14px; border-radius: 11px; font-weight: 700; cursor: pointer; }
+.manual-course-details { margin-top: 16px; }
+.manual-course-details summary { cursor: pointer; color: var(--primary); font-weight: 800; padding: 11px 13px; background: #f6f0f9; border-radius: 11px; }
+.manual-course-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; margin-top: 14px; }
+.manual-course-form label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
+.manual-course-form .span-2 { grid-column: 1 / -1; }
+.manual-course-form input, .manual-course-form select,
+.setting-field input { width: 100%; padding: 10px 11px; border: 1px solid var(--border); border-radius: 10px; background: white; font: inherit; }
+
+.setup-nav-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.setup-nav-row .lang-switcher { margin: 0; }
+.back-link { text-decoration: none; color: var(--primary); font-weight: 700; }
+.day-adjustment-card { width: min(920px, 100%); }
+.day-page-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+@media (max-width: 980px) {
+    .dashboard-hero-grid, .constraints-layout, .course-data-grid { grid-template-columns: 1fr; }
+    .ai-rules-column, html[dir="rtl"] .ai-rules-column { border: 0; padding: 0; }
+}
+@media (max-width: 700px) {
+    .dashboard-page { width: min(100% - 24px, 1320px); padding-top: 18px; }
+    .dashboard-topbar, .section-heading-row { flex-direction: column; }
+    .dashboard-top-actions { justify-content: flex-start; }
+    .constraint-grid, .manual-course-form { grid-template-columns: 1fr; }
+    .manual-course-form .span-2 { grid-column: auto; }
+    .dashboard-section { padding: 17px; }
+    .setup-nav-row { align-items: flex-start; flex-direction: column-reverse; }
+}
+
+/* Course catalog preview on the department dashboard */
+.course-catalog-card {
+    margin-top: 22px;
+    border: 1px solid var(--border, #e6dde9);
+    border-radius: 18px;
+    background: var(--surface, #fff);
+    padding: 20px;
+    overflow: hidden;
+}
+.course-catalog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 16px;
+}
+.course-catalog-header > div:first-child {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.course-catalog-header h3 { margin: 0 0 4px; }
+.course-catalog-header p { margin: 0; }
+.course-search-input {
+    width: min(360px, 100%);
+    min-width: 240px;
+    padding: 11px 14px;
+    border: 1px solid var(--border, #e6dde9);
+    border-radius: 12px;
+    background: var(--surface, #fff);
+    font: inherit;
+}
+.course-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border, #e3d3e8);
+    border-radius: 14px;
+}
+.course-data-table {
+    width: 100%;
+    min-width: 1050px;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+.course-data-table th,
+.course-data-table td {
+    padding: 11px 12px;
+    text-align: start;
+    border-bottom: 1px solid var(--border, #ece4ef);
+    vertical-align: top;
+    white-space: nowrap;
+}
+.course-data-table th {
+    position: sticky;
+    top: 0;
+    background: var(--surface-alt, #f8f5f9);
+    font-weight: 700;
+    z-index: 1;
+}
+.course-data-table td:nth-child(2),
+.course-data-table td:nth-child(8),
+.course-data-table td:nth-child(9) {
+    white-space: normal;
+    min-width: 180px;
+}
+.course-data-table tbody tr:hover { background: rgba(0,0,0,.025); }
+.course-data-table tbody tr:last-child td { border-bottom: 0; }
+@media (max-width: 700px) {
+    .course-catalog-header { align-items: stretch; flex-direction: column; }
+    .course-search-input { width: 100%; min-width: 0; }
+}
+
+
+/* Claude proposal: conversation stays fast; solver runs only on explicit apply. */
+.ai-proposal-card { margin-top: 16px; padding: 16px; border: 1px solid var(--border-color, #e0d4e5); border-radius: 14px; background: rgba(255,255,255,.55); }
+.ai-proposal-card p { margin: 8px 0; }
+.ai-proposal-card ul { margin: 8px 0 14px; padding-inline-start: 22px; }
+.ai-proposal-card small { display:block; margin-top:10px; opacity:.75; }
+
+/* Lecturer availability editor */
+.lecturer-picker-form { margin: 1rem 0 1.4rem; }
+.lecturer-picker { max-width: 540px; }
+.lecturer-picker select { width: 100%; min-height: 44px; border: 1px solid #e0d3e5; border-radius: 10px; padding: 0 .75rem; background: #fff; font: inherit; }
+.lecturer-current-heading { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin: .5rem 0 1rem; padding: 1rem 1.1rem; border:1px solid #e9e1ec; border-radius:14px; background:#fcfafc; }
+.lecturer-current-heading div { display:flex; flex-direction:column; gap:.2rem; }
+.saved-override-badge { padding:.35rem .65rem; border-radius:999px; background:#e8f5ec; font-size:.82rem; font-weight:700; }
+.saved-override-badge.default { background:#f2edf4; }
+.lecturer-availability-row { grid-template-columns: minmax(140px, 1fr) minmax(150px, .8fr) minmax(150px, .8fr) minmax(150px, .8fr); }
+.lecturer-availability-row.department-closed { opacity:.55; }
+.department-window-note { align-self:center; color:#6c5a77; white-space:nowrap; }
+.lecturer-reset-form { margin-top: .8rem; }
+@media (max-width: 780px) {
+  .lecturer-availability-row { grid-template-columns:1fr 1fr; }
+  .department-window-note { grid-column:1 / -1; }
+  .lecturer-current-heading { align-items:flex-start; flex-direction:column; }
+}
+
+
+/* Course-category colours: category is more important than lecture/tutorial type. */
+.course-card.category-חובה, .dynamic-event.category-חובה, .compact-course-card.category-חובה { background: #dbeafe; border-color: #3b82f6; }
+.course-card.category-בחירה, .dynamic-event.category-בחירה, .compact-course-card.category-בחירה { background: #dcfce7; border-color: #22c55e; }
+.course-card.category-סמינר, .dynamic-event.category-סמינר, .compact-course-card.category-סמינר { background: #fce7f3; border-color: #ec4899; }
+.course-card.category-פרויקט, .dynamic-event.category-פרויקט, .compact-course-card.category-פרויקט { background: #fef3c7; border-color: #f59e0b; }
+.course-card.category-כללי, .dynamic-event.category-כללי, .compact-course-card.category-כללי { background: #ede9fe; border-color: #8b5cf6; }
+.required-color { background:#dbeafe; border:1px solid #3b82f6; }
+.elective-color { background:#dcfce7; border:1px solid #22c55e; }
+.seminar-color { background:#fce7f3; border:1px solid #ec4899; }
+.project-color { background:#fef3c7; border:1px solid #f59e0b; }
+.general-color { background:#ede9fe; border:1px solid #8b5cf6; }
+.course-category-badge { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:12px; font-weight:700; border:1px solid transparent; }
+.course-category-badge.category-חובה { background:#dbeafe; border-color:#93c5fd; }
+.course-category-badge.category-בחירה { background:#dcfce7; border-color:#86efac; }
+.course-category-badge.category-סמינר { background:#fce7f3; border-color:#f9a8d4; }
+.course-category-badge.category-פרויקט { background:#fef3c7; border-color:#fcd34d; }
+.course-category-badge.category-כללי { background:#ede9fe; border-color:#c4b5fd; }
+
+.cohort-badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;font-size:10px;font-weight:700;background:#f2e9f7;color:#3d2a4b;margin-inline-start:5px;}
+
+.dashboard-cohort-option {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid #e6d9ec;
+  border-radius: 14px;
+  background: #fbf8fc;
+}
+.dashboard-cohort-option .day-checkbox { display:flex; gap:9px; align-items:center; font-weight:700; }
+.dashboard-cohort-option small { display:block; margin-top:6px; line-height:1.45; color:#6c5a77; }
+
+
+/* V21 — overlapping lessons are displayed side-by-side rather than stacked. */
+.course-card {
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+
+
+
+/* Dashboard data check */
+.data-check-ok { color: var(--success-text); font-weight: 600; }
+.data-check-group { border-radius: 12px; padding: 12px 16px; margin-top: 12px; line-height: 1.6; }
+.data-check-group h3 { margin: 0 0 6px; font-size: 1rem; }
+.data-check-group ul { margin: 0; padding-inline-start: 22px; }
+.data-check-group li { margin-bottom: 4px; white-space: pre-line; }
+.data-check-group.blocking { background: var(--error-bg); color: var(--error-text); }
+.data-check-group.warning { background: #fef3c7; color: #92400e; }
+.data-check-group.info { background: rgba(0, 0, 0, 0.04); }
+.data-check-group.info summary { cursor: pointer; font-weight: 600; }
+
+/* Column mapping confirmation */
+.column-mapping-card { max-width: 1100px; }
+.mapping-summary { padding: 10px 14px; border-radius: 10px; line-height: 1.6; }
+.mapping-summary.complete { background: var(--success-bg); color: var(--success-text); }
+.mapping-summary.incomplete { background: #fef3c7; color: #92400e; }
+.mapping-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+.mapping-table th, .mapping-table td { padding: 10px 8px; border-bottom: 1px solid rgba(0, 0, 0, 0.08); text-align: start; vertical-align: middle; }
+.mapping-table th { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+.mapping-table select { width: 100%; min-width: 180px; }
+.mapping-table tr.missing { background: var(--error-bg); }
+.mapping-table tr.check .match-method { color: #92400e; font-weight: 600; }
+.mapping-table .not-found { color: var(--error-text); font-weight: 600; }
+.match-samples { color: var(--muted); font-size: 0.85rem; }
+.field-badge { display: inline-block; margin-inline-start: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.75rem; }
+.field-badge.required { background: rgba(0, 0, 0, 0.07); }
+.field-badge.optional { background: transparent; border: 1px solid rgba(0, 0, 0, 0.12); color: var(--muted); }
+.mapping-unused { color: var(--muted); }
+.mapping-remember { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+.mapping-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 700px) {
+    .mapping-table thead { display: none; }
+    .mapping-table tr { display: block; padding: 8px 0; }
+    .mapping-table td { display: block; border: none; padding: 4px 0; }
+}
+.mapping-table .uses-default { color: var(--muted); font-style: italic; }
+
+/* ---------- Panels over the dashboard (column check, year moves) ----------
+   Same look as the loading box: the dashboard stays visible behind it.
+   Below the loading overlay (9999) so "Approve and build" shows the spinner. */
+.review-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: rgba(37, 4, 51, 0.48);
+    display: grid;
+    place-items: center;
+    padding: 24px 16px;
+}
+.review-box {
+    width: min(980px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 18px;
+    padding: 24px 26px;
+    box-shadow: 0 18px 50px rgba(37, 4, 51, 0.24);
+    text-align: start;
+}
+.year-review-box { width: min(760px, 100%); }
+.review-box h2 { margin: 4px 0 8px; }
+.review-box .eyebrow { margin: 0; font-size: 0.75rem; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.review-lead { color: #5a4866; line-height: 1.6; margin: 0 0 12px; }
+.review-note { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+.review-scroll { overflow-x: auto; }
+.review-box .flash { white-space: pre-line; }
+.year-moves-table td.year-to { font-weight: 700; color: var(--primary); }
+.course-id-chip { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dashboard-page.behind-panel { pointer-events: none; user-select: none; }
+.mapping-actions form { margin: 0; }
+@media (max-width: 640px) {
+    .review-overlay { padding: 12px; }
+    .review-box { padding: 18px 16px; max-height: calc(100vh - 24px); }
+}
+
+/* ---------- Settings section ---------- */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.settings-grid .setting-field span { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+.year-mode-options { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin: 12px 0; }
+.year-mode-options legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
+.year-mode-option { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; cursor: pointer; }
+.year-mode-option input { margin-top: 4px; }
+.year-mode-option small { display: block; color: var(--muted); line-height: 1.45; }
+.year-overrides { background: #f5eef8; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.year-overrides ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.year-overrides li { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 4px 0; }
+.year-overrides small { display: block; color: var(--muted); }
+.link-button { background: none; border: none; padding: 0; color: var(--primary); text-decoration: underline; cursor: pointer; font: inherit; }
+.settings-form .secondary-button.full-width { margin-bottom: 8px; }
+.diagnosis-hint { font-weight: 600; }
+.settings-grid .setting-field { padding: 10px 12px; }
+@media (max-width: 700px) {
+    .year-moves-table td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 600; }
+    .year-moves-table tr { border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+}
+
+/* ---------- Left column under the Claude chat: upload card (and collapsible sections) ---------- */
+.dashboard-main-column { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dashboard-main-column .dashboard-ai { min-height: 0; }
+.dashboard-fold {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(37, 4, 51, .055);
+}
+.dashboard-fold > summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 12px;
+    padding: 18px 22px;
+    cursor: pointer;
+    list-style: none;
+}
+.dashboard-fold > summary::-webkit-details-marker { display: none; }
+.dashboard-fold > summary::after {
+    content: "▾";
+    margin-inline-start: auto;
+    color: var(--muted);
+    transition: transform .15s ease;
+}
+.dashboard-fold[open] > summary::after { transform: rotate(180deg); }
+.dashboard-fold > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: 20px; }
+.dashboard-fold .fold-label { font-size: 0.75rem; letter-spacing: 0.08em; font-weight: 700; color: var(--muted); }
+.dashboard-fold summary strong { font-size: 1.05rem; }
+.dashboard-fold .fold-meta { color: var(--muted); font-size: 0.9rem; }
+.dashboard-fold .fold-body { padding: 0 22px 22px; }
+.dashboard-fold .fold-body > p { margin-top: 0; color: var(--muted); }
+
+/* ============================================================
+   Readable overview (update 12): text large enough to read from a
+   distance. Semesters wrap to the next line when a row cannot hold them
+   at this size; days inside a semester wrap the same way.
+   ============================================================ */
+.dynamic-year-semesters {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+    gap: 14px;
+}
+.dynamic-semester-card { padding: 12px; border-radius: 14px; }
+.dynamic-semester-header { margin-bottom: 10px; gap: 10px; }
+.dynamic-semester-header h3 { font-size: 18px; line-height: 1.25; }
+.dynamic-semester-header span,
+.dynamic-semester-header small { font-size: 13px; }
+.dynamic-days-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+}
+.dynamic-day-title { padding: 7px 6px; font-size: 15px; }
+.dynamic-events-list { gap: 6px; padding: 6px; }
+.dynamic-event { padding: 8px 10px; border-radius: 8px; border-right-width: 4px; }
+html[dir="ltr"] .dynamic-event { border-left-width: 4px; }
+/* Name on its own full-width line; time and cohort on the line below. */
+.dynamic-event-top { flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.dynamic-event-top strong { flex: 1 1 100%; font-size: 15px; line-height: 1.3; }
+.dynamic-event-top > span { font-size: 14px; font-weight: 600; color: #2b1238; }
+.dynamic-event-top .cohort-badge { margin-inline-start: 0; font-size: 12px; padding: 2px 8px; }
+.dynamic-event-meta { margin-top: 5px; gap: 8px; font-size: 13px; color: #5a4866; }
+.dynamic-event-meta span:last-child { white-space: normal; }
+.dynamic-empty-semester { font-size: 14px; padding: 18px 10px; }
+
+/* ============================================================
+   Readable semester view (update 12): taller 15-minute rows (17px -> 24px)
+   so cards can hold larger text. A 30-minute label still spans two rows.
+   ============================================================ */
+.calendar-grid {
+    grid-template-rows: 60px repeat(var(--slot-count), 24px);
+}
+.day-column-lines {
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 23px,
+            rgba(227, 211, 232, 0.45) 23px,
+            rgba(227, 211, 232, 0.45) 24px
+        ),
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 47px,
+            #e0d4e5 47px,
+            #e0d4e5 48px
+        );
+}
+.time-label { font-size: 14px; padding-top: 4px; }
+.day-header { font-size: 19px; }
+.day-header small { font-size: 14px; }
+.course-card { padding: 7px 10px; gap: 3px; }
+.course-name { font-size: 17px !important; line-height: 1.3; }
+.course-compact-meta,
+.course-compact-meta span,
+.course-time { font-size: 15px !important; }
+.course-time { font-weight: 600; }
+.lecturer-name { font-size: 15px !important; }
+.course-card .cohort-badge { font-size: 13px; }
+/* Up to 45 minutes: the lecturer moves to the hover box so nothing is cut. */
+.course-card[data-grid-span="1"] .lecturer-name,
+.course-card[data-grid-span="2"] .lecturer-name,
+.course-card[data-grid-span="3"] .lecturer-name { display: none; }
+.course-card[data-grid-span="1"] .course-name,
+.course-card[data-grid-span="2"] .course-name { font-size: 14px !important; }
+.course-card[data-grid-span="1"] .course-compact-meta span,
+.course-card[data-grid-span="2"] .course-compact-meta span { font-size: 13px !important; }
+.course-card:hover .course-hover-details strong { font-size: 16px; }
+.course-card:hover .course-hover-details span,
+.course-card:hover .course-hover-details small { font-size: 14px; }
+.course-card .cohort-badge { align-self: flex-start; }
+
+/* Settings: degree years from the course file */
+.degree-years-auto { display: flex; gap: 8px; align-items: flex-start; margin: -2px 0 12px; cursor: pointer; }
+.degree-years-auto input { margin-top: 4px; }
+.degree-years-auto small { display: block; color: var(--muted); line-height: 1.45; }
+.setting-field input[readonly] { background: #f3eef5; color: #5a4866; }
+.setting-note { display: block; margin-top: 6px; color: var(--muted); line-height: 1.45; }
+
+/* Settings: program name */
+.program-name-field { display: block; margin-bottom: 12px; }
+.program-name-field span { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+.program-name-field small { display: block; margin-top: 6px; color: var(--muted); line-height: 1.45; }
+
+/* ---------- Top menu (templates/_top_nav.html) ---------- */
+.skip-link {
+    position: absolute;
+    inset-inline-start: 16px;
+    top: -60px;
+    z-index: 100;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--text);
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+}
+.skip-link:focus { top: 8px; }
+
+.app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 28px;
+    padding: 14px 28px;
+    background: var(--text);
+}
+.app-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+    text-decoration: none;
+}
+.app-nav { display: flex; gap: 4px; }
+.app-nav-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 10px;
+    color: #e6d9ee;
+    font-size: 17px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+a.app-nav-item:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
+.app-nav-item[aria-current="page"] { background: var(--primary); color: #ffffff; font-weight: 700; }
+.app-nav-item.is-disabled { color: #9d86ad; cursor: default; }
+.app-nav-tip {
+    position: absolute;
+    top: calc(100% + 6px);
+    inset-inline-start: 0;
+    z-index: 60;
+    width: max-content;
+    max-width: 300px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--text);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.45;
+    white-space: normal;
+    display: none;
+}
+.app-nav-item.is-disabled:hover .app-nav-tip,
+.app-nav-item.is-disabled:focus-visible .app-nav-tip { display: block; }
+
+.app-utilities { margin-inline-start: auto; display: flex; align-items: center; gap: 8px; }
+.app-assistant {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid #8f6aa8;
+    border-radius: 10px;
+    background: transparent;
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+}
+.app-assistant:hover { background: rgba(255, 255, 255, 0.12); }
+.app-lang {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 10px;
+    color: #e6d9ee;
+    font-weight: 700;
+    text-decoration: none;
+}
+.app-lang:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
+
+.app-account { position: relative; }
+.app-account summary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    list-style: none;
+}
+.app-account summary::-webkit-details-marker { display: none; }
+.app-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #c7a3cd;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+}
+.app-account-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    inset-inline-end: 0;
+    z-index: 60;
+    min-width: 220px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 8px 24px rgba(37, 4, 51, 0.12);
+}
+.app-account-name { margin: 0; font-weight: 700; }
+.app-account-email { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.app-account-menu form { margin: 12px 0 0; }
+.app-account-menu button {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.app-account-menu button:hover { background: var(--background); }
+
+.app-topbar a:focus-visible,
+.app-topbar summary:focus-visible,
+.app-topbar button:focus-visible,
+.app-nav-item.is-disabled:focus-visible {
+    outline: 3px solid #c7a3cd;
+    outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+    .app-topbar { padding: 6px 12px; gap: 4px 12px; }
+    .app-brand { font-size: 16px; }
+    .app-nav { order: 3; width: 100%; flex-wrap: wrap; position: relative; }
+    .app-nav-item.is-disabled { position: static; }
+    .app-nav-tip { inset-inline: 0; width: auto; max-width: none; }
+    .app-nav-item { padding: 0 12px; }
+    .app-assistant { padding: 0 12px; }
+    .app-assistant-label {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+    }
+}
+
+@media print {
+    .app-topbar, .skip-link { display: none; }
+}

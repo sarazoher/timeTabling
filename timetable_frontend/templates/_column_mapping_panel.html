@@ -1,0 +1,85 @@
+{# Column check after an upload: a panel over the dashboard (setup.html).
+   Context: column_mapping (see app._column_mapping_context). #}
+{% set m = column_mapping %}
+{% set en = current_lang == 'en' %}
+<div class="review-overlay" role="dialog" aria-modal="true" aria-labelledby="mappingTitle">
+    <section class="review-box column-mapping-box">
+        <p class="eyebrow">{{ 'COURSE FILE' if en else 'קובץ קורסים' }}</p>
+        <h2 id="mappingTitle">{{ 'Check the column names' if en else 'בדיקת שמות העמודות' }}</h2>
+        <p class="review-lead">
+            {% if en %}The column names in sheet <bdi>"{{ m.sheet }}"</bdi> differ from the app's own names. Check each match, fix it if needed, and confirm. Nothing is loaded until you confirm.{% else %}שמות העמודות בגיליון <bdi>"{{ m.sheet }}"</bdi> שונים מהשמות שהמערכת מכירה. בדקו כל התאמה, תקנו אם צריך ואשרו. שום דבר לא נטען לפני האישור.{% endif %}
+        </p>
+
+        {% for category, message in panel_messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
+
+        <p class="mapping-summary {{ 'complete' if m.found_required == m.total_required else 'incomplete' }}">
+            {% if en %}Found {{ m.found_required }} of {{ m.total_required }} required fields.{% else %}נמצאו {{ m.found_required }} מתוך {{ m.total_required }} שדות חובה.{% endif %}
+            {% if m.found_required < m.total_required %}
+            {{ 'The required fields marked "not found" have no matching column: if the file really lacks that data, add it in Excel and upload again.' if en else 'לשדות החובה שמסומנים "לא נמצא" אין עמודה מתאימה. אם הנתונים באמת חסרים בקובץ, יש להוסיף אותם ב-Excel ולהעלות שוב.' }}
+            {% endif %}
+            {% if m.rows | selectattr('default') | rejectattr('column') | list %}
+            {{ 'Optional fields that are not in the file use the default shown next to them; the data check will list them.' if en else 'שדות רשות שלא נמצאו בקובץ יקבלו את ברירת המחדל שמופיעה לידם, ובדיקת הנתונים תפרט אותם.' }}
+            {% endif %}
+        </p>
+
+        {% if m.other_sheets %}
+        <p class="mapping-summary incomplete">
+            {% if en %}Only sheet <bdi>"{{ m.sheet }}"</bdi> will be loaded. Other sheets in this file are ignored: {% for s in m.other_sheets %}<bdi>"{{ s }}"</bdi>{% if not loop.last %}, {% endif %}{% endfor %}. To load another sheet, save it as its own file and upload it.{% else %}ייטען רק הגיליון <bdi>"{{ m.sheet }}"</bdi>. גיליונות נוספים בקובץ לא ייטענו: {% for s in m.other_sheets %}<bdi>"{{ s }}"</bdi>{% if not loop.last %}, {% endif %}{% endfor %}. כדי לטעון גיליון אחר, שמרו אותו כקובץ נפרד והעלו אותו.{% endif %}
+        </p>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('confirm_column_mapping') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="review-scroll">
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'Field the app needs' if en else 'שדה שהמערכת צריכה' }}</th>
+                        <th>{{ 'Column in your file' if en else 'עמודה בקובץ שלכם' }}</th>
+                        <th>{{ 'How it was matched' if en else 'איך הותאם' }}</th>
+                        <th>{{ 'Example values' if en else 'ערכים לדוגמה' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in m.rows %}
+                    <tr class="{{ 'missing' if row.required and not row.column else '' }} {{ 'check' if row.method in ('typo', 'values') else '' }}">
+                        <td>
+                            <strong>{{ row.label }}</strong>
+                            <span class="field-badge {{ 'required' if row.required else 'optional' }}">{{ ('required' if en else 'חובה') if row.required else ('optional' if en else 'רשות') }}</span>
+                        </td>
+                        <td>
+                            <select name="field_{{ loop.index0 }}" aria-label="{{ row.label }}">
+                                <option value="" {% if not row.column %}selected{% endif %}>{{ '— not in the file —' if en else '— לא נמצא בקובץ —' }}</option>
+                                {% if row.empty_allowed %}
+                                <option value="{{ m.empty_choice }}" {% if row.column == m.empty_choice %}selected{% endif %}>{{ 'No such column: leave empty' if en else 'אין עמודה כזו: להשאיר ריק' }}</option>
+                                {% endif %}
+                                {% for column in m.columns %}
+                                <option value="{{ column }}" {% if column == row.column %}selected{% endif %}>{{ column }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="match-method">{% if row.column and row.method_label %}{{ row.method_label }}{% elif row.required %}<span class="not-found">{{ 'not found' if en else 'לא נמצא' }}</span>{% elif row.default %}<span class="uses-default">{{ 'Default:' if en else 'ברירת מחדל:' }} {{ row.default }}</span>{% endif %}</td>
+                        <td class="match-samples">{% for sample in row.samples %}<bdi>{{ sample }}</bdi>{% if not loop.last %} · {% endif %}{% endfor %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+            {% if m.unused %}
+            <p class="mapping-unused">{{ 'Columns that will not be used:' if en else 'עמודות שלא ייעשה בהן שימוש:' }}
+                {% for column in m.unused %}<bdi>"{{ column }}"</bdi>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+            {% endif %}
+
+            <label class="mapping-remember">
+                <input type="checkbox" name="remember" checked>
+                {{ 'Remember these column names, so the next upload is matched automatically' if en else 'לזכור את שמות העמודות האלה, כדי שההעלאה הבאה תותאם אוטומטית' }}
+            </label>
+
+            <div class="mapping-actions">
+                <button class="primary-button" type="submit" name="action" value="confirm">{{ 'Confirm and load' if en else 'אישור וטעינה' }}</button>
+                <button class="secondary-button" type="submit" name="action" value="cancel" formnovalidate>{{ 'Cancel upload' if en else 'ביטול ההעלאה' }}</button>
+            </div>
+        </form>
+    </section>
+</div>

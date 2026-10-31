@@ -1,0 +1,6 @@
+Flask>=3.0,<4
+Flask-Babel
+pandas
+openpyxl
+ortools
+Werkzeug>=3.0,<4

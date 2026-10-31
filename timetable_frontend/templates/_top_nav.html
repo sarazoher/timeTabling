@@ -1,0 +1,63 @@
+{# The app's top menu, shared by every signed-in page.
+   Before including, a page sets nav_active to 'home' or 'timetable' (or
+   nothing, for a page the menu has no item for yet) and may set nav_inert
+   while a panel covers the page.
+   Data and Rules are shown greyed until their own pages exist; for now their
+   content is on the Home page, and the tooltip says so. #}
+{% set en = current_lang == 'en' %}
+{% set other_lang = 'he' if en else 'en' %}
+<a class="skip-link" href="#main-content">{{ 'Skip to content' if en else 'דילוג לתוכן' }}</a>
+<header class="app-topbar"{% if nav_inert %} inert aria-hidden="true"{% endif %}>
+    <a class="app-brand" href="{{ url_for('setup_page') }}">{{ 'Timetable builder' if en else 'בניית מערכת שעות' }}</a>
+
+    <nav class="app-nav" aria-label="{{ 'Main' if en else 'ניווט ראשי' }}">
+        <a class="app-nav-item" href="{{ url_for('setup_page') }}"{% if nav_active == 'home' %} aria-current="page"{% endif %}>{{ 'Home' if en else 'בית' }}</a>
+        <a class="app-nav-item" href="{{ url_for('calendar_page') }}"{% if nav_active == 'timetable' %} aria-current="page"{% endif %}>{{ 'Timetable' if en else 'מערכת השעות' }}</a>
+        {% for key, he_label, en_label in [('data', 'נתונים', 'Data'), ('rules', 'כללים', 'Rules')] %}
+        <span class="app-nav-item is-disabled" tabindex="0" aria-disabled="true" aria-describedby="nav-tip-{{ key }}">
+            {{- en_label if en else he_label -}}
+            <span class="app-nav-tip" role="tooltip" id="nav-tip-{{ key }}">{{ 'Not a separate page yet: for now it is on the Home page' if en else 'עדיין לא עמוד נפרד: בינתיים זה בדף הבית' }}</span>
+        </span>
+        {% endfor %}
+    </nav>
+
+    <div class="app-utilities">
+        <a class="app-assistant" href="{{ url_for('setup_page') }}#ai-assistant">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="app-assistant-label">{{ 'Ask the assistant' if en else 'שאל את העוזר' }}</span>
+        </a>
+        <a class="app-lang" href="{{ url_for('set_language', lang_code=other_lang) }}" lang="{{ other_lang }}" hreflang="{{ other_lang }}"
+           aria-label="{{ 'עברית: מעבר לעברית' if en else 'English: switch to English' }}">{{ 'עב' if en else 'EN' }}</a>
+        {% if current_user %}
+        <details class="app-account">
+            <summary aria-label="{{ ('Your account: ' if en else 'החשבון שלך: ') ~ current_user.name }}">
+                <span class="app-avatar" aria-hidden="true">{{ (current_user.name or '?')[:2] | upper }}</span>
+            </summary>
+            <div class="app-account-menu">
+                <p class="app-account-name"><bdi>{{ current_user.name }}</bdi></p>
+                {% if current_user.email %}<p class="app-account-email"><bdi>{{ current_user.email }}</bdi></p>{% endif %}
+                <form method="post" action="{{ url_for('logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit">{{ 'Sign out' if en else 'יציאה מהחשבון' }}</button>
+                </form>
+            </div>
+        </details>
+        {% endif %}
+    </div>
+</header>
+<script>
+// Close the account menu on Escape or a click outside it.
+(function () {
+    var menu = document.querySelector('.app-account');
+    if (!menu) return;
+    document.addEventListener('click', function (event) {
+        if (menu.open && !menu.contains(event.target)) menu.open = false;
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && menu.open) {
+            menu.open = false;
+            menu.querySelector('summary').focus();
+        }
+    });
+})();
+</script>

@@ -1,0 +1,52 @@
+{# Suggested study-year moves: a panel over the dashboard (setup.html).
+   Context: year_review = year_moves.json written by main.py (suggest mode). #}
+{% set en = current_lang == 'en' %}
+<div class="review-overlay" role="dialog" aria-modal="true" aria-labelledby="yearReviewTitle">
+    <section class="review-box year-review-box">
+        <p class="eyebrow">{{ 'STUDY YEARS' if en else 'שנות לימוד' }}</p>
+        <h2 id="yearReviewTitle">{{ 'Some prerequisite chains do not fit their study year' if en else 'חלק משרשראות הקדם לא נכנסות בשנת הלימודים שלהן' }}</h2>
+        <p class="review-lead">
+            {% if en %}No timetable can be built with the years as they are in the Excel. These are the fewest changes that make every chain fit: each course below moves to a later year. Nothing has been changed yet.{% else %}עם השנים כפי שהן בקובץ ה-Excel לא ניתן לבנות מערכת. אלה מספר השינויים הקטן ביותר שמאפשר לכל השרשראות להיכנס: כל קורס ברשימה עובר לשנה מאוחרת יותר. עדיין לא שונה דבר.{% endif %}
+        </p>
+
+        {% for category, message in panel_messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
+
+        <div class="review-scroll">
+        <table class="mapping-table year-moves-table">
+            <thead>
+                <tr>
+                    <th>{{ 'Course' if en else 'קורס' }}</th>
+                    <th>{{ 'Year in Excel' if en else 'שנה בקובץ' }}</th>
+                    <th>{{ 'Suggested year' if en else 'שנה מוצעת' }}</th>
+                    <th>{{ 'Why' if en else 'למה' }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for move in year_review.moves %}
+                <tr>
+                    <td><strong>{{ move.name }}</strong> <span class="course-id-chip">{{ move.course_id }}</span></td>
+                    <td data-label="{{ 'Year in Excel' if en else 'שנה בקובץ' }}">{{ move.from_year }}</td>
+                    <td class="year-to" data-label="{{ 'Suggested year' if en else 'שנה מוצעת' }}">{{ move.to_year }}</td>
+                    <td data-label="{{ 'Why' if en else 'למה' }}">{{ move.reason_en if en else move.reason_he }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        <p class="review-note">
+            {% if en %}Approving keeps your Excel file as it is. The moves are saved in the settings, listed in the data check, and can be removed at any time. All other hard rules are still checked by the solver.{% else %}האישור לא משנה את קובץ ה-Excel. ההעברות נשמרות בהגדרות, מופיעות בבדיקת הנתונים, ואפשר לבטל כל אחת מהן בכל רגע. כל שאר האילוצים הקשיחים עדיין נבדקים על ידי הפותר.{% endif %}
+        </p>
+
+        <div class="mapping-actions">
+            <form method="post" action="{{ url_for('approve_year_moves') }}" class="generate-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="primary-button" type="submit">{{ 'Approve and build' if en else 'אישור ובניית המערכת' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('dismiss_year_moves') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="secondary-button" type="submit">{{ 'Keep the Excel years' if en else 'להשאיר את השנים שבקובץ' }}</button>
+            </form>
+        </div>
+    </section>
+</div>

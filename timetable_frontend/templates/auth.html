@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="{{ current_lang }}" dir="{{ text_direction }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ auth_text('יצירת חשבון' if registering else 'כניסה לחשבון', 'Create account' if registering else 'Sign in') }} · Timetable</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}"></head>
+<body class="auth-page">
+<main class="auth-layout">
+<section class="auth-intro"><span class="auth-brand">TIMETABLE / מערכת שעות</span>
+<div><p class="auth-eyebrow">{{ auth_text('תכנון אקדמי, במקום אחד', 'ACADEMIC PLANNING, TOGETHER') }}</p>
+<h1>{{ auth_text('המערכת הבאה שלכם מתחילה כאן.', 'Your next timetable starts here.') }}</h1>
+<p>{{ auth_text('קורסים, מרצים ואילוצים — סביבת עבודה משותפת לבניית מערכת שעות למחלקה.', 'Courses, lecturers and constraints — a shared workspace for your department’s timetable.') }}</p></div>
+<div class="auth-features"><span>{{ auth_text('תכנון סמסטרים', 'Semester planning') }}</span><span>{{ auth_text('מחזורים א׳ וב׳', 'A & B cohorts') }}</span><span>{{ auth_text('מערכת להורדה', 'Downloadable schedules') }}</span></div></section>
+<section class="auth-panel"><nav class="auth-languages" aria-label="Language"><a href="{{ url_for('set_language', lang_code='he') }}" lang="he">עברית</a><a href="{{ url_for('set_language', lang_code='en') }}" lang="en">English</a></nav>
+<div class="auth-card"><p class="auth-eyebrow">{{ auth_text('ברוכים הבאים', 'WELCOME') }}</p>
+<h2>{{ auth_text('יצירת חשבון' if registering else 'כניסה לחשבון', 'Create your account' if registering else 'Sign in to your account') }}</h2>
+<p class="auth-subtitle">{{ auth_text('החשבון מאפשר גישה למערכת השעות המשותפת של המחלקה.', 'Your account gives you access to the shared department timetable.') }}</p>
+{% if not registering and request.args.get('password_reset') == '1' %}<p class="auth-success" role="status">{{ auth_text('הסיסמה עודכנה. אפשר להתחבר עם הסיסמה החדשה.', 'Password updated. Sign in with your new password.') }}</p>{% endif %}
+{% if error %}<div class="auth-error" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="{{ url_for('register' if registering else 'login') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ next_url }}">
+{% if registering %}<label for="name">{{ auth_text('שם מלא', 'Full name') }}</label><input id="name" name="name" autocomplete="name" maxlength="80" value="{{ name }}" required>{% endif %}
+<label for="email">{{ auth_text('כתובת אימייל', 'Email address') }}</label><input id="email" type="email" name="email" dir="ltr" autocomplete="username" maxlength="254" value="{{ email }}" placeholder="name@example.com" required>
+<label for="password">{{ auth_text('סיסמה', 'Password') }}</label><input id="password" type="password" name="password" dir="ltr" autocomplete="{{ 'new-password' if registering else 'current-password' }}" {% if registering %}minlength="10"{% endif %} maxlength="256" required {% if registering %}aria-describedby="password-help"{% endif %}>
+{% if registering %}<small id="password-help">{{ auth_text('לפחות 10 תווים. אפשר להשתמש במשפט שקל לזכור.', 'At least 10 characters. A memorable passphrase works well.') }}</small>
+<label for="confirm_password">{{ auth_text('אימות סיסמה', 'Confirm password') }}</label><input id="confirm_password" type="password" name="confirm_password" dir="ltr" autocomplete="new-password" minlength="10" maxlength="256" required>{% endif %}
+{% if not registering %}<p class="auth-recovery"><a href="{{ url_for('forgot_password') }}">{{ auth_text('שכחת סיסמה?', 'Forgot password?') }}</a></p>{% endif %}
+<button class="auth-submit" type="submit">{{ auth_text('יצירת חשבון' if registering else 'כניסה', 'Create account' if registering else 'Sign in') }} <span aria-hidden="true">{{ '←' if current_lang == 'he' else '→' }}</span></button>
+</form>
+<p class="auth-alternate">{{ auth_text('כבר יש לך חשבון?' if registering else 'עדיין אין לך חשבון?', 'Already have an account?' if registering else 'New here?') }} <a href="{{ url_for('login' if registering else 'register') }}">{{ auth_text('כניסה לחשבון' if registering else 'יצירת חשבון', 'Sign in' if registering else 'Create an account') }}</a></p>
+</div><p class="auth-footer">{{ auth_text('מערכת לתכנון שעות לימוד', 'University timetable planning') }}</p></section>
+</main></body></html>

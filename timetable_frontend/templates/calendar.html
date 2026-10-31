@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Timetable') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+</head>
+<body>
+{% set nav_active = 'timetable' %}
+{% include "_top_nav.html" %}
+    <div id="loadingOverlay" class="loading-overlay" hidden>
+        <div class="loading-box">
+            <div class="spinner" aria-hidden="true"></div>
+            <h2>{{ _('Building the timetable...') }}</h2>
+            <p>{{ _('The solver is checking constraints and searching for a suitable timetable. This can take a few seconds.') }}</p>
+        </div>
+    </div>
+    <main id="main-content" class="page">
+
+        <header class="hero">
+            <div>
+                <h1>{{ _('Generated Timetable') }}</h1>
+                <p class="subtitle">
+                    {{ _('This is the result the solver generated based on the configured days and hours.') }}
+                </p>
+            </div>
+
+            <div class="hero-actions">
+                <a class="secondary-button" href="{{ url_for('export_timetable') }}">{{ 'Download timetable' if current_lang == 'en' else 'הורדת מערכת השעות' }}</a>
+                <div class="summary">
+                    <div class="summary-card">
+                        <span>{{ _('Courses') }}</span>
+                        <strong>{{ unique_courses }}</strong>
+                    </div>
+                    <div class="summary-card">
+                        <span>{{ _('Semesters') }}</span>
+                        <strong>{{ semesters|length }}</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <section class="chosen-availability">
+            <strong>{{ _('Department settings:') }}</strong>
+            {% for day in days %}
+                <span class="availability-chip">
+                    {{ day_label(day.key) }} {{ config.days[day.key].start }}–{{ config.days[day.key].end }}
+                </span>
+            {% endfor %}
+        </section>
+
+        {% if not timetable %}
+            <section class="empty-state">
+                <h2>{{ _('No timetable has been generated yet') }}</h2>
+                <a class="primary-link" href="{{ url_for('setup_page') }}">{{ 'Go to Home to build it' if current_lang == 'en' else 'לבנייה בדף הבית' }}</a>
+            </section>
+        {% else %}
+            <section class="controls">
+                <label for="semesterSelect">{{ _('Show timetable for:') }}</label>
+                <select id="semesterSelect">
+                    <option value="all">{{ _('All semesters') }}</option>
+                    {% for semester, name in semesters %}
+                        <option value="{{ semester }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <span id="semesterStatus" class="status"></span>
+            </section>
+
+            <section class="calendar-wrapper" id="singleSemesterView">
+                <div
+                    class="calendar-grid"
+                    id="calendarGrid"
+                    style="--day-count: {{ days|length }}; --slot-count: {{ slot_labels|length }}; min-width: {{ 82 + (days|length * 190) }}px;"
+                >
+                    <div class="corner-cell">{{ _('Time') }}</div>
+
+                    {% for day in days %}
+                        <div class="day-header" style="grid-column: {{ loop.index + 1 }};">
+                            {{ day_label(day.key) }}
+                            <small>{{ config.days[day.key].start }}–{{ config.days[day.key].end }}</small>
+                        </div>
+                    {% endfor %}
+
+                    {% for label in slot_labels %}
+                        {% set minute = label.split(':')[1]|int %}
+                        {% if minute in [0, 30] %}
+                            <div
+                                class="time-label"
+                                style="grid-row: {{ loop.index + 1 }} / span 2;"
+                            >
+                                {{ label }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for day in days %}
+                        <div
+                            class="day-column-lines"
+                            style="grid-column: {{ loop.index + 1 }}; grid-row: 2 / span {{ slot_labels|length }};"
+                        ></div>
+                    {% endfor %}
+
+                    {% for event in timetable %}
+                        {% if event.grid_column is defined %}
+                            <article
+                                class="course-card category-{{ event.course_category }} {{ 'tutorial' if event.event_type == 'Tutorial' else 'lecture' }}"
+                                data-semester="{{ event.semester }}"
+                                data-semester-status="{{ event.semester_status }}"
+                                data-grid-span="{{ event.grid_span }}"
+                                data-start="{{ event.start }}"
+                                data-end="{{ event.end }}"
+                                style="grid-column: {{ event.grid_column }}; grid-row: {{ event.grid_row }} / span {{ event.grid_span }};"
+                                title="{{ event.name }} | {{ event.event_type_label }} | {{ event.start }}–{{ event.end }} | {{ event.lecturer }} | {{ _('Prerequisite') }}: {{ event.prerequisites or _('None') }} | {{ _('Parallel requirement') }}: {{ event.parallel_requirement or _('None') }}"
+                            >
+                                <strong class="course-name">{{ event.name }}</strong>
+                                {% if event.offering_status == 'REUSED_RECURRING' %}<span class="cohort-badge">{{ 'Existing offering with a younger cohort' if current_lang == 'en' else 'הצעה קיימת עם מחזור צעיר' }}</span>{% endif %}
+                                {% if config.allow_semester_b_start %}<span class="cohort-badge">{{ ('Cohort ' ~ event.cohort_label) if current_lang == 'en' else ('מחזור ' ~ event.cohort_label) }}</span>{% endif %}
+
+                                <div class="course-compact-meta">
+                                    <span class="event-type">
+                                        {{ event.event_type_label }}
+                                    </span>
+                                    
+                                    <span class="course-time">{{ event.start }}–{{ event.end }}</span>
+                                </div>
+
+                                <span class="lecturer-name">{{ event.lecturer }}</span>
+
+                                <div class="course-hover-details">
+                                    <strong>{{ event.name }}</strong>{% if config.allow_semester_b_start %}<span class="cohort-badge">{{ ('Cohort ' ~ event.cohort_label) if current_lang == 'en' else ('מחזור ' ~ event.cohort_label) }}</span>{% endif %}
+                                    <span>
+                                        {{ event.event_type_label }}
+                                        · {{ event.start }}–{{ event.end }}
+                                    </span>
+                                    <span>{{ event.lecturer }}</span>
+                                    <small>{{ _('Prerequisite') }}: {{ event.prerequisites or _('None') }}</small>
+                                    <small>{{ _('Parallel requirement') }}: {{ event.parallel_requirement or _('None') }}</small>
+                                </div>
+                            </article>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="legend category-legend">
+                <span><i class="legend-color required-color"></i> {{ 'Required' if current_lang == 'en' else 'חובה' }}</span>
+                <span><i class="legend-color elective-color"></i> {{ 'Elective' if current_lang == 'en' else 'בחירה' }}</span>
+                <span><i class="legend-color seminar-color"></i> {{ 'Seminar' if current_lang == 'en' else 'סמינר' }}</span>
+                <span><i class="legend-color project-color"></i> {{ 'Project' if current_lang == 'en' else 'פרויקט' }}</span>
+                <span><i class="legend-color general-color"></i> {{ 'General' if current_lang == 'en' else 'כללי' }}</span>
+            </section>
+
+            <section class="all-semesters-view" id="allSemestersView" hidden>
+                <div class="all-semesters-heading">
+                    <div>
+                        <h2>{{ _('Overview of the entire degree') }}</h2>
+                        <p>
+                            {{ _('Compact view: days without classes take up no space, and breaks are preserved in the schedule but are not shown as empty space.') }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="degree-overview dynamic-degree-overview">
+                    {% for year_group in year_groups %}
+                        <section class="degree-year-section dynamic-year-section">
+                            <header class="degree-year-header">
+                                <div>
+                                    <h2>{{ _('Year %(num)s', num=year_group.year) }}</h2>
+                                    <span>{{ _('%(count)s semesters', count=year_group.semesters|length) }}</span>
+                                </div>
+                            </header>
+
+                            <div
+                                class="dynamic-year-semesters"
+                                style="--semester-count: {{ year_group.semesters|length }};"
+                            >
+                                {% for group in year_group.semesters %}
+                                    <article
+                                        class="dynamic-semester-card"
+                                        data-open-semester="{{ group.number }}"
+                                        role="button"
+                                        tabindex="0"
+                                        title="{{ _('Click to open %(name)s in full view', name=group.name) }}"
+                                    >
+                                        <header class="dynamic-semester-header">
+                                            <div>
+                                                <span>{{ _('Semester %(num)s', num=group.semester_in_year) }}</span>
+                                                <h3>{{ group.name }}</h3>
+                                            </div>
+                                            <small>{{ _('%(count)s courses', count=group.course_count) }}</small>
+                                        </header>
+
+                                        {% if group.events %}
+                                            <div class="dynamic-days-grid">
+                                                {% for day in days %}
+                                                    {% set day_events = group.events
+                                                        | selectattr("day", "equalto", day.key)
+                                                        | list
+                                                        | sort(attribute="start")
+                                                    %}
+
+                                                    {% if day_events %}
+                                                        <section class="dynamic-day-column">
+                                                            <header class="dynamic-day-title">
+                                                                {{ day_label(day.key) }}
+                                                            </header>
+
+                                                            <div class="dynamic-events-list">
+                                                                {% for event in day_events %}
+                                                                    <article
+                                                                        class="dynamic-event category-{{ event.course_category }} {{ 'tutorial' if event.event_type == 'Tutorial' else 'lecture' }}"
+                                                                        title="{{ event.name }} | {{ event.event_type_label }} | {{ event.start }}–{{ event.end }} | {{ event.lecturer }}"
+                                                                    >
+                                                                        <div class="dynamic-event-top">
+                                                                            <strong>{{ event.name }}</strong>{% if config.allow_semester_b_start %}<span class="cohort-badge">{{ ('Cohort ' ~ event.cohort_label) if current_lang == 'en' else ('מחזור ' ~ event.cohort_label) }}</span>{% endif %}
+                                                                            <span>{{ event.start }}–{{ event.end }}</span>
+                                                                        </div>
+
+                                                                        <div class="dynamic-event-meta">
+                                                                            <span>
+                                                                                {{ event.event_type_label }}
+                                                                            </span>
+                                                                            <span>{{ event.lecturer }}</span>
+                                                                        </div>
+                                                                    </article>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </section>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="dynamic-empty-semester">
+                                                {{ _('No courses in this semester') }}
+                                            </div>
+                                        {% endif %}
+                                    </article>
+                                {% endfor %}
+                            </div>
+                        </section>
+                    {% endfor %}
+                </div>
+            </section>
+
+{% endif %}
+    </main>
+
+    
+
+    <script>
+        const semesterSelect = document.getElementById("semesterSelect");
+        const singleSemesterView = document.getElementById("singleSemesterView");
+        const allSemestersView = document.getElementById("allSemestersView");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+
+        function timeToMinutes(value) {
+            const [h, m] = value.split(":").map(Number);
+            return h * 60 + m;
+        }
+
+        // Lay overlapping events out side-by-side, Google-Calendar style.
+        // This is display-only: it does not change any solver decision.
+        function layoutOverlappingEvents() {
+            const visible = [...document.querySelectorAll(".course-card:not([hidden])")];
+            visible.forEach(card => {
+                card.style.width = "";
+                card.style.transform = "";
+                card.style.justifySelf = "";
+            });
+
+            const byColumn = new Map();
+            visible.forEach(card => {
+                const column = card.style.gridColumn || "";
+                if (!byColumn.has(column)) byColumn.set(column, []);
+                byColumn.get(column).push(card);
+            });
+
+            byColumn.forEach(cards => {
+                const events = cards.map(card => ({
+                    card,
+                    start: timeToMinutes(card.dataset.start),
+                    end: timeToMinutes(card.dataset.end),
+                    lane: 0,
+                })).sort((a, b) => a.start - b.start || a.end - b.end);
+
+                // Split into connected overlap groups.
+                let group = [];
+                let groupEnd = -1;
+                const flush = () => {
+                    if (!group.length) return;
+                    const laneEnds = [];
+                    group.forEach(ev => {
+                        let lane = laneEnds.findIndex(end => end <= ev.start);
+                        if (lane < 0) { lane = laneEnds.length; laneEnds.push(ev.end); }
+                        else laneEnds[lane] = ev.end;
+                        ev.lane = lane;
+                    });
+                    const lanes = Math.max(1, laneEnds.length);
+                    if (lanes > 1) {
+                        group.forEach(ev => {
+                            ev.card.style.justifySelf = "start";
+                            ev.card.style.width = `calc(${100 / lanes}% - 6px)`;
+                            ev.card.style.transform = `translateX(calc(${ev.lane * 100}% + ${ev.lane * 3}px))`;
+                        });
+                    }
+                    group = []; groupEnd = -1;
+                };
+
+                events.forEach(ev => {
+                    if (group.length && ev.start >= groupEnd) flush();
+                    group.push(ev);
+                    groupEnd = Math.max(groupEnd, ev.end);
+                });
+                flush();
+            });
+        }
+
+        function updateSemesterView() {
+            if (!semesterSelect) return;
+
+            const selected = semesterSelect.value;
+            const showAll = selected === "all";
+
+            if (singleSemesterView) singleSemesterView.hidden = showAll;
+            if (allSemestersView) allSemestersView.hidden = !showAll;
+
+            document.querySelectorAll(".course-card").forEach((card) => {
+                if (showAll) {
+                    card.hidden = true;
+                } else {
+                    card.hidden = card.dataset.semester !== selected;
+                }
+            });
+            if (!showAll) requestAnimationFrame(layoutOverlappingEvents);
+        }
+
+        if (semesterSelect) {
+            semesterSelect.addEventListener("change", updateSemesterView);
+            updateSemesterView();
+        }
+
+        function openSemester(number) {
+            if (!semesterSelect) return;
+
+            semesterSelect.value = String(number);
+            updateSemesterView();
+
+            const controls = document.querySelector(".controls");
+            if (controls) {
+                controls.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+            }
+        }
+
+        document.querySelectorAll("[data-open-semester]").forEach((card) => {
+            card.addEventListener("click", () => {
+                openSemester(card.dataset.openSemester);
+            });
+
+            card.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openSemester(card.dataset.openSemester);
+                }
+            });
+        });
+
+        // Show loading state whenever the user asks to regenerate the timetable.
+        document.querySelectorAll('form[action*="generate"], form.generate-form').forEach((form) => {
+            form.addEventListener("submit", () => {
+                if (loadingOverlay) loadingOverlay.hidden = false;
+            });
+        });
+
+        window.addEventListener("pageshow", () => {
+            if (loadingOverlay) loadingOverlay.hidden = true;
+        });
+    </script>
+
+</body>
+</html>
