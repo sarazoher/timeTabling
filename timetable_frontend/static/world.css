@@ -72,3 +72,24 @@
     .tt-week .slot { opacity: 1; }
     .tt-btn { transition: none; }
 }
+
+/* Panels that need an answer (column check, year moves) on both levels:
+   milky light glass over a softly blurred, darkened page. */
+.is-light-page .review-overlay, .is-dark-page .review-overlay { background: rgba(20, 3, 29, .42); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.is-light-page .review-box, .is-dark-page .review-box { position: relative; background: rgba(250, 246, 253, .95); color: var(--tt-plum-deep); border: 1px solid #fff; border-radius: 24px; padding: 28px 30px; box-shadow: 0 40px 90px -30px rgba(20, 3, 29, .7), inset 0 1px 0 #fff; }
+.is-light-page .review-box h2, .is-dark-page .review-box h2 { font-size: clamp(22px, 2.4vw, 28px); font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }
+.is-light-page .review-box .eyebrow, .is-dark-page .review-box .eyebrow { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--tt-lavender); color: var(--tt-plum); letter-spacing: .04em; }
+.is-light-page .review-lead, .is-dark-page .review-lead { color: var(--tt-muted); }
+.review-box .mapping-table th { color: var(--tt-muted); }
+.review-box .mapping-table td { border-bottom-color: rgba(117, 68, 154, .12); }
+.review-box .mapping-table select { min-height: 42px; border-radius: 10px; border: 1px solid #e3d3e8; background-color: #fff; font: inherit; }
+.review-box .mapping-summary { border-radius: 14px; }
+.review-box .mapping-actions { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(117, 68, 154, .12); gap: 12px; }
+.review-box .primary-button, .review-box .secondary-button { min-height: 50px; padding: 0 22px; border-radius: 14px; font: inherit; font-weight: 800; cursor: pointer; }
+.review-box .primary-button { border: 0; color: #fff; background: linear-gradient(135deg, var(--tt-glow), var(--tt-plum) 55%, var(--tt-glow-deep)); box-shadow: 0 14px 30px -14px var(--tt-plum); }
+.review-box .secondary-button { color: var(--tt-plum); background: rgba(255, 255, 255, .8); border: 1px solid #e3d3e8; }
+.review-box .primary-button:focus-visible, .review-box .secondary-button:focus-visible, .review-box select:focus-visible { outline: 3px solid var(--tt-lilac); outline-offset: 2px; }
+@media (max-width: 720px) {
+    .is-light-page .review-box, .is-dark-page .review-box { padding: 22px 18px; border-radius: 20px; }
+    .review-box .mapping-actions > *, .review-box .mapping-actions button { width: 100%; }
+}

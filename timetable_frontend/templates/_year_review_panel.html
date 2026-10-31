@@ -1,4 +1,4 @@
-{# Suggested study-year moves: a panel over the dashboard (setup.html).
+{# Suggested study-year moves: a panel over Home, Data, Rules or the guided setup.
    Context: year_review = year_moves.json written by main.py (suggest mode). #}
 {% set en = current_lang == 'en' %}
 <div class="review-overlay" role="dialog" aria-modal="true" aria-labelledby="yearReviewTitle">
@@ -35,7 +35,7 @@
         </div>
 
         <p class="review-note">
-            {% if en %}Approving keeps your Excel file as it is. The moves are saved in the settings, listed in the data check, and can be removed at any time. All other hard rules are still checked by the solver.{% else %}האישור לא משנה את קובץ ה-Excel. ההעברות נשמרות בהגדרות, מופיעות בבדיקת הנתונים, ואפשר לבטל כל אחת מהן בכל רגע. כל שאר האילוצים הקשיחים עדיין נבדקים על ידי הפותר.{% endif %}
+            {% if en %}Approving keeps your Excel file as it is. The moves are saved in the settings, listed in the data check, and can be removed at any time. Every other rule that must hold is still checked when the timetable is built.{% else %}האישור לא משנה את קובץ ה-Excel. ההעברות נשמרות בהגדרות, מופיעות בבדיקת הנתונים, ואפשר לבטל כל אחת מהן בכל רגע. כל שאר הכללים המחייבים עדיין נבדקים בזמן הבנייה.{% endif %}
         </p>
 
         <div class="mapping-actions">

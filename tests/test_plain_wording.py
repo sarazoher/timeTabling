@@ -1,6 +1,7 @@
 """Users never see solver jargon or department wording, in either language."""
 import html
 import io
+import json
 import re
 import sys
 import unittest
@@ -40,6 +41,18 @@ class PlainWordingTests(AuthFixture, unittest.TestCase):
         self.client.post("/courses/upload", content_type="multipart/form-data", data={
             "csrf_token": token, "courses_excel": (io.BytesIO(FIXTURE_CS.read_bytes()), "cs.xlsx")})
         self.check(self.client, PAGES)
+
+    def test_the_year_moves_panel(self):
+        self.register()
+        with self.client.session_transaction() as sess:
+            token = sess["csrf_token"]
+        self.client.post("/setup/sample", data={"csrf_token": token})
+        (self.workspace() / "year_moves.json").write_text(json.dumps({"mode": "suggest", "moves": [
+            {"course_id": 4, "name": "D", "from_year": 2, "to_year": 3,
+             "reason_he": "שרשרת ארוכה", "reason_en": "long chain"}]}), encoding="utf-8")
+        page = self.client.get("/data").get_data(as_text=True)
+        self.assertIn('id="yearReviewTitle"', page)
+        self.check(self.client, ["/", "/data", "/rules", "/setup"])
 
 
 if __name__ == "__main__":
