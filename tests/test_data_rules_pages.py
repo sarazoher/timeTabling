@@ -86,6 +86,12 @@ class DataRulesPagesTests(AuthFixture, unittest.TestCase):
         self.assertIn("נור איגור", page)
         self.assertIn('<bdi dir="ltr" class="time-range">17:00–20:00</bdi>', page)
 
+    def test_timetable_page_links_to_data(self):
+        page = self.client.get("/calendar").get_data(as_text=True)
+        self.assertIn('href="/data"', page.split('class="hero-actions"')[1] if 'class="hero-actions"' in page else page)
+        self.assertIn("שינוי נתונים או הגדרות", page)
+        self.assertIn('href="/setup"', page)                 # no timetable yet: the way to build one
+
 
 if __name__ == "__main__":
     unittest.main()

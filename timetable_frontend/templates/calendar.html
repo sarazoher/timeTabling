@@ -27,6 +27,7 @@
             </div>
 
             <div class="hero-actions">
+                <a class="secondary-button" href="{{ url_for('data_page') }}">{{ 'Change data or settings' if current_lang == 'en' else 'שינוי נתונים או הגדרות' }}</a>
                 <a class="secondary-button" href="{{ url_for('export_timetable') }}">{{ 'Download timetable' if current_lang == 'en' else 'הורדת מערכת השעות' }}</a>
                 <div class="summary">
                     <div class="summary-card">
@@ -59,7 +60,7 @@
         {% if not timetable %}
             <section class="empty-state">
                 <h2>{{ _('No timetable has been generated yet') }}</h2>
-                <a class="primary-link" href="{{ url_for('setup_page') }}">{{ 'Go to Home to build it' if current_lang == 'en' else 'לבנייה בדף הבית' }}</a>
+                <a class="primary-link" href="{{ url_for('guided_setup') }}">{{ 'Go to setup to build it' if current_lang == 'en' else 'להגדרה ולבנייה' }}</a>
             </section>
         {% else %}
             <section class="controls">
