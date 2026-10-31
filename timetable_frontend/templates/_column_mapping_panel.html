@@ -30,6 +30,7 @@
 
         <form method="post" action="{{ url_for('confirm_column_mapping') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="{{ return_to }}">
             <div class="review-scroll">
             <table class="mapping-table">
                 <thead>

@@ -41,10 +41,12 @@
         <div class="mapping-actions">
             <form method="post" action="{{ url_for('approve_year_moves') }}" class="generate-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="return_to" value="{{ return_to }}">
                 <button class="primary-button" type="submit">{{ 'Approve and build' if en else 'אישור ובניית המערכת' }}</button>
             </form>
             <form method="post" action="{{ url_for('dismiss_year_moves') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="return_to" value="{{ return_to }}">
                 <button class="secondary-button" type="submit">{{ 'Keep the Excel years' if en else 'להשאיר את השנים שבקובץ' }}</button>
             </form>
         </div>

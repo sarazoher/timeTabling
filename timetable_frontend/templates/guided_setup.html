@@ -1,0 +1,273 @@
+{# Guided setup: 1 course file, 2 settings, 3 check and build.
+   Context: see app.guided_setup. Panels (column check, year moves) open over this page. #}
+{% set en = current_lang == 'en' %}
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Set up the timetable' if en else 'הגדרת מערכת השעות' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+</head>
+<body>
+<div id="loadingOverlay" class="loading-overlay" hidden>
+    <div class="loading-box" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <h2 id="loadingTitle">{{ 'Building the timetable...' if en else 'בונים את מערכת השעות...' }}</h2>
+        <p id="loadingText">{{ 'This can take a few minutes. Keep this page open.' if en else 'זה יכול לקחת כמה דקות. אפשר להשאיר את הדף פתוח.' }}</p>
+    </div>
+</div>
+
+{% set all_messages = get_flashed_messages(with_categories=true) %}
+{% set panel_open = column_mapping or year_review %}
+{% set panel_messages = all_messages if panel_open else [] %}
+{% set page_messages = [] if panel_open else all_messages %}
+{% if column_mapping %}{% include "_column_mapping_panel.html" %}
+{% elif year_review %}{% include "_year_review_panel.html" %}{% endif %}
+
+{% set nav_active = None %}{% set nav_inert = panel_open %}
+{% include "_top_nav.html" %}
+
+<main id="main-content" class="gs-page{{ ' behind-panel' if panel_open else '' }}"{% if panel_open %} aria-hidden="true"{% endif %}>
+    <h1>{{ 'Set up the timetable' if en else 'הגדרת מערכת השעות' }}</h1>
+    <p class="gs-lead">{{ 'Three steps: upload the course file, check the settings, and build. You can come back to any step later.' if en else 'שלושה שלבים: מעלים את קובץ הקורסים, בודקים את ההגדרות, ובונים. אפשר לחזור לכל שלב גם אחר כך.' }}</p>
+
+    {% include "_page_messages.html" %}
+
+    {# ---------- 1. Course file ---------- #}
+    <section class="gs-step{{ ' is-done' if has_file else '' }}" aria-labelledby="gsStep1">
+        <div class="gs-step-head">
+            <span class="gs-num" aria-hidden="true">{% if has_file %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>{% else %}1{% endif %}</span>
+            <div>
+                <h2 id="gsStep1">{{ 'Course file' if en else 'קובץ הקורסים' }}{% if has_file %}<span class="sr-only">{{ ' (done)' if en else ' (הושלם)' }}</span>{% endif %}</h2>
+                <p class="gs-sub">{% if has_file %}{{ 'Loaded.' if en else 'נטען.' }}{% else %}{{ "An Excel file with the program's course list." if en else 'קובץ Excel עם רשימת הקורסים של התוכנית.' }}{% endif %}</p>
+            </div>
+        </div>
+        <div class="gs-body">
+            <form method="post" action="{{ url_for('upload_courses_excel') }}" enctype="multipart/form-data" id="uploadForm" data-loading="upload">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="return_to" value="setup">
+                {% if has_file %}
+                <div class="gs-filerow">
+                    <bdi class="gs-filename">{{ file_label }}</bdi>
+                    <span>{% if en %}{{ course_count }} courses · {{ lecturer_count }} lecturers{% else %}{{ course_count }} קורסים · {{ lecturer_count }} מרצים{% endif %}</span>
+                    <label class="gs-link-label">
+                        <input class="gs-file-input" type="file" name="courses_excel" accept=".xlsx,.xlsm" required>
+                        <span>{{ 'Replace file' if en else 'החלפת קובץ' }}</span>
+                    </label>
+                </div>
+                {% else %}
+                <div class="gs-drop" id="dropZone">
+                    <strong>{{ 'Drag an Excel file here' if en else 'גררו לכאן קובץ Excel' }}</strong>
+                    <p>{{ "Or choose a file from your computer. After the upload we'll check the column names together." if en else 'או בחרו קובץ מהמחשב. אחרי ההעלאה נבדוק יחד את שמות העמודות.' }}</p>
+                    <label class="gs-button gs-file-button">
+                        <input class="gs-file-input" type="file" name="courses_excel" accept=".xlsx,.xlsm" required>
+                        <span>{{ 'Choose a file' if en else 'בחירת קובץ' }}</span>
+                    </label>
+                </div>
+                {% endif %}
+                <noscript><button class="gs-button gs-secondary" type="submit">{{ 'Upload' if en else 'העלאה' }}</button></noscript>
+            </form>
+            {% if not has_file and has_sample %}
+            <form method="post" action="{{ url_for('load_sample_data') }}" class="gs-sample" data-loading="upload">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {{ 'No file at hand?' if en else 'אין קובץ בהישג יד?' }}
+                <button type="submit" class="link-button">{{ 'Try it with sample data' if en else 'לנסות עם נתוני דוגמה' }}</button>
+            </form>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if not has_file %}
+    <section class="gs-step is-waiting" aria-labelledby="gsStep2">
+        <div class="gs-step-head"><span class="gs-num" aria-hidden="true">2</span><div>
+            <h2 id="gsStep2">{{ 'Settings' if en else 'הגדרות' }}</h2>
+            <p class="gs-sub">{{ 'Program name, years, semesters, days and hours. Opens after the course file is loaded.' if en else 'שם התוכנית, שנים, סמסטרים, ימים ושעות. ייפתח אחרי שקובץ הקורסים ייטען.' }}</p></div></div>
+    </section>
+    <section class="gs-step is-waiting" aria-labelledby="gsStep3">
+        <div class="gs-step-head"><span class="gs-num" aria-hidden="true">3</span><div>
+            <h2 id="gsStep3">{{ 'Check and build' if en else 'בדיקה ובנייה' }}</h2>
+            <p class="gs-sub">{{ 'A short check of the data, then building the timetable.' if en else 'בדיקה קצרה של הנתונים, ואז בניית מערכת השעות.' }}</p></div></div>
+    </section>
+    {% else %}
+    <form method="post" action="{{ url_for('generate_timetable') }}" id="buildForm" data-loading="build">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="return_to" value="setup">
+        <input type="hidden" name="degree_years_auto_shown" value="1">
+
+        {# ---------- 2. Settings ---------- #}
+        <section class="gs-step" aria-labelledby="gsStep2">
+            <div class="gs-step-head"><span class="gs-num" aria-hidden="true">2</span><div>
+                <h2 id="gsStep2">{{ 'Settings' if en else 'הגדרות' }}</h2>
+                <p class="gs-sub">{{ 'Check that everything is right. The settings are saved when you build.' if en else 'בדקו שהכול נכון. ההגדרות נשמרות עם הבנייה.' }}</p></div></div>
+            <div class="gs-body">
+                <label class="gs-field">
+                    <span>{{ 'Program name' if en else 'שם התוכנית' }}</span>
+                    <input type="text" name="program_name" id="programName" maxlength="80" value="{{ config.program_name or '' }}" autocomplete="off" dir="auto">
+                    <small class="gs-hint">{{ 'Download file name:' if en else 'שם הקובץ להורדה:' }} <bdi id="exportName" dir="rtl">{{ export_name }}</bdi></small>
+                </label>
+
+                <div class="gs-row2">
+                    <div class="gs-field">
+                        <label for="degreeYears">{{ 'Years of study' if en else 'שנות לימוד' }}</label>
+                        <input type="number" id="degreeYears" name="degree_years" min="1" max="10" value="{{ config.degree_years }}" required {% if config.degree_years_auto %}readonly{% endif %}>
+                        <label class="gs-check gs-small">
+                            <input type="checkbox" id="degreeYearsAuto" name="degree_years_auto" {% if config.degree_years_auto %}checked{% endif %} data-file-years="{{ file_years or '' }}">
+                            <span>{% if file_years %}{{ ('From the course file (its highest year is %s)' % file_years) if en else ('לפי קובץ הקורסים (השנה הגבוהה בו היא %s)' % file_years) }}{% else %}{{ 'From the course file' if en else 'לפי קובץ הקורסים' }}{% endif %}</span>
+                        </label>
+                    </div>
+                    <label class="gs-field">
+                        <span>{{ 'Semesters per year' if en else 'סמסטרים בשנה' }}</span>
+                        <input type="number" name="semesters_per_year" min="1" max="4" value="{{ config.semesters_per_year }}" required>
+                    </label>
+                </div>
+
+                <fieldset class="gs-field gs-days">
+                    <legend>{{ 'Teaching days and hours' if en else 'ימים ושעות לימוד' }}</legend>
+                    <table>
+                        <thead><tr>
+                            <th scope="col">{{ 'Day' if en else 'יום' }}</th>
+                            <th scope="col">{{ 'From' if en else 'מ־' }}</th>
+                            <th scope="col">{{ 'To' if en else 'עד' }}</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for day in all_days %}
+                        {% set values = config.days[day.key] %}
+                        {% set label = day.key if en else day.hebrew %}
+                        <tr class="{{ '' if values.enabled else 'is-off' }}">
+                            <td><label class="gs-check"><input type="checkbox" name="enabled_{{ day.key }}" {% if values.enabled %}checked{% endif %} data-day-toggle><span>{{ label }}</span></label></td>
+                            <td><input class="gs-time" type="text" name="start_{{ day.key }}" value="{{ values.start }}" inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" dir="ltr" required aria-label="{{ (label ~ ', from') if en else (label ~ ', משעה') }}"></td>
+                            <td><input class="gs-time" type="text" name="end_{{ day.key }}" value="{{ values.end }}" inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" dir="ltr" required aria-label="{{ (label ~ ', to') if en else (label ~ ', עד שעה') }}"></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <small class="gs-hint">{{ '24-hour times, for example 08:00 or 17:30.' if en else 'שעות בפורמט 24 שעות, למשל 08:00 או 17:30.' }}</small>
+                </fieldset>
+
+                <details class="gs-advanced"{% if config.allow_semester_b_start or config.year_mode != 'suggest' %} open{% endif %}>
+                    <summary>{{ 'Advanced: starting in semester B, study-year changes, lecturer hours' if en else 'מתקדם: התחלה בסמסטר ב׳, שינוי שנות לימוד, שעות מרצים' }}</summary>
+                    <label class="gs-check">
+                        <input type="checkbox" name="allow_semester_b_start" {% if config.allow_semester_b_start %}checked{% endif %}>
+                        <span><strong>{{ 'Also students who start in semester B' if en else 'גם סטודנטים שמתחילים בסמסטר ב׳' }}</strong>
+                        <small>{{ 'Adds a second intake one semester later, sharing classes with the first intake wherever possible.' if en else 'מוסיף מחזור שני שמתחיל סמסטר אחד מאוחר יותר, ולומד יחד עם המחזור הראשון ככל האפשר.' }}</small></span>
+                    </label>
+                    {% set mode_text = {
+                        'strict': ('Years exactly as in the file', 'The build stops and explains which course chain does not fit.',
+                                   'שנים בדיוק כמו בקובץ', 'הבנייה נעצרת ומסבירה איזו שרשרת קורסים לא נכנסת.'),
+                        'suggest': ('Suggest moves, I approve', 'Shows the fewest courses to move to a later year; nothing changes until you approve.',
+                                    'להציע העברות, אני מאשר/ת', 'מוצגים הקורסים המעטים ביותר שצריך להעביר לשנה מאוחרת יותר; דבר לא משתנה לפני האישור.'),
+                        'auto': ('Move them automatically and report', 'The fewest needed moves are applied and listed after the build.',
+                                 'להעביר אוטומטית ולדווח', 'ההעברות ההכרחיות המעטות ביותר מופעלות ומפורטות אחרי הבנייה.'),
+                    } %}
+                    <fieldset class="gs-modes">
+                        <legend>{{ "When a prerequisite chain doesn't fit its study year" if en else 'כששרשרת קדם לא נכנסת בשנת הלימודים שלה' }}</legend>
+                        {% for mode in year_modes %}{% set t = mode_text[mode] %}
+                        <label class="gs-check">
+                            <input type="radio" name="year_mode" value="{{ mode }}" {% if config.year_mode == mode %}checked{% endif %}>
+                            <span><strong>{{ t[0] if en else t[2] }}</strong><small>{{ t[1] if en else t[3] }}</small></span>
+                        </label>
+                        {% endfor %}
+                    </fieldset>
+                    <p class="gs-small"><a href="{{ url_for('lecturer_availability_page') }}">{{ "Set a lecturer's own working hours" if en else 'הגדרת שעות עבודה למרצה מסוים' }}</a></p>
+                </details>
+            </div>
+        </section>
+
+        {# ---------- 3. Check and build ---------- #}
+        <section class="gs-step" aria-labelledby="gsStep3">
+            <div class="gs-step-head"><span class="gs-num" aria-hidden="true">3</span><div>
+                <h2 id="gsStep3">{{ 'Check and build' if en else 'בדיקה ובנייה' }}</h2></div></div>
+            <div class="gs-body">
+                {% set details_url = url_for('setup_page') + '#data-check' %}
+                {% if check.blocking %}
+                {% set first = check.blocking_items[0] %}
+                <p class="gs-check-line is-blocking" role="alert">
+                    <strong>{% if en %}{{ check.blocking }} {{ 'problem stops' if check.blocking == 1 else 'problems stop' }} the build:{% else %}{{ 'בעיה אחת חוסמת' if check.blocking == 1 else check.blocking ~ ' בעיות חוסמות' }} את הבנייה:{% endif %}</strong>
+                    <span>{{ first.en if en else first.he }}</span>
+                    <a href="{{ details_url }}">{{ 'Details' if en else 'לפירוט' }}</a>
+                </p>
+                {% elif check.warning %}
+                <p class="gs-check-line is-warning">
+                    <strong>{% if en %}{{ check.warning }} {{ 'warning' if check.warning == 1 else 'warnings' }}{% else %}{{ 'אזהרה אחת' if check.warning == 1 else check.warning ~ ' אזהרות' }}{% endif %}</strong>
+                    <span>{{ "They won't stop the build, but they're worth a look." if en else 'לא יעצרו את הבנייה, אבל כדאי להציץ.' }}</span>
+                    <a href="{{ details_url }}">{{ 'Details' if en else 'לפירוט' }}</a>
+                </p>
+                {% else %}
+                <p class="gs-check-line is-ok"><strong>{{ 'The data looks good.' if en else 'הנתונים תקינים.' }}</strong>
+                    <span>{{ 'No problems were found in the course file.' if en else 'לא נמצאו בעיות בקובץ הקורסים.' }}</span></p>
+                {% endif %}
+                <div class="gs-build">
+                    <button type="submit" class="gs-button gs-big"{% if check.blocking %} disabled aria-describedby="gsBuildNote"{% endif %}>{{ 'Build the timetable' if en else 'בניית מערכת השעות' }}</button>
+                    <small id="gsBuildNote">{% if check.blocking %}{{ 'You can build once the problem is fixed in the file.' if en else 'אפשר לבנות אחרי שהבעיה תתוקן בקובץ.' }}{% else %}{{ 'This can take a few minutes.' if en else 'יכול לקחת כמה דקות.' }}{% endif %}</small>
+                </div>
+            </div>
+        </section>
+    </form>
+    {% endif %}
+</main>
+
+<script>
+(function () {
+    const overlay = document.getElementById('loadingOverlay');
+    const title = document.getElementById('loadingTitle');
+    const text = document.getElementById('loadingText');
+    const messages = {
+        upload: [{{ ('Checking the course file...' if en else 'בודקים את קובץ הקורסים...')|tojson }},
+                 {{ ('This takes a few seconds.' if en else 'זה לוקח כמה שניות.')|tojson }}],
+        build: [title.textContent, text.textContent],
+    };
+    function showLoading(kind) {
+        const m = messages[kind] || messages.build;
+        title.textContent = m[0]; text.textContent = m[1];
+        overlay.hidden = false;
+    }
+    document.querySelectorAll('form[data-loading]').forEach(form => {
+        form.addEventListener('submit', () => showLoading(form.dataset.loading));
+    });
+    window.addEventListener('pageshow', () => { overlay.hidden = true; });
+
+    // Choosing a file uploads it right away.
+    const uploadForm = document.getElementById('uploadForm');
+    const fileInput = uploadForm && uploadForm.querySelector('input[type=file]');
+    if (fileInput) fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) { showLoading('upload'); uploadForm.submit(); }
+    });
+    const drop = document.getElementById('dropZone');
+    if (drop && fileInput) {
+        ['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('is-over'); }));
+        ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('is-over'); }));
+        drop.addEventListener('drop', ev => {
+            if (!ev.dataTransfer.files.length) return;
+            fileInput.files = ev.dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
+        });
+    }
+
+    // Years from the file: the number is read-only while the box is ticked.
+    const yearsAuto = document.getElementById('degreeYearsAuto');
+    const years = document.getElementById('degreeYears');
+    const name = document.getElementById('programName');
+    const exportName = document.getElementById('exportName');
+    function updateExportName() {
+        if (!exportName) return;
+        const n = (name.value || '').replace(/[\\/:*?"<>|]+/g, ' ').trim().replace(/\s+/g, ' ');
+        const y = parseInt(years.value, 10) || 3;
+        exportName.textContent = (n ? `מערכת שעות ${n} — ${y} שנים` : `מערכת שעות — ${y} שנים`) + '.html';
+    }
+    if (yearsAuto && years) yearsAuto.addEventListener('change', () => {
+        years.readOnly = yearsAuto.checked;
+        if (yearsAuto.checked && yearsAuto.dataset.fileYears) years.value = yearsAuto.dataset.fileYears;
+        updateExportName();
+    });
+    if (name) name.addEventListener('input', updateExportName);
+    if (years) years.addEventListener('input', updateExportName);
+
+    // A day that is off greys out its hours.
+    document.querySelectorAll('[data-day-toggle]').forEach(box => box.addEventListener('change', () => {
+        box.closest('tr').classList.toggle('is-off', !box.checked);
+    }));
+})();
+</script>
+</body>
+</html>

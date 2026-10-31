@@ -10,6 +10,7 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 import copy
+import re
 import json
 import os
 import shutil
@@ -263,6 +264,12 @@ def validate_form_config(config: dict) -> None:
             continue
 
         enabled_count += 1
+        for value in (values["start"], values["end"]):
+            if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", str(value or "")):
+                raise ValueError(
+                    ("Write times as hours:minutes, for example 08:00 or 17:30 (%s)." % day_label_for(day["key"], select_locale()))
+                    if select_locale() == "en" else
+                    ("יש לכתוב שעות בצורה שעה:דקות, למשל 08:00 או 17:30 (%s)." % day_label_for(day["key"], select_locale())))
         start = time_to_minutes(values["start"])
         end = time_to_minutes(values["end"])
 
@@ -282,6 +289,14 @@ def validate_form_config(config: dict) -> None:
 
 
 
+def _return_url(anchor: str = "") -> str:
+    """Where a form goes back to: the guided Setup page when it was sent from
+    there (hidden field return_to=setup), otherwise the home page."""
+    if (request.form.get("return_to") or request.args.get("return_to")) == "setup":
+        return url_for("guided_setup")
+    return url_for("setup_page") + anchor
+
+
 def config_from_form() -> dict:
     previous = load_config()
     config = {
@@ -298,6 +313,7 @@ def config_from_form() -> dict:
         "allow_semester_b_start": request.form.get("allow_semester_b_start") == "on",
         "year_mode": year_mode({"year_mode": request.form.get("year_mode", previous.get("year_mode"))}),
         "year_overrides": previous.get("year_overrides", {}),
+        "course_file_name": previous.get("course_file_name", ""),
         "days": {},
         # Keep natural-language requirements when the department changes
         # general availability settings.
@@ -561,7 +577,78 @@ def setup_page():
         year_overrides=_year_override_rows(config, catalog),
         file_years=max((int(c.get("year") or 0) for c in catalog), default=None),
         year_modes=YEAR_MODES,
+        return_to="",
     )
+
+
+SAMPLE_COURSES_FILE = Path(__file__).resolve().parent / "sample" / "sample_courses.xlsx"
+# Teaching days for the sample file: evenings plus Friday morning, which
+# builds in about a minute.
+SAMPLE_DAYS = {
+    "Monday": ("17:00", "22:00"), "Thursday": ("17:00", "22:00"), "Friday": ("08:00", "14:00"),
+}
+
+
+def _data_check_counts() -> dict:
+    findings = load_json(DATA_CHECK_FILE, []) if COURSES_EXCEL_FILE.exists() else []
+    counts = {"blocking": 0, "warning": 0, "info": 0}
+    for item in findings:
+        severity = item.get("severity")
+        if severity in counts:
+            counts[severity] += 1
+    counts["blocking_items"] = [item for item in findings if item.get("severity") == "blocking"]
+    return counts
+
+
+@app.route("/setup", methods=["GET"])
+def guided_setup():
+    """The guided first-time flow: course file, settings, check and build."""
+    catalog = load_course_catalog()   # first: it may update the automatic degree length
+    config = load_config()
+    has_file = COURSES_EXCEL_FILE.exists()
+    from timetable_export import export_filename
+    return render_template(
+        "guided_setup.html",
+        config=config,
+        all_days=ALL_DAYS,
+        has_file=has_file,
+        file_label=config.get("course_file_name") or "courses.xlsx",
+        course_count=len(catalog),
+        lecturer_count=len({str(c.get("lecturer") or "").strip() for c in catalog} - {""}),
+        file_years=max((int(c.get("year") or 0) for c in catalog), default=None),
+        check=_data_check_counts(),
+        year_modes=YEAR_MODES,
+        export_name=export_filename(config),
+        build_failure=load_json(BUILD_FAILURE_FILE, None),
+        column_mapping=_column_mapping_context(),
+        year_review=_year_review(),
+        return_to="setup",
+        has_sample=SAMPLE_COURSES_FILE.exists(),
+    )
+
+
+@app.route("/setup/sample", methods=["POST"])
+def load_sample_data():
+    """Load the bundled sample course file and its teaching days, for a demo."""
+    en = select_locale() == "en"
+    temp_path = workspace_dir() / "_uploaded_courses.xlsx"
+    try:
+        shutil.copy2(SAMPLE_COURSES_FILE, temp_path)
+        _store_uploaded_catalog(temp_path)
+        config = load_config()
+        config["program_name"] = "Computer Science (sample)" if en else "מדעי המחשב (דוגמה)"
+        config["course_file_name"] = "sample_courses.xlsx"
+        for day in ALL_DAYS:
+            hours = SAMPLE_DAYS.get(day["key"])
+            config["days"][day["key"]] = ({"enabled": True, "start": hours[0], "end": hours[1]} if hours
+                                          else {**config["days"][day["key"]], "enabled": False})
+        save_config(config)
+        flash("Sample data loaded: a computer science course file and its teaching days. Build when ready."
+              if en else "נתוני הדוגמה נטענו: קובץ קורסים של מדעי המחשב וימי הלימוד שלו. אפשר לבנות.", "success")
+    except Exception as error:  # noqa: BLE001
+        temp_path.unlink(missing_ok=True)
+        flash(_describe_load_error(error), "error")
+    return redirect(url_for("guided_setup"))
 
 
 def _year_override_rows(config: dict, catalog: list[dict]) -> list[dict]:
@@ -719,7 +806,7 @@ def _build_and_redirect():
         # Suggest mode: the backend stopped before solving and wrote the
         # fewest needed year moves. The dashboard shows them in a panel.
         BUILD_FAILURE_FILE.unlink(missing_ok=True)
-        return redirect(url_for("setup_page"))
+        return redirect(_return_url())
     if not success:
         details_lower = details.lower()
         solver_failure = (
@@ -751,7 +838,7 @@ def _build_and_redirect():
         # Only a short marker goes into the (cookie-based) flash; the full
         # report is read from disk by the dashboard.
         flash(headline, "build-failure")
-        return redirect(url_for("setup_page"))
+        return redirect(_return_url())
 
     BUILD_FAILURE_FILE.unlink(missing_ok=True)
     flash(_("The timetable was built successfully by the solver."), "success")
@@ -768,7 +855,7 @@ def generate_timetable():
         return _build_and_redirect()
     except Exception as error:
         flash(str(error), "error")
-        return redirect(url_for("setup_page"))
+        return redirect(_return_url())
 
 
 @app.route("/settings", methods=["POST"])
@@ -790,7 +877,7 @@ def approve_year_moves():
     """Save the suggested moves as approved overrides, then build."""
     review = _year_review()
     if review is None:
-        return redirect(url_for("setup_page"))
+        return redirect(_return_url())
     config = load_config()
     overrides = dict(config.get("year_overrides", {}))
     for move in review["moves"]:
@@ -802,7 +889,7 @@ def approve_year_moves():
         return _build_and_redirect()
     except Exception as error:
         flash(str(error), "error")
-        return redirect(url_for("setup_page"))
+        return redirect(_return_url())
 
 
 @app.route("/years/dismiss", methods=["POST"])
@@ -813,7 +900,7 @@ def dismiss_year_moves():
           if select_locale() == "en" else
           "לא שונה דבר. לא ניתן לבנות מערכת כל עוד שרשראות הקדם האלה לא נכנסות בשנת הלימודים שלהן: "
           "אפשר לתקן את השנים בקובץ ה-Excel, או לבנות שוב ולאשר את ההעברות.", "warning")
-    return redirect(url_for("setup_page") + "#settings")
+    return redirect(_return_url("#settings"))
 
 
 @app.route("/years/override/remove", methods=["POST"])
@@ -1174,7 +1261,7 @@ def upload_courses_excel():
     uploaded = request.files.get("courses_excel")
     if not uploaded or not uploaded.filename:
         flash(_("Choose an Excel file first."), "error")
-        return redirect(url_for("setup_page") + "#course-upload")
+        return redirect(_return_url("#course-upload"))
 
     # Check the extension on the ORIGINAL name. secure_filename() strips all
     # non-ASCII characters, so a Hebrew name like "קורסים.xlsx" became "xlsx"
@@ -1183,11 +1270,12 @@ def upload_courses_excel():
     extension = Path(uploaded.filename).suffix.lower()
     if extension not in (".xlsx", ".xlsm"):
         flash(_("Please upload an .xlsx or .xlsm Excel file."), "error")
-        return redirect(url_for("setup_page") + "#course-upload")
+        return redirect(_return_url("#course-upload"))
 
     temp_path = workspace_dir() / "_uploaded_courses.xlsx"
     try:
         uploaded.save(temp_path)
+        PENDING_FILE_NAME.write_text(Path(uploaded.filename).name[:120], encoding="utf-8")
         from column_mapping import propose_mapping
         if not propose_mapping(temp_path).is_identity:
             # Some headers differ from the app's own names (or a required one
@@ -1202,7 +1290,10 @@ def upload_courses_excel():
         if temp_path.exists():
             temp_path.unlink()
         flash(_describe_load_error(error), "error")
-    return redirect(url_for("setup_page") + "#course-upload")
+    return redirect(_return_url("#course-upload"))
+
+
+PENDING_FILE_NAME = WorkspaceFile("_pending_file_name.txt")
 
 
 def _store_uploaded_catalog(temp_path: Path) -> None:
@@ -1247,6 +1338,11 @@ def _store_uploaded_catalog(temp_path: Path) -> None:
             shutil.copy2(backup_path, COURSES_EXCEL_FILE)
             _refresh_after_course_change()
         raise ValueError(details)
+    if PENDING_FILE_NAME.exists():
+        config = load_config()
+        config["course_file_name"] = PENDING_FILE_NAME.read_text(encoding="utf-8").strip()
+        save_config(config)
+        PENDING_FILE_NAME.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -1281,7 +1377,7 @@ def _start_column_mapping(temp_path: Path):
         return _finish_column_mapping(result.sheet, {p.canonical: p.column for p in result.proposals if p.column},
                                       remember=False, automatic=True)
     PENDING_MAPPING_FILE.write_text(json.dumps(result.to_dict(), ensure_ascii=False), encoding="utf-8")
-    return redirect(url_for("setup_page"))
+    return redirect(_return_url())
 
 
 def _finish_column_mapping(sheet: str, mapping: dict, remember: bool, automatic: bool = False):
@@ -1294,8 +1390,8 @@ def _finish_column_mapping(sheet: str, mapping: dict, remember: bool, automatic:
     except Exception as error:
         temp_path.unlink(missing_ok=True)
         flash(_describe_load_error(error), "error")
-        return redirect(url_for("setup_page") if PENDING_MAPPING_FILE.exists()
-                        else url_for("setup_page") + "#course-upload")
+        return redirect(_return_url() if PENDING_MAPPING_FILE.exists()
+                        else _return_url("#course-upload"))
     if remember:
         remember_column_names(mapping, workspace_dir() / "column_names.json")
     PENDING_UPLOAD_FILE.unlink(missing_ok=True)
@@ -1307,7 +1403,7 @@ def _finish_column_mapping(sheet: str, mapping: dict, remember: bool, automatic:
     else:
         flash(_("Course Excel uploaded. Existing timetable was not changed; build when ready."), "success")
     _flash_data_check_summary()
-    return redirect(url_for("setup_page") + "#course-upload")
+    return redirect(_return_url("#course-upload"))
 
 
 @app.route("/courses/map", methods=["GET"])
@@ -1357,7 +1453,7 @@ def confirm_column_mapping():
         PENDING_MAPPING_FILE.unlink(missing_ok=True)
         flash(_("Upload cancelled. The current course list was not changed.")
               if select_locale() == "en" else "ההעלאה בוטלה. רשימת הקורסים הנוכחית לא שונתה.", "success")
-        return redirect(url_for("setup_page") + "#course-upload")
+        return redirect(_return_url("#course-upload"))
     from column_mapping import FIELD_BY_CANONICAL
     en = select_locale() == "en"
     mapping, missing, chosen = {}, [], {}
@@ -1388,7 +1484,7 @@ def confirm_column_mapping():
             parts.append(("The same column was chosen for more than one field:\n" if en else
                           "אותה עמודה נבחרה ליותר משדה אחד:\n") + "\n".join(f"• {d}" for d in doubled))
         flash("\n\n".join(parts), "error")
-        return redirect(url_for("setup_page"))
+        return redirect(_return_url())
     return _finish_column_mapping(pending["sheet"], mapping, remember=request.form.get("remember") == "on")
 
 

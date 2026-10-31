@@ -35,47 +35,12 @@
             <p>{{ 'Manage scheduling requests, constraints and course data from one place.' if current_lang == 'en' else 'ניהול בקשות שיבוץ, אילוצים ונתוני קורסים במקום אחד.' }}</p>
         </div>
         <div class="dashboard-top-actions">
+            <a class="secondary-button" href="{{ url_for('guided_setup') }}">{{ 'Step-by-step setup' if current_lang == 'en' else 'הגדרה שלב אחר שלב' }}</a>
             <a class="secondary-button" href="{{ url_for('export_timetable') }}">{{ 'Download timetable' if current_lang == 'en' else 'הורדת מערכת השעות' }}</a>
         </div>
     </header>
 
-    {% with messages = page_messages %}
-        {% for category, message in messages %}
-            {% if category == 'build-failure' and build_failure %}
-            {% set en = current_lang == 'en' %}
-            {% set blocking = build_failure.findings | selectattr('severity', 'equalto', 'blocking') | list %}
-            {% set warnings = build_failure.findings | selectattr('severity', 'equalto', 'warning') | list %}
-            <div class="flash error build-failure" role="alert">
-                <strong>{{ build_failure.message }}</strong>
-                {% if blocking %}
-                <ul class="diagnosis-list">
-                    {% for item in blocking %}<li>{{ item.en if en else item.he }}</li>{% endfor %}
-                </ul>
-                {% if config.year_mode == 'strict' and blocking | selectattr('code', 'equalto', 'year_too_short') | list %}
-                <p class="diagnosis-hint">{{ 'The study-year rule in Settings is "exactly as in the Excel". Choose "suggest moves" there to see the fewest year changes that fix this.' if en else 'בהגדרות נבחר "שנים בדיוק כמו בקובץ". אפשר לבחור שם "להציע העברות" כדי לראות את מספר שינויי השנה הקטן ביותר שפותר את זה.' }}</p>
-                {% endif %}
-                {% else %}
-                <p>{{ 'No simple cause was found before solving, so the conflict comes from a combination of constraints. The technical details show where the solver stopped.' if en else 'לא נמצאה סיבה פשוטה לפני הפתרון, כך שהסתירה נובעת משילוב של כמה אילוצים. הפרטים הטכניים מראים איפה הפותר נעצר.' }}</p>
-                {% endif %}
-                {% if warnings %}
-                <details>
-                    <summary>{{ 'Warnings' if en else 'אזהרות' }} ({{ warnings | length }})</summary>
-                    <ul class="diagnosis-list">
-                        {% for item in warnings %}<li>{{ item.en if en else item.he }}</li>{% endfor %}
-                    </ul>
-                </details>
-                {% endif %}
-                <details>
-                    <summary>{{ 'Technical details' if en else 'פרטים טכניים' }}</summary>
-                    <pre dir="ltr">{{ build_failure.details }}</pre>
-                    {% if build_failure.debug_url %}<a href="{{ build_failure.debug_url }}">DEBUG JSON</a>{% endif %}
-                </details>
-            </div>
-            {% else %}
-            <div class="flash {{ 'error' if category == 'build-failure' else category }}">{{ message }}</div>
-            {% endif %}
-        {% endfor %}
-    {% endwith %}
+    {% include "_page_messages.html" %}
 
     <section class="dashboard-hero-grid">
         <div class="dashboard-main-column">

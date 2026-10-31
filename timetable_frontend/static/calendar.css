@@ -2578,3 +2578,172 @@ a.app-nav-item:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
 @media print {
     .app-topbar, .skip-link { display: none; }
 }
+
+/* ---------- Guided setup (templates/guided_setup.html) ---------- */
+.sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+}
+.gs-page { max-width: 860px; margin: 0 auto; padding: 36px 20px 72px; }
+.gs-page.behind-panel { pointer-events: none; user-select: none; }
+.gs-page h1 { margin: 0 0 6px; font-size: 34px; font-weight: 800; line-height: 1.2; }
+.gs-lead { margin: 0 0 28px; color: var(--muted); font-size: 17px; line-height: 1.55; }
+.gs-page > .flash { margin-bottom: 16px; }
+
+.gs-step {
+    margin-bottom: 16px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+}
+.gs-step.is-waiting { background: transparent; border-style: dashed; }
+.gs-step-head { display: flex; align-items: center; gap: 14px; }
+.gs-num {
+    flex: 0 0 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: 800;
+}
+.gs-step.is-waiting .gs-num { background: #efe4f4; color: #8f7a9e; }
+.gs-step.is-done .gs-num { background: var(--success-bg); color: var(--success-text); }
+.gs-step h2 { margin: 0; font-size: 21px; }
+.gs-step.is-waiting h2 { color: #7d6a8c; }
+.gs-sub { margin: 4px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.gs-body { margin-top: 18px; padding-inline-start: 50px; }
+
+.gs-drop {
+    padding: 26px;
+    border: 2px dashed #d3bfdc;
+    border-radius: 14px;
+    background: #fdfbfd;
+    text-align: center;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
+}
+.gs-drop.is-over { border-color: var(--primary); background: #f4edf7; }
+.gs-drop strong { display: block; margin-bottom: 6px; font-size: 18px; }
+.gs-drop p { margin: 0 0 14px; color: var(--muted); }
+.gs-file-input {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+}
+.gs-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    background: var(--primary);
+    color: #ffffff;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 160ms ease-out, background-color 150ms ease-out;
+}
+.gs-button:hover { background: #5e3580; }
+.gs-button:active { transform: scale(0.97); }
+.gs-button.gs-secondary { background: var(--surface); color: var(--primary); border-color: #d9c6e3; }
+.gs-button.gs-big { min-height: 54px; padding: 0 28px; font-size: 18px; }
+.gs-button[disabled] { background: #e9e0ec; border-color: #e9e0ec; color: #7d6a8c; cursor: not-allowed; transform: none; }
+.gs-file-button:focus-within,
+.gs-link-label:focus-within { outline: 3px solid #c7a3cd; outline-offset: 2px; }
+.gs-sample { margin: 12px 0 0; color: var(--muted); font-size: 15px; }
+.gs-sample .link-button { font-weight: 600; min-height: 44px; }
+
+.gs-filerow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.gs-filename { font-weight: 700; }
+.gs-link-label { color: var(--primary); font-weight: 600; text-decoration: underline; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; }
+
+.gs-field { display: block; margin: 0 0 18px; border: 0; padding: 0; min-width: 0; }
+.gs-field > span, .gs-field > label, .gs-field > legend { display: block; margin-bottom: 6px; font-weight: 700; }
+.gs-field input[type=text], .gs-field input[type=number] {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid #d3bfdc;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--text);
+    font: inherit;
+}
+.gs-field input[readonly] { background: #f3eef5; color: var(--muted); }
+.gs-hint { display: block; margin-top: 6px; color: var(--muted); font-size: 14px; }
+.gs-hint bdi { color: var(--text); font-weight: 600; }
+.gs-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.gs-small { font-size: 14px; }
+
+.gs-check { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; cursor: pointer; }
+.gs-check input { width: 20px; height: 20px; margin: 2px 0 0; flex: 0 0 auto; }
+.gs-check small { display: block; color: var(--muted); font-size: 14px; font-weight: 400; line-height: 1.5; }
+.gs-check.gs-small { font-weight: 400; color: var(--muted); }
+
+.gs-days table { width: 100%; border-collapse: collapse; }
+.gs-days th { padding: 0 6px 6px; color: var(--muted); font-size: 14px; font-weight: 600; text-align: start; }
+.gs-days td { padding: 4px 6px; border-top: 1px solid #f1e8f4; }
+.gs-days .gs-check { margin: 0; align-items: center; min-height: 40px; }
+.gs-time {
+    width: 96px;
+    min-height: 40px;
+    padding: 0 8px;
+    border: 1px solid #d3bfdc;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--text);
+    font: inherit;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+.gs-field input.gs-time { width: 96px; padding: 0 8px; }
+.gs-days table { width: auto; min-width: 60%; }
+.gs-days tr.is-off td { color: #8f7a9e; }
+.gs-days tr.is-off .gs-time { background: #f8f5f9; color: #a594b0; border-color: #e9e0ec; }
+
+.gs-advanced { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--border); }
+.gs-advanced summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--primary);
+    font-weight: 700;
+    cursor: pointer;
+}
+.gs-modes { margin: 12px 0 0; padding: 0; border: 0; }
+.gs-modes legend { margin-bottom: 4px; font-weight: 700; }
+
+.gs-check-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    line-height: 1.5;
+}
+.gs-check-line.is-ok { background: var(--success-bg); color: var(--success-text); }
+.gs-check-line.is-warning { background: var(--warning-bg); color: var(--warning-text); }
+.gs-check-line.is-blocking { background: var(--error-bg); color: var(--error-text); }
+.gs-check-line a { color: inherit; font-weight: 700; }
+.gs-build { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 18px; }
+.gs-build small { color: var(--muted); font-size: 14px; }
+
+@media (max-width: 720px) {
+    .gs-page { padding: 22px 14px 48px; }
+    .gs-page h1 { font-size: 27px; }
+    .gs-step { padding: 18px 16px; }
+    .gs-body { padding-inline-start: 0; }
+    .gs-row2 { grid-template-columns: 1fr; }
+    .gs-field input.gs-time { width: 76px; }
+    .gs-days table { width: 100%; }
+    .gs-button.gs-big { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .gs-button, .gs-drop { transition: none; }
+}

@@ -244,7 +244,8 @@ def install_auth(app):
                                        'Cannot create an account with this address. Try signing in.'), 409
                 else:
                     begin_session(user_id)
-                    return redirect(url_for('setup_page'))
+                    # A new account starts empty: go straight to the guided setup.
+                    return redirect(url_for('guided_setup'))
         return render_template('auth.html', registering=True, error=error, email=email,
                                name=name, next_url='/'), code
 
