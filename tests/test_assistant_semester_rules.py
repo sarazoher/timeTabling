@@ -83,5 +83,48 @@ class AssistantSemesterRuleTests(unittest.TestCase):
         self.assertEqual(plan[1], 1)
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import json  # noqa: E402
+from unittest.mock import patch  # noqa: E402
+from auth_support import AuthFixture, app  # noqa: E402
+
+
+class ConfirmRebuildsTests(AuthFixture, unittest.TestCase):
+    """"Apply and rebuild" saves the rule and builds, in the page's language."""
+
+    def setUp(self):
+        super().setUp()
+        self.register()
+        with self.client.session_transaction() as sess:
+            self.token = sess["csrf_token"]
+        self.client.post("/setup/sample", data={"csrf_token": self.token})
+        path = self.workspace() / "schedule_config.json"
+        config = json.loads(path.read_text(encoding="utf-8"))
+        config["ai_pending"] = {"message": "x", "rules": [semester_rule(8500008, allowed=[2])]}
+        path.write_text(json.dumps(config, ensure_ascii=False), encoding="utf-8")
+
+    def config(self):
+        return json.loads((self.workspace() / "schedule_config.json").read_text(encoding="utf-8"))
+
+    def test_confirm_saves_the_rule_and_builds(self):
+        with patch.object(app, "run_backend", return_value=(True, "")) as backend:
+            response = self.client.post("/assistant/confirm", data={"csrf_token": self.token})
+        backend.assert_called_once()
+        self.assertEqual(response.status_code, 302)
+        config = self.config()
+        self.assertEqual([r["id"] for r in config["ai_constraints"]], ["r1"])
+        self.assertNotIn("ai_pending", config)
+        self.assertEqual(config["ai_chat"][-1]["text"], "הכלל נשמר, ומערכת השעות נבנית מחדש לפיו.")
+
+    def test_messages_follow_the_language(self):
+        self.client.get("/language/en")
+        with patch.object(app, "run_backend", return_value=(True, "")):
+            self.client.post("/assistant/confirm", data={"csrf_token": self.token})
+        self.assertEqual(self.config()["ai_chat"][-1]["text"], "The rule was saved and the timetable is being rebuilt with it.")
+        self.client.get("/language/he")
+        self.client.post("/assistant/remove/r1", data={"csrf_token": self.token})
+        self.assertEqual(self.config()["ai_chat"][-1]["text"], "כלל אחד הוסר. מערכת השעות לא שונתה; אפשר לבנות מחדש כשמוכנים.")
+
+
 if __name__ == '__main__':
     unittest.main()

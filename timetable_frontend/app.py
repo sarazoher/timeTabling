@@ -1410,14 +1410,24 @@ def confirm_ai_requirement():
     save_config(config)
 
     config.pop("ai_pending", None)
+    en = select_locale() == "en"
     config.setdefault("ai_chat", []).append({
         "role": "assistant",
-        "text": "The scheduling rule was saved. The existing timetable has not been changed. Rebuild explicitly when ready.",
+        "text": ("The rule was saved and the timetable is being rebuilt with it."
+                 if en else "הכלל נשמר, ומערכת השעות נבנית מחדש לפיו."),
         "status": "applied",
     })
     save_config(config)
-    flash("Claude's rule was saved. Existing timetable unchanged; rebuild when ready.", "success")
-    return redirect(url_for("setup_page") + "#ai-assistant")
+    if not COURSES_EXCEL_FILE.exists():
+        flash("The rule was saved. Upload a course file to build." if en
+              else "הכלל נשמר. כדי לבנות צריך קודם להעלות קובץ קורסים.", "success")
+        return redirect(url_for("setup_page") + "#ai-assistant")
+    # The button says "apply and rebuild": build now, like the Rebuild button.
+    try:
+        return _build_and_redirect()
+    except Exception as error:  # noqa: BLE001
+        flash(str(error), "error")
+        return redirect(url_for("setup_page") + "#ai-assistant")
 
 
 @app.route("/assistant/remove/<rule_id>", methods=["POST"])
@@ -1432,7 +1442,8 @@ def remove_ai_requirement(rule_id: str):
 
     config.setdefault("ai_chat", []).append({
         "role": "assistant",
-        "text": _("Removed one scheduling requirement and rebuilt the timetable."),
+        "text": ("Removed one rule. The timetable was not changed; rebuild when ready." if select_locale() == "en"
+                 else "כלל אחד הוסר. מערכת השעות לא שונתה; אפשר לבנות מחדש כשמוכנים."),
         "status": "applied",
     })
     save_config(config)
