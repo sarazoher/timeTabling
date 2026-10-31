@@ -181,7 +181,6 @@ input[type="time"], select {
     display: grid;
     grid-template-columns: 82px repeat(var(--day-count), minmax(190px, 1fr));
     grid-template-rows: 54px repeat(var(--slot-count), 34px);
-    direction: ltr;
 }
 
 .corner-cell,

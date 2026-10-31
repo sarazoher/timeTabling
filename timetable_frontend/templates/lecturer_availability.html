@@ -46,7 +46,7 @@
                     </label>
                     <div class="time-field"><label for="lecturer_start_{{ day.key }}">{{ 'From' if current_lang == 'en' else 'מ-' }}</label><input id="lecturer_start_{{ day.key }}" type="time" name="lecturer_start_{{ day.key }}" value="{{ values.start }}" min="{{ dept.start }}" max="{{ dept.end }}" step="300" {% if not dept.enabled %}disabled{% endif %}></div>
                     <div class="time-field"><label for="lecturer_end_{{ day.key }}">{{ 'To' if current_lang == 'en' else 'עד' }}</label><input id="lecturer_end_{{ day.key }}" type="time" name="lecturer_end_{{ day.key }}" value="{{ values.end }}" min="{{ dept.start }}" max="{{ dept.end }}" step="300" {% if not dept.enabled %}disabled{% endif %}></div>
-                    <small class="department-window-note">{{ ('Department: ' if current_lang == 'en' else 'מחלקה: ') }}{% if dept.enabled %}{{ dept.start }}–{{ dept.end }}{% else %}{{ 'closed' if current_lang == 'en' else 'סגור' }}{% endif %}</small>
+                    <small class="department-window-note">{{ ('Department: ' if current_lang == 'en' else 'מחלקה: ') }}{% if dept.enabled %}<bdi dir="ltr" class="time-range">{{ dept.start }}–{{ dept.end }}</bdi>{% else %}{{ 'closed' if current_lang == 'en' else 'סגור' }}{% endif %}</small>
                 </div>{% endfor %}
             </div>
 
