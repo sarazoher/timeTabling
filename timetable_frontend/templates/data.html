@@ -14,13 +14,6 @@
 </head>
 <body class="is-light-page">
 {% set sky = 'light' %}{% include "_sky.html" %}
-<div id="loadingOverlay" class="loading-overlay" hidden>
-    <div class="loading-box" role="status" aria-live="polite">
-        <div class="spinner" aria-hidden="true"></div>
-        <h2>{{ 'Checking the course file...' if en else 'בודקים את קובץ הקורסים...' }}</h2>
-        <p>{{ 'This takes a few seconds.' if en else 'זה לוקח כמה שניות.' }}</p>
-    </div>
-</div>
 
 {% set all_messages = get_flashed_messages(with_categories=true) %}
 {% set panel_open = column_mapping or year_review %}
@@ -65,15 +58,7 @@
             <div class="wk-card-head"><span class="wk-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span><h2 id="drFile">{{ 'Course file' if en else 'קובץ הקורסים' }}</h2></div>
             <p class="dr-file"><bdi>{{ file_label }}</bdi><br><span>{% if en %}{{ course_count }} courses · {{ lecturer_count }} lecturers{% else %}{{ course_count }} קורסים · {{ lecturer_count }} מרצים{% endif %}</span></p>
             <div class="dr-actions">
-                <form method="post" action="{{ url_for('upload_courses_excel') }}" enctype="multipart/form-data" id="replaceForm">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="return_to" value="data">
-                    <label class="gs-button gs-secondary gs-file-button">
-                        <input class="gs-file-input" type="file" name="courses_excel" accept=".xlsx,.xlsm" required>
-                        <span>{{ 'Replace file' if en else 'החלפת קובץ' }}</span>
-                    </label>
-                    <noscript><button class="gs-button gs-secondary" type="submit">{{ 'Upload' if en else 'העלאה' }}</button></noscript>
-                </form>
+                <a class="gs-button gs-secondary" id="replaceFile" href="{{ url_for('guided_setup', replace=1) }}">{{ 'Replace file' if en else 'החלפת קובץ' }}</a>
                 <a class="gs-button gs-secondary" href="#manual-course" data-open="manual-course">{{ 'Add a course' if en else 'הוספת קורס' }}</a>
             </div>
         </section>
@@ -243,14 +228,6 @@
     }));
     window.addEventListener('hashchange', openFromHash);
     openFromHash();
-
-    // Choosing a replacement file uploads it right away.
-    const replace = document.getElementById('replaceForm');
-    const overlay = document.getElementById('loadingOverlay');
-    if (replace) replace.querySelector('input[type=file]').addEventListener('change', event => {
-        if (event.target.files.length) { overlay.hidden = false; replace.submit(); }
-    });
-    window.addEventListener('pageshow', () => { overlay.hidden = true; });
 
     const search = document.getElementById('courseSearch');
     const rows = document.querySelectorAll('#courseTable tbody tr');

@@ -33,12 +33,14 @@ class DataRulesPagesTests(AuthFixture, unittest.TestCase):
     def test_data_page_order_puts_the_course_list_last(self):
         self.load_sample()
         page = self.client.get("/data").get_data(as_text=True)
-        order = [page.index(m) for m in ('id="replaceForm"', 'id="settings"', 'id="check"',
+        order = [page.index(m) for m in ('id="replaceFile"', 'id="settings"', 'id="check"',
                                           'id="manual-course"', 'id="courseTable"')]
         self.assertEqual(order, sorted(order))
         self.assertIn("38", page)
         self.assertIn("שמירה ובנייה מחדש", page)
         self.assertIn('action="/rebuild"', page)
+        self.assertIn('id="replaceFile" href="/setup?replace=1"', page)   # replacing happens on Setup
+        self.assertNotIn('name="courses_excel"', page)
 
     def test_saving_settings_on_the_data_page_returns_there(self):
         self.load_sample()

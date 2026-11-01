@@ -38,29 +38,35 @@
 
     {% include "_page_messages.html" %}
 
-    {# ---------- 1. Course file ---------- #}
-    <section class="gs-step{{ ' is-done' if has_file else '' }}" aria-labelledby="gsStep1">
+    {# ---------- 1. Course file ----------
+       The only place a course file is uploaded. "Replace file" (here or on Data)
+       reopens this page as it is at the start (replacing): the upload box, with
+       steps 2 and 3 waiting for the new file. #}
+    {% set show_upload = not has_file or replacing %}
+    {% set step1_done = has_file and not replacing %}
+    <section class="gs-step{{ ' is-done' if step1_done else '' }}" aria-labelledby="gsStep1">
         <div class="gs-step-head">
-            <span class="gs-num" aria-hidden="true">{% if has_file %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>{% else %}1{% endif %}</span>
+            <span class="gs-num" aria-hidden="true">{% if step1_done %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>{% else %}1{% endif %}</span>
             <div>
-                <h2 id="gsStep1">{{ 'Course file' if en else 'קובץ הקורסים' }}{% if has_file %}<span class="sr-only">{{ ' (done)' if en else ' (הושלם)' }}</span>{% endif %}</h2>
-                <p class="gs-sub">{% if has_file %}{{ 'Loaded.' if en else 'נטען.' }}{% else %}{{ "An Excel file with the program's course list." if en else 'קובץ Excel עם רשימת הקורסים של התוכנית.' }}{% endif %}</p>
+                <h2 id="gsStep1">{{ 'Course file' if en else 'קובץ הקורסים' }}{% if step1_done %}<span class="sr-only">{{ ' (done)' if en else ' (הושלם)' }}</span>{% endif %}</h2>
+                <p class="gs-sub">{% if step1_done %}{{ 'Loaded.' if en else 'נטען.' }}{% else %}{{ "An Excel file with the program's course list." if en else 'קובץ Excel עם רשימת הקורסים של התוכנית.' }}{% endif %}</p>
             </div>
         </div>
         <div class="gs-body">
+            {% if not show_upload %}
+            <div class="gs-filerow">
+                <bdi class="gs-filename">{{ file_label }}</bdi>
+                <span>{% if en %}{{ course_count }} courses · {{ lecturer_count }} lecturers{% else %}{{ course_count }} קורסים · {{ lecturer_count }} מרצים{% endif %}</span>
+                <a class="gs-link-label" id="replaceFile" href="{{ url_for('guided_setup', replace=1, back='setup') }}">{{ 'Replace file' if en else 'החלפת קובץ' }}</a>
+            </div>
+            {% else %}
             <form method="post" action="{{ url_for('upload_courses_excel') }}" enctype="multipart/form-data" id="uploadForm" data-loading="upload">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="return_to" value="setup">
-                {% if has_file %}
-                <div class="gs-filerow">
-                    <bdi class="gs-filename">{{ file_label }}</bdi>
-                    <span>{% if en %}{{ course_count }} courses · {{ lecturer_count }} lecturers{% else %}{{ course_count }} קורסים · {{ lecturer_count }} מרצים{% endif %}</span>
-                    <label class="gs-link-label">
-                        <input class="gs-file-input" type="file" name="courses_excel" accept=".xlsx,.xlsm" required>
-                        <span>{{ 'Replace file' if en else 'החלפת קובץ' }}</span>
-                    </label>
-                </div>
-                {% else %}
+                {% if replacing %}
+                <p class="gs-replacing">{% if en %}Replacing <bdi>{{ file_label }}</bdi> ({{ course_count }} courses). Nothing changes until the new file is checked, and the current timetable stays until you build again.{% else %}מחליפים את <bdi>{{ file_label }}</bdi> ({{ course_count }} קורסים). שום דבר לא משתנה עד שהקובץ החדש נבדק, ומערכת השעות הנוכחית נשארת עד הבנייה הבאה.{% endif %}
+                    <a href="{{ url_for('guided_setup') if request.args.get('back') == 'setup' else url_for('data_page') }}">{{ 'Keep the current file' if en else 'להשאיר את הקובץ הנוכחי' }}</a></p>
+                {% endif %}
                 <div class="gs-drop" id="dropZone">
                     <strong>{{ 'Drag an Excel file here' if en else 'גררו לכאן קובץ Excel' }}</strong>
                     <p>{{ "Or choose a file from your computer. After the upload we'll check the column names together." if en else 'או בחרו קובץ מהמחשב. אחרי ההעלאה נבדוק יחד את שמות העמודות.' }}</p>
@@ -69,10 +75,10 @@
                         <span>{{ 'Choose a file' if en else 'בחירת קובץ' }}</span>
                     </label>
                 </div>
-                {% endif %}
                 <noscript><button class="gs-button gs-secondary" type="submit">{{ 'Upload' if en else 'העלאה' }}</button></noscript>
             </form>
-            {% if not has_file and has_sample %}
+            {% endif %}
+            {% if show_upload and has_sample %}
             <form method="post" action="{{ url_for('load_sample_data') }}" class="gs-sample" data-loading="upload">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {{ 'No file at hand?' if en else 'אין קובץ בהישג יד?' }}
@@ -82,7 +88,7 @@
         </div>
     </section>
 
-    {% if not has_file %}
+    {% if show_upload %}
     <section class="gs-step is-waiting" aria-labelledby="gsStep2">
         <div class="gs-step-head"><span class="gs-num" aria-hidden="true">2</span><div>
             <h2 id="gsStep2">{{ 'Settings' if en else 'הגדרות' }}</h2>

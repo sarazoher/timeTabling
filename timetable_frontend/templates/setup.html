@@ -31,36 +31,15 @@
     <div class="hm-messages">{% include "_page_messages.html" %}</div>
 
     <section class="hm-hero{{ ' is-new' if not has_file else '' }}" aria-labelledby="hmTitle">
-        {% if has_file %}
+        {# The week behind the title: the real first semester once built; before
+           that, a few example lessons. The course file is uploaded only on the
+           setup page (guided_setup.html), never here. #}
+        {% set demo_slots = [(5, 1, 2, 'is-required'), (3, 2, 1, 'is-general'), (2, 4, 2, 'is-elective'), (6, 4, 1, 'is-seminar'), (1, 1, 1, 'is-project'), (4, 6, 1, 'is-required')] %}
         <div class="hm-week tt-week{{ ' is-faded' if stale else '' }}" aria-hidden="true">
             {%- for col in range(1, 7) %}{% for row in range(1, 8) %}<span class="cell" style="grid-column:{{ col }};grid-row:{{ row }}"></span>{% endfor %}{% endfor -%}
-            {%- for slot in week_slots %}<span class="slot {{ slot.kind }}" style="grid-column:{{ slot.col }};grid-row:{{ slot.row }} / span {{ slot.rows }};animation-delay:{{ '%.2f' % (0.4 + loop.index0 * 0.3) }}s"></span>{% endfor -%}
+            {%- if has_file %}{% for slot in week_slots %}<span class="slot {{ slot.kind }}" style="grid-column:{{ slot.col }};grid-row:{{ slot.row }} / span {{ slot.rows }};animation-delay:{{ '%.2f' % (0.4 + loop.index0 * 0.3) }}s"></span>{% endfor %}
+            {%- else %}{% for col, row, rows, kind in demo_slots %}<span class="slot {{ kind }}" style="grid-column:{{ col }};grid-row:{{ row }} / span {{ rows }};animation-delay:{{ '%.2f' % (0.4 + loop.index0 * 0.35) }}s"></span>{% endfor %}{% endif -%}
         </div>
-        {% else %}
-        <div class="hm-drop tt-glass-dark">
-            <form method="post" action="{{ url_for('upload_courses_excel') }}" enctype="multipart/form-data" id="homeUpload">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="return_to" value="setup">
-                <div class="hm-drop-zone" id="homeDrop">
-                    <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3-3 3 3"/></svg>
-                    <strong>{{ 'Drag the course file here' if en else 'גררו לכאן את קובץ הקורסים' }}</strong>
-                    <span>{{ 'An Excel file: courses, lecturers, credits, prerequisites.' if en else 'קובץ Excel: קורסים, מרצים, נק״ז, דרישות קדם.' }}</span>
-                    <label class="tt-btn tt-btn-main-dark hm-file-button">
-                        <input class="hm-file-input" type="file" name="courses_excel" accept=".xlsx,.xlsm" required>
-                        <span>{{ 'Choose a file' if en else 'בחירת קובץ' }}</span>
-                    </label>
-                    <noscript><button class="tt-btn tt-btn-glass-dark" type="submit">{{ 'Upload' if en else 'העלאה' }}</button></noscript>
-                </div>
-            </form>
-            {% if has_sample %}
-            <form method="post" action="{{ url_for('load_sample_data') }}" class="hm-sample">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                {{ 'No file at hand?' if en else 'אין קובץ בהישג יד?' }}
-                <button type="submit" class="hm-link-button">{{ 'Try it with sample data' if en else 'לנסות עם נתוני דוגמה' }}</button>
-            </form>
-            {% endif %}
-        </div>
-        {% endif %}
 
         <div class="hm-copy">
             <p class="hm-hello">{{ 'Hello, ' if en else 'שלום, ' }}<bdi>{{ current_user.name if current_user else '' }}</bdi></p>
@@ -96,7 +75,7 @@
                 {% elif has_file %}
                 <a class="home-main-button tt-btn tt-btn-main-dark" href="{{ url_for('guided_setup') }}#gsStep2">{{ 'Continue setup' if en else 'המשך להגדרה' }}</a>
                 {% else %}
-                <a class="home-main-button tt-btn tt-btn-glass-dark" href="{{ url_for('guided_setup') }}">{{ 'Step-by-step setup' if en else 'הגדרה שלב אחר שלב' }}</a>
+                <a class="home-main-button tt-btn tt-btn-main-dark" href="{{ url_for('guided_setup') }}">{{ 'Start: upload the course file' if en else 'מתחילים: העלאת קובץ הקורסים' }}</a>
                 {% endif %}
             </div>
         </div>
@@ -158,17 +137,6 @@
 
 </main>
 <script>
-    // New account: choosing or dropping a file uploads it at once.
-    const homeUpload = document.getElementById('homeUpload');
-    const homeFile = homeUpload && homeUpload.querySelector('input[type=file]');
-    if (homeFile) homeFile.addEventListener('change', () => { if (homeFile.files.length) homeUpload.submit(); });
-    const homeDrop = document.getElementById('homeDrop');
-    if (homeDrop && homeFile) {
-        ['dragenter', 'dragover'].forEach(n => homeDrop.addEventListener(n, e => { e.preventDefault(); homeDrop.classList.add('is-over'); }));
-        ['dragleave', 'drop'].forEach(n => homeDrop.addEventListener(n, e => { e.preventDefault(); homeDrop.classList.remove('is-over'); }));
-        homeDrop.addEventListener('drop', e => { if (e.dataTransfer.files.length) { homeFile.files = e.dataTransfer.files; homeUpload.submit(); } });
-    }
-
     // The rule cards slide in row by row, from alternating sides, as they come into view.
     const rows = document.querySelectorAll('.hm-rrow');
     if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {

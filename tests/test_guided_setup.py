@@ -95,6 +95,28 @@ class GuidedSetupTests(AuthFixture, unittest.TestCase):
         self.assertIn("gs-check-line", page)
         self.assertIn("מערכת שעות מדעי המחשב (דוגמה) — 3 שנים.html", page)
 
+    def test_replacing_the_file_reopens_the_start_of_setup(self):
+        self.client.post("/setup/sample", data={"csrf_token": self.token()})
+        page = self.page()
+        self.assertIn('id="replaceFile" href="/setup?replace=1&amp;back=setup"', page)
+        self.assertNotIn('name="courses_excel"', page)            # loaded: no upload box until asked
+        page = self.client.get("/setup?replace=1").get_data(as_text=True)
+        self.assertIn('id="dropZone"', page)
+        self.assertIn('name="courses_excel"', page)
+        self.assertIn('<input type="hidden" name="return_to" value="setup">', page)
+        self.assertIn("מחליפים את <bdi>sample_courses.xlsx</bdi>", page)
+        self.assertIn('href="/data">להשאיר את הקובץ הנוכחי</a>', page)
+        self.assertEqual(page.count('class="gs-step is-waiting"'), 2)   # settings and build wait for the new file
+        self.assertNotIn('id="buildForm"', page)
+        page = self.client.get("/setup?replace=1&back=setup").get_data(as_text=True)
+        self.assertIn('href="/setup">להשאיר את הקובץ הנוכחי</a>', page)
+
+    def test_the_course_file_is_uploaded_only_on_setup(self):
+        self.assertIn('name="courses_excel"', self.page())
+        self.client.post("/setup/sample", data={"csrf_token": self.token()})
+        for url in ("/", "/data", "/rules", "/calendar", "/lecturers", "/setup"):
+            self.assertNotIn('name="courses_excel"', self.client.get(url).get_data(as_text=True), url)
+
     def test_setup_is_in_the_light_look_and_points_to_the_data_check(self):
         self.assertIn('<body class="is-light-page">', self.page())
         self.client.post("/setup/sample", data={"csrf_token": self.token()})

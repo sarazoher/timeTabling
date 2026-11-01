@@ -183,6 +183,8 @@
 .is-light-page .gs-drop { background: rgba(255, 255, 255, .5); border: 2px dashed rgba(117, 68, 154, .32); border-radius: 18px; transition: background .3s var(--tt-ease), border-color .3s var(--tt-ease); }
 .is-light-page .gs-drop.is-over { background: rgba(230, 201, 245, .5); border-color: var(--tt-plum); }
 .is-light-page .gs-filerow { padding: 12px 16px; border-radius: 14px; background: rgba(255, 255, 255, .72); }
+.gs-replacing { margin: 0 0 14px; padding: 12px 16px; border-radius: 14px; background: rgba(230, 201, 245, .45); line-height: 1.6; }
+.gs-replacing a { color: var(--tt-plum); font-weight: 800; text-underline-offset: 4px; margin-inline-start: 6px; }
 .is-light-page .gs-field input[type=text], .is-light-page .gs-field input[type=number], .is-light-page .gs-field select { border-radius: 12px; border: 1px solid #e3d3e8; background: #fff; }
 .is-light-page .gs-field input[readonly] { background: rgba(255, 255, 255, .5); }
 .is-light-page .gs-check input { accent-color: var(--tt-plum); }

@@ -35,18 +35,6 @@
 [dir="ltr"] .hm-week { transform: translateY(-56%) perspective(1200px) rotateY(-14deg) rotateX(6deg); mask-image: linear-gradient(to left, #000 35%, transparent 95%); -webkit-mask-image: linear-gradient(to left, #000 35%, transparent 95%); }
 .hm-week.is-faded { opacity: .45; filter: grayscale(.5); }
 
-.hm-drop { position: absolute; inset-inline-end: 6vw; top: 50%; transform: translateY(-58%); width: min(40vw, 520px); padding: 14px; }
-.hm-drop form { margin: 0; }
-.hm-drop-zone { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 40px 24px; border: 2px dashed rgba(255, 255, 255, .28); border-radius: 18px; transition: border-color .3s, background .3s; }
-.hm-drop-zone.is-over { border-color: var(--tt-lavender); background: rgba(199, 163, 205, .1); }
-.hm-drop-zone svg { color: var(--tt-lavender); }
-.hm-drop-zone strong { font-size: 21px; }
-.hm-drop-zone > span { color: var(--tt-on-dark-muted); margin-bottom: 10px; }
-.hm-file-button { position: relative; overflow: hidden; }
-.hm-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.hm-file-button:focus-within { outline: 3px solid var(--tt-lilac); outline-offset: 2px; }
-.hm-sample { margin: 14px 0 4px; text-align: center; color: var(--tt-on-dark-muted); }
-.hm-link-button { background: none; border: 0; padding: 4px; color: var(--tt-lavender); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 
 .hm-ledger { position: absolute; inset-inline-start: 6vw; inset-inline-end: max(6vw, 330px); bottom: 32px; display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
 .hm-ledger-title { display: flex; align-items: center; gap: 8px; color: var(--tt-lavender); font-weight: 700; padding-inline-end: 8px; }
@@ -93,7 +81,6 @@
 @media (max-width: 900px) {
     .hm-hero { min-height: 0; padding: 28px 18px 40px; display: flex; flex-direction: column; align-items: stretch; gap: 26px; }
     .hm-week { position: relative; inset: auto; transform: none !important; width: 100%; order: -1; mask-image: linear-gradient(#000 60%, transparent) !important; -webkit-mask-image: linear-gradient(#000 60%, transparent) !important; }
-    .hm-drop { position: relative; inset: auto; transform: none; width: 100%; order: 2; }
     .hm-ledger { position: relative; inset: auto; }
     .hm-status { padding: 30px 18px 0; }
     .hm-rules { padding: 70px 18px 60px; }
@@ -101,7 +88,4 @@
     .hm-ctas > * { flex: 1 1 auto; }
     .hm-ctas .tt-btn { width: 100%; }
     .home-rows { padding: 4px 16px; }
-}
-@media (prefers-reduced-motion: reduce) {
-    .hm-drop-zone { transition: none; }
 }

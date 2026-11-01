@@ -756,7 +756,6 @@ def setup_page():
         build_seconds=_build_seconds(),
         week_slots=_home_week_slots(timetable, config),
         showcase=_showcase_rules(),
-        has_sample=SAMPLE_COURSES_FILE.exists(),
     )
 
 
@@ -872,6 +871,9 @@ def guided_setup():
         year_review=_year_review(),
         return_to="setup",
         has_sample=SAMPLE_COURSES_FILE.exists(),
+        # "Replace file" (Data, or step 1 here) opens this page as it is at the
+        # start: the upload box, with steps 2 and 3 waiting for the new file.
+        replacing=has_file and request.args.get("replace") == "1",
     )
 
 

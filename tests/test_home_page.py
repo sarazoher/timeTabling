@@ -51,13 +51,13 @@ class HomePageTests(AuthFixture, unittest.TestCase):
         later = time.time() + 5   # built after the file was loaded
         os.utime(path, (later, later))
 
-    def test_new_account_shows_the_upload(self):
+    def test_new_account_is_sent_to_setup_to_upload(self):
         page = self.home()
-        self.assertEqual(main_button(page), ("/setup", "הגדרה שלב אחר שלב"))
-        self.assertIn('id="homeUpload"', page)
-        self.assertIn('name="courses_excel"', page)
-        self.assertIn('<input type="hidden" name="return_to" value="setup">', page)
-        self.assertIn('action="/setup/sample"', page)
+        self.assertEqual(main_button(page), ("/setup", "מתחילים: העלאת קובץ הקורסים"))
+        self.assertNotIn('name="courses_excel"', page)          # the file is uploaded only on Setup
+        self.assertNotIn('action="/courses/upload"', page)
+        self.assertNotIn('action="/setup/sample"', page)
+        self.assertEqual(len(re.findall(r'<span class="slot is-', page)), 6)   # example lessons in the week
         self.assertEqual(done_rows(page), 0)
         self.assertIn("עדיין לא הועלה", page)
         self.assertNotIn('action="/rebuild"', page)
