@@ -103,11 +103,25 @@ class DataRulesPagesTests(AuthFixture, unittest.TestCase):
         self.assertIn('class="tt-sky is-light"', page)
         self.assertIn('href="/static/work.css"', page)
 
+    def test_settings_and_data_page_folds_the_check_and_the_course_list(self):
+        self.load_sample()
+        page = self.client.get("/data").get_data(as_text=True)
+        self.assertIn("<h1>הגדרות ונתונים</h1>", page)
+        self.assertIn('aria-current="page">הגדרות ונתונים</a>', page)
+        buttons = page.split('class="dr-actions wk-file-actions"')[1].split("</div>")[0]
+        self.assertEqual(re.findall(r'class="gs-button gs-secondary( is-top)?"', buttons), [" is-top", "", ""])
+        self.assertIn('>הוספת קורס</a>', buttons.split("is-top")[1].split("</a>")[0] + "</a>")
+        self.assertIn('id="showCheck" href="#check" data-open="check">מה נמצא בקובץ</a>', buttons)
+        self.assertIn('<details class="dr-box dr-fold" id="check">', page)       # folded: the sample has nothing blocking
+        self.assertIn('<details class="dr-box dr-fold" id="courses">', page)
+        self.assertLess(page.index('id="courses"'), page.index('id="courseTable"'))
+
     def test_lecturer_hours_page_belongs_to_data(self):
         self.load_sample()
         page = self.client.get("/lecturers").get_data(as_text=True)
         self.assertIn('<body class="is-light-page">', page)
         self.assertIn('class="wk-back" href="/data"', page)
+        self.assertIn("חזרה להגדרות ונתונים", page)
         self.assertIn('href="/data">ביטול</a>', page)
         self.assertEqual(len(re.findall(r'name="lecturer_enabled_\w+"', page)), 7)
         self.assertNotIn('name="lecturer_start_Sunday"', page)           # not a teaching day: nothing to send
@@ -120,7 +134,7 @@ class DataRulesPagesTests(AuthFixture, unittest.TestCase):
         page = self.client.get("/rules").get_data(as_text=True)
         self.assertIn('<body class="is-light-page">', page)
         self.assertNotIn("נור איגור", page)
-        self.assertIn('<a href="/data">הנתונים</a>', page)
+        self.assertIn('<a href="/data">הגדרות ונתונים</a>', page)
         self.assertIn('data-assistant-open aria-controls="ai-assistant"', page)
         groups = page.split('class="dr-box wk-group ')[1:]
         self.assertEqual([g.split('"')[0] for g in groups], ["is-must", "is-pref"])

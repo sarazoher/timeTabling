@@ -1,4 +1,6 @@
-{# Data: the course file, settings, data check and the course list (last, since it is long).
+{# Settings and data (/data): the course file, settings and lecturer hours as cards, then
+   the folded sections: editing the settings, what was found in the file, adding a course,
+   and the course list (last, since it is long).
    Context: see app.data_page. Panels (column check, year moves) open over this page. #}
 {% set en = current_lang == 'en' %}
 <!DOCTYPE html>
@@ -6,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ 'Data' if en else 'נתונים' }} · TimeTabling</title>
+    <title>{{ 'Settings & data' if en else 'הגדרות ונתונים' }} · TimeTabling</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='world.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='work.css') }}">
@@ -28,7 +30,7 @@
 <main id="main-content" class="dr-page{{ ' behind-panel' if panel_open else '' }}"{% if panel_open %} aria-hidden="true"{% endif %}>
     <div class="dr-head">
         <div>
-            <h1>{{ 'Data' if en else 'נתונים' }}</h1>
+            <h1>{{ 'Settings & data' if en else 'הגדרות ונתונים' }}</h1>
             <p class="dr-lead">{{ "The course file, the settings and what was found in the file. Changes here don't affect the timetable until the next build." if en else 'קובץ הקורסים, ההגדרות ומה שנמצא בקובץ. שינוי כאן לא משנה את מערכת השעות עד הבנייה הבאה.' }}</p>
         </div>
         {% if has_file %}
@@ -57,9 +59,10 @@
         <section class="dr-box" aria-labelledby="drFile">
             <div class="wk-card-head"><span class="wk-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span><h2 id="drFile">{{ 'Course file' if en else 'קובץ הקורסים' }}</h2></div>
             <p class="dr-file"><bdi>{{ file_label }}</bdi><br><span>{% if en %}{{ course_count }} courses · {{ lecturer_count }} lecturers{% else %}{{ course_count }} קורסים · {{ lecturer_count }} מרצים{% endif %}</span></p>
-            <div class="dr-actions">
+            <div class="dr-actions wk-file-actions">
+                <a class="gs-button gs-secondary is-top" href="#manual-course" data-open="manual-course">{{ 'Add a course' if en else 'הוספת קורס' }}</a>
                 <a class="gs-button gs-secondary" id="replaceFile" href="{{ url_for('guided_setup', replace=1) }}">{{ 'Replace file' if en else 'החלפת קובץ' }}</a>
-                <a class="gs-button gs-secondary" href="#manual-course" data-open="manual-course">{{ 'Add a course' if en else 'הוספת קורס' }}</a>
+                <a class="gs-button gs-secondary" id="showCheck" href="#check" data-open="check">{{ "What's in the file" if en else 'מה נמצא בקובץ' }}</a>
             </div>
         </section>
 
@@ -93,7 +96,7 @@
     </div>
 
     {% set dc_state = 'is-blocking' if dc_blocking else ('is-warning' if dc_warnings else '') %}
-    <a class="wk-status dr-box" href="#check">
+    <a class="wk-status dr-box" href="#check" data-open="check">
         <span class="wk-bar {{ dc_state }}"><span class="wk-tick" aria-hidden="true">{% if dc_blocking or dc_warnings %}!{% else %}<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>{% endif %}</span>
         <span>{{ 'Data check:' if en else 'בדיקת נתונים:' }}
             {% if dc_blocking %}{% if en %}{{ dc_blocking|length }} problem(s) block the build{% else %}{{ dc_blocking|length }} בעיות חוסמות את הבנייה{% endif %}
@@ -133,8 +136,8 @@
         </form>
     </details>
 
-    <section class="dr-box" id="check" aria-labelledby="drCheckTitle">
-        <h2 id="drCheckTitle">{{ 'What was found in the file' if en else 'מה נמצא בקובץ' }}</h2>
+    <details class="dr-box dr-fold" id="check"{% if dc_blocking %} open{% endif %}>
+        <summary><h2 id="drCheckTitle">{{ 'What was found in the file' if en else 'מה נמצא בקובץ' }}</h2></summary>
         {% if not data_check %}
         <p class="gs-check-line is-ok"><strong>{{ 'The data looks good.' if en else 'הנתונים תקינים.' }}</strong> <span>{{ 'No problems were found in the course file.' if en else 'לא נמצאו בעיות בקובץ הקורסים.' }}</span></p>
         {% endif %}
@@ -148,7 +151,7 @@
             <ul class="dr-messages">{% for item in dc_info %}<li class="is-info">{{ item.en if en else item.he }}</li>{% endfor %}</ul>
         </details>
         {% endif %}
-    </section>
+    </details>
 
     <details class="dr-box dr-fold" id="manual-course">
         <summary><h2>{{ 'Add a course' if en else 'הוספת קורס' }}</h2></summary>
@@ -173,9 +176,9 @@
         </form>
     </details>
 
-    <section class="dr-box" aria-labelledby="drCourses">
-        <div class="dr-row">
-            <h2 id="drCourses">{{ 'Course list' if en else 'רשימת הקורסים' }} <span class="dr-count">({{ course_count }})</span></h2>
+    <details class="dr-box dr-fold" id="courses">
+        <summary><h2 id="drCourses">{{ 'Course list' if en else 'רשימת הקורסים' }} <span class="dr-count">({{ course_count }})</span></h2></summary>
+        <div class="dr-row wk-courses-search">
             <label class="dr-search"><span class="sr-only">{{ 'Search courses' if en else 'חיפוש קורס' }}</span>
                 <input id="courseSearch" type="search" placeholder="{{ 'Search by name, lecturer or number' if en else 'חיפוש לפי שם, מרצה או מספר' }}"></label>
         </div>
@@ -212,12 +215,12 @@
             </table>
             <p class="dr-no-match" id="noMatch" hidden>{{ 'No course matches the search.' if en else 'אין קורס שמתאים לחיפוש.' }}</p>
         </div>
-    </section>
+    </details>
     {% endif %}
 </main>
 <script>
 (function () {
-    // "Edit the settings" and "Add a course" open their folded section.
+    // The card buttons and the data-check bar open their folded section.
     function openFromHash() {
         const target = location.hash && document.querySelector(location.hash);
         if (target && target.tagName === 'DETAILS') target.open = true;

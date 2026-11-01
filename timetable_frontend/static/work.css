@@ -51,6 +51,13 @@
 .wk-go { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--tt-plum); box-shadow: 0 10px 20px -8px var(--tt-plum); }
 [dir="ltr"] .wk-go svg { transform: scaleX(-1); }
 
+/* Course file card: three buttons as a triangle, "Add a course" on top in
+   the middle, "Replace file" and "What's in the file" side by side below. */
+.wk-file-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.wk-file-actions .gs-button { justify-content: center; text-align: center; padding: 0 12px; }
+.wk-file-actions .is-top { grid-column: 1 / -1; justify-self: center; width: calc(50% - 5px); }
+.wk-courses-search { justify-content: flex-start; }
+
 /* Lecturer hours card */
 .wk-lecturers { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14.5px; }
 .wk-lecturers li { display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; border-radius: 12px; background: rgba(255, 255, 255, .6); }

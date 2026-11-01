@@ -19,7 +19,7 @@
         {% else %}
         <span class="app-nav-item is-disabled" tabindex="0" role="link" aria-disabled="true" aria-describedby="navTipTimetable">{{ 'Timetable' if en else 'מערכת השעות' }}<span class="app-nav-tip" id="navTipTimetable" role="tooltip">{{ 'Available after the first build. Finish setup first.' if en else 'יהיה זמין אחרי הבנייה הראשונה. קודם מסיימים את ההגדרה.' }}</span></span>
         {% endif %}
-        <a class="app-nav-item" href="{{ url_for('data_page') }}"{% if nav_active == 'data' %} aria-current="page"{% endif %}>{{ 'Data' if en else 'נתונים' }}</a>
+        <a class="app-nav-item" href="{{ url_for('data_page') }}"{% if nav_active == 'data' %} aria-current="page"{% endif %}>{{ 'Settings & data' if en else 'הגדרות ונתונים' }}</a>
         {% if nav_has_file or nav_active == 'rules' %}
         <a class="app-nav-item" href="{{ url_for('rules_page') }}"{% if nav_active == 'rules' %} aria-current="page"{% endif %}>{{ 'Rules' if en else 'כללים' }}</a>
         {% else %}

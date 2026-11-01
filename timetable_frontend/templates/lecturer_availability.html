@@ -18,7 +18,7 @@
 {% set nav_active = 'data' %}
 {% include "_top_nav.html" %}
 <main id="main-content" class="dr-page wk-narrow">
-    <a class="wk-back" href="{{ url_for('data_page') }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>{{ 'Back to Data' if en else 'חזרה לנתונים' }}</a>
+    <a class="wk-back" href="{{ url_for('data_page') }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>{{ 'Back to settings and data' if en else 'חזרה להגדרות ונתונים' }}</a>
     <div class="dr-head">
         <div>
             <h1>{{ 'Lecturer hours' if en else 'שעות של מרצים' }}</h1>
@@ -75,7 +75,7 @@
     <section class="dr-box wk-cal-empty">
         <h2>{{ 'No lecturers yet' if en else 'עדיין אין מרצים' }}</h2>
         <p>{{ 'Upload a course file or add courses first.' if en else 'קודם מעלים קובץ קורסים או מוסיפים קורסים.' }}</p>
-        <a class="gs-button" href="{{ url_for('data_page') }}">{{ 'Go to Data' if en else 'לדף הנתונים' }}</a>
+        <a class="gs-button" href="{{ url_for('data_page') }}">{{ 'Go to settings and data' if en else 'להגדרות ונתונים' }}</a>
     </section>
     {% endif %}
 </main>

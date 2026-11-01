@@ -97,7 +97,7 @@
                 <span class="home-mark" aria-hidden="true"></span>
                 <div><strong>{{ 'Course file' if en else 'קובץ הקורסים' }}<span class="sr-only">{{ (' (done)' if en else ' (הושלם)') if has_file else (' (not done)' if en else ' (לא הושלם)') }}</span></strong>
                 <span class="home-value">{% if has_file %}<bdi>{{ config.course_file_name or 'courses.xlsx' }}</bdi> · {{ courses|length }} {{ 'courses' if en else 'קורסים' }}{% else %}{{ 'Not uploaded yet' if en else 'עדיין לא הועלה' }}{% endif %}</span></div>
-                {% if has_file %}<a class="home-link" href="{{ url_for('data_page') }}">{{ 'Data' if en else 'נתונים' }}</a>{% endif %}
+                {% if has_file %}<a class="home-link" href="{{ url_for('data_page') }}">{{ 'Settings & data' if en else 'הגדרות ונתונים' }}</a>{% endif %}
             </li>
             <li class="{{ 'is-warn' if stale else ('is-done' if has_file else '') }}">
                 <span class="home-mark" aria-hidden="true"></span>

@@ -73,7 +73,7 @@
         {% else %}
         <p class="wk-own-empty">{{ 'No rules of your own yet. Write to the assistant what you need, in your own words; it shows you the rule before anything changes.' if en else 'עדיין אין כללים משלכם. כתבו לעוזר מה צריך, במילים שלכם; הוא מראה את הכלל לפני שמשהו משתנה.' }}</p>
         {% endif %}
-        <p class="wk-own-note">{{ 'Lecturer hours are set on the' if en else 'שעות של מרצים מוגדרות בדף' }} <a href="{{ url_for('data_page') }}">{{ 'Data page' if en else 'הנתונים' }}</a>.</p>
+        <p class="wk-own-note">{{ 'Lecturer hours are set under' if en else 'שעות של מרצים מוגדרות בדף' }} <a href="{{ url_for('data_page') }}">{{ 'Settings & data' if en else 'הגדרות ונתונים' }}</a>.</p>
     </section>
 
     <h2 class="wk-section-title">{{ 'Kept in every timetable' if en else 'נשמרים בכל מערכת שעות' }}</h2>
