@@ -56,10 +56,18 @@ class TimetableLookTests(AuthFixture, unittest.TestCase):
 
     def test_timetable_page_is_in_the_light_look(self):
         page = self.client.get("/calendar").get_data(as_text=True)
-        self.assertIn('<body class="is-light-page">', page)
+        self.assertIn('<body class="is-light-page wk-cal-wide">', page)
         self.assertIn('href="/static/work.css"', page)
         self.assertIn('wk-legend">', page.split('class="controls')[1].split("</section>")[0])
         self.assertNotIn("loadingOverlay", page)
+
+    def test_a_years_semesters_sit_in_one_row(self):
+        page = self.client.get("/calendar").get_data(as_text=True)
+        per_year = re.findall(r'class="dynamic-year-semesters"\s+style="--semester-count: (\d+);"', page)
+        self.assertTrue(per_year)
+        self.assertEqual(set(per_year), {str(self.config["semesters_per_year"])})
+        css = (FRONTEND / "static" / "work.css").read_text(encoding="utf-8")
+        self.assertIn("grid-template-columns: repeat(var(--semester-count), minmax(0, 1fr))", css)
 
     def test_hours_outside_each_day_are_shaded(self):
         page = self.client.get("/calendar").get_data(as_text=True)

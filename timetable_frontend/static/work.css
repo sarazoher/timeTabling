@@ -145,6 +145,13 @@
 .is-light-page .all-semesters-heading p { color: var(--tt-muted); }
 .is-light-page .degree-year-section { background: rgba(255, 255, 255, .5); backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2); border: 1px solid rgba(255, 255, 255, .9); border-radius: 22px; box-shadow: 0 24px 48px -28px rgba(60, 20, 90, .45), inset 0 1px 0 #fff; }
 .is-light-page .degree-year-header h2 { font-size: 22px; font-weight: 900; }
+/* All semesters: a year's semesters side by side in one row (three for a
+   three-semester year). The page is wider than the other work pages so each
+   semester card keeps room for two day columns. */
+.is-light-page.wk-cal-wide .dr-page.wk-cal-page { max-width: 1440px; }
+@media (min-width: 1000px) {
+    .is-light-page .dynamic-year-semesters { grid-template-columns: repeat(var(--semester-count), minmax(0, 1fr)); }
+}
 .is-light-page .dynamic-semester-card { background: rgba(255, 255, 255, .7); border: 1px solid #fff; border-radius: 18px; box-shadow: 0 12px 26px -20px rgba(60, 20, 90, .5); transition: transform .3s var(--tt-ease), box-shadow .3s var(--tt-ease); }
 .is-light-page .dynamic-semester-card:hover { transform: translateY(-3px); box-shadow: 0 20px 36px -22px rgba(60, 20, 90, .6); }
 .is-light-page .dynamic-semester-card:focus-visible { outline: 3px solid var(--tt-lilac); outline-offset: 3px; }

@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='work.css') }}">
 {% include "_favicon.html" %}
 </head>
-<body class="is-light-page">
+<body class="is-light-page wk-cal-wide">
 {% set sky = 'light' %}{% include "_sky.html" %}
 {% set page_messages = get_flashed_messages(with_categories=true) %}
 {% set nav_active = 'timetable' %}
