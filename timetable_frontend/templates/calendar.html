@@ -158,12 +158,12 @@
                     <div>
                         <h2>{{ _('Overview of the entire degree') }}</h2>
                         <p>
-                            {{ _('Compact view: days without classes take up no space, and breaks are preserved in the schedule but are not shown as empty space.') }}
+                            {{ 'Each semester as a week: every teaching day is a column, and the lessons are listed in order. Click a semester to see it hour by hour.' if en else 'כל סמסטר כשבוע: כל יום לימודים הוא עמודה, והשיעורים מופיעים לפי הסדר. לחיצה על סמסטר פותחת אותו לפי שעות.' }}
                         </p>
                     </div>
                 </div>
 
-                <div class="degree-overview dynamic-degree-overview">
+                <div class="degree-overview dynamic-degree-overview{{ ' has-many-days' if days|length > 4 else (' has-four-days' if days|length == 4 else '') }}">
                     {% for year_group in year_groups %}
                         <section class="degree-year-section dynamic-year-section">
                             <header class="degree-year-header">
@@ -194,42 +194,35 @@
                                         </header>
 
                                         {% if group.events %}
-                                            <div class="dynamic-days-grid">
+                                            {# Every teaching day is a column, side by side, in the same order in
+                                               every semester, so the columns line up across the year (poster view). #}
+                                            <div class="dynamic-days-grid" style="--day-count: {{ days|length }};">
                                                 {% for day in days %}
                                                     {% set day_events = group.events
                                                         | selectattr("day", "equalto", day.key)
                                                         | list
                                                         | sort(attribute="start")
                                                     %}
-
-                                                    {% if day_events %}
-                                                        <section class="dynamic-day-column">
-                                                            <header class="dynamic-day-title">
-                                                                {{ day_label(day.key) }}
-                                                            </header>
-
-                                                            <div class="dynamic-events-list">
-                                                                {% for event in day_events %}
-                                                                    <article
-                                                                        class="dynamic-event category-{{ event.course_category }} {{ 'tutorial' if event.event_type == 'Tutorial' else 'lecture' }}"
-                                                                        title="{{ event.name }} | {{ event.event_type_label }} | ⁦{{ event.start }}–{{ event.end }}⁩ | {{ event.lecturer }}"
-                                                                    >
-                                                                        <div class="dynamic-event-top">
-                                                                            <strong>{{ event.name }}</strong>{% if config.allow_semester_b_start %}<span class="cohort-badge">{{ ('Cohort ' ~ event.cohort_label) if current_lang == 'en' else ('מחזור ' ~ event.cohort_label) }}</span>{% endif %}
-                                                                            <span><bdi dir="ltr" class="time-range">{{ event.start }}–{{ event.end }}</bdi></span>
-                                                                        </div>
-
-                                                                        <div class="dynamic-event-meta">
-                                                                            <span>
-                                                                                {{ event.event_type_label }}
-                                                                            </span>
-                                                                            <span>{{ event.lecturer }}</span>
-                                                                        </div>
-                                                                    </article>
-                                                                {% endfor %}
-                                                            </div>
-                                                        </section>
-                                                    {% endif %}
+                                                    <section class="dynamic-day-column{{ '' if day_events else ' is-empty' }}">
+                                                        <header class="dynamic-day-title">{{ day_label(day.key) }}</header>
+                                                        {% if day_events %}
+                                                        <div class="dynamic-events-list">
+                                                            {% for event in day_events %}
+                                                                <article
+                                                                    class="dynamic-event category-{{ event.course_category }} {{ 'tutorial' if event.event_type == 'Tutorial' else 'lecture' }}"
+                                                                    title="{{ event.name }} | {{ event.event_type_label }} | ⁦{{ event.start }}–{{ event.end }}⁩ | {{ event.lecturer }}"
+                                                                >
+                                                                    <strong class="dynamic-event-name">{{ event.name }}</strong>
+                                                                    <span class="dynamic-event-time"><bdi dir="ltr" class="time-range">{{ event.start }}–{{ event.end }}</bdi></span>
+                                                                    <span class="dynamic-event-meta"><span>{{ event.event_type_label }}</span> · <span>{{ event.lecturer }}</span></span>
+                                                                    {% if config.allow_semester_b_start %}<span class="cohort-badge">{{ ('Cohort ' ~ event.cohort_label) if current_lang == 'en' else ('מחזור ' ~ event.cohort_label) }}</span>{% endif %}
+                                                                </article>
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% else %}
+                                                        <p class="dynamic-day-empty"><span aria-hidden="true">—</span><span class="sr-only">{{ 'No classes' if en else 'אין שיעורים' }}</span></p>
+                                                        {% endif %}
+                                                    </section>
                                                 {% endfor %}
                                             </div>
                                         {% else %}

@@ -69,6 +69,20 @@ class TimetableLookTests(AuthFixture, unittest.TestCase):
         css = (FRONTEND / "static" / "work.css").read_text(encoding="utf-8")
         self.assertIn("grid-template-columns: repeat(var(--semester-count), minmax(0, 1fr))", css)
 
+    def test_every_teaching_day_is_a_column_in_every_semester(self):
+        page = self.client.get("/calendar").get_data(as_text=True)
+        open_days = [day for day, values in self.config["days"].items() if values.get("enabled")]
+        cards = page.split('class="dynamic-semester-card"')[1:]
+        with_lessons = [card for card in cards if 'class="dynamic-event ' in card]
+        self.assertEqual(len(with_lessons), 1)
+        self.assertIn('class="dynamic-days-grid" style="--day-count: %d;"' % len(open_days), with_lessons[0])
+        self.assertEqual(with_lessons[0].count('class="dynamic-day-column'), len(open_days))
+        for card in cards:
+            if card not in with_lessons:                                     # an empty semester says so
+                self.assertIn("dynamic-empty-semester", card)
+        self.assertEqual(page.count('class="dynamic-event '), 1)            # the one lesson, Monday of semester 1
+        self.assertIn("dynamic-day-column is-empty", page)                 # days without lessons keep their column
+
     def test_hours_outside_each_day_are_shaded(self):
         page = self.client.get("/calendar").get_data(as_text=True)
         open_days = [day for day, values in self.config["days"].items() if values.get("enabled")]

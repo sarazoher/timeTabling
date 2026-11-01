@@ -148,10 +148,27 @@
 /* All semesters: a year's semesters side by side in one row (three for a
    three-semester year). The page is wider than the other work pages so each
    semester card keeps room for two day columns. */
-.is-light-page.wk-cal-wide .dr-page.wk-cal-page { max-width: 1440px; }
+.is-light-page.wk-cal-wide .dr-page.wk-cal-page { max-width: 1640px; }
 @media (min-width: 1000px) {
     .is-light-page .dynamic-year-semesters { grid-template-columns: repeat(var(--semester-count), minmax(0, 1fr)); }
+    /* More teaching days need wider semesters: two per row for 4 days, one for 5 or more. */
+    .is-light-page .has-four-days .dynamic-year-semesters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .is-light-page .has-many-days .dynamic-year-semesters { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Inside a semester: every teaching day side by side, each course a compact
+   card (name, time, then lesson type and lecturer), easy to read from a poster stand. */
+.is-light-page .dynamic-days-grid { grid-template-columns: repeat(var(--day-count, 3), minmax(0, 1fr)); gap: 6px; align-items: stretch; }
+.is-light-page .dynamic-day-column { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.is-light-page .dynamic-day-title { padding: 6px 4px; font-size: 14px; text-align: center; }
+.is-light-page .dynamic-events-list { padding: 0; gap: 6px; }
+.is-light-page .dynamic-event { display: flex; flex-direction: column; gap: 2px; padding: 7px 8px; text-align: start; }
+.is-light-page .dynamic-event-name { font-size: 14px; font-weight: 800; line-height: 1.25; color: var(--tt-plum-deep); overflow-wrap: anywhere; }
+.is-light-page .dynamic-event-time { font-size: 13px; font-weight: 700; color: #2b1238; font-variant-numeric: tabular-nums; }
+.is-light-page .dynamic-event-meta { display: block; margin: 0; font-size: 12px; line-height: 1.35; color: #5a4866; }
+.is-light-page .dynamic-event .cohort-badge { align-self: flex-start; margin: 2px 0 0; font-size: 11px; padding: 1px 7px; }
+.is-light-page .dynamic-day-column.is-empty .dynamic-day-title { opacity: .55; }
+.dynamic-day-empty { margin: 0; padding: 10px 0; text-align: center; color: rgba(117, 68, 154, .35); font-weight: 700; border: 1.5px dashed rgba(117, 68, 154, .14); border-radius: 10px; }
 .is-light-page .dynamic-semester-card { background: rgba(255, 255, 255, .7); border: 1px solid #fff; border-radius: 18px; box-shadow: 0 12px 26px -20px rgba(60, 20, 90, .5); transition: transform .3s var(--tt-ease), box-shadow .3s var(--tt-ease); }
 .is-light-page .dynamic-semester-card:hover { transform: translateY(-3px); box-shadow: 0 20px 36px -22px rgba(60, 20, 90, .6); }
 .is-light-page .dynamic-semester-card:focus-visible { outline: 3px solid var(--tt-lilac); outline-offset: 3px; }
