@@ -1,409 +1,310 @@
-# University Timetable Scheduler
+<div align="center">
 
-A Python application for generating university course timetables from Excel data, department availability, and academic constraints. The interface supports Hebrew and English, with Hebrew as the default.
+<img src="timetable_frontend/static/logo.svg" width="88" alt="TimeTabling logo: a plum timetable with a graduation cap">
 
-This guide documents the supplied timetable application, including its Stage 1 interval-model performance fix.
+# TimeTabling
 
-## Accounts and sign-in
+**A smart system for planning study programs and scheduling courses**
 
-Start the app with the Windows commands below, then open http://127.0.0.1:5000/. The app now opens the sign-in screen. Choose **יצירת חשבון / Create an account**, enter your name, email and a password of at least 10 characters, and confirm the password. Registration signs you in immediately. Use **יציאה מהחשבון / Sign out** in the top bar when finished.
+One Excel course file in. A complete, valid timetable for a whole degree out, in about a minute.<br>
+Change it in plain words; nothing changes until you approve.
 
-Each account accesses the same department workspace: courses, settings, generated timetables, and the scheduling assistant are shared. All registered users currently have the same editing permissions. This version does not introduce separate personal timetables or administrator/student roles. Registration is open to anyone who can reach this app. Email is a sign-in identifier. Email verification is not implemented. Password-reset email delivery is available after configuring SMTP; local recovery works without email.
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3-000000?logo=flask&logoColor=white)
+![Google OR-Tools CP-SAT](https://img.shields.io/badge/OR--Tools-CP--SAT-4285F4?logo=google&logoColor=white)
+![Claude API](https://img.shields.io/badge/Claude-API-D97757)
+![290 tests passing](https://img.shields.io/badge/tests-290%20passing-2ea44f)
+![Hebrew and English](https://img.shields.io/badge/UI-Hebrew%20%7C%20English-75449a)
 
-Accounts persist in `.instance/accounts.sqlite3` in the project root. A random session signing key is generated in `.instance/secret.key` on first launch. Keep this folder on your own computer when upgrading the project; back it up privately with your department data. Do not distribute it with project ZIPs. The supplied archive contains no accounts, passwords, signing keys, or active sessions. There are no default credentials.
+<img src="docs/screenshots/home.jpg" alt="TimeTabling home page: the Computer Science (sample) timetable is ready, 38 courses and 56 weekly meetings placed in about a minute, with a validity check showing zero problems" width="100%">
 
-Passwords use Werkzeug scrypt hashing. Sessions expire after eight hours, and sign-out revokes the server session. All timetable pages, exports and modifying routes require sign-in; POST forms include CSRF protection. Repeated login attempts are temporarily limited. Existing standalone HTML files that were already downloaded remain standalone documents; signing out cannot revoke a copy someone downloaded.
+</div>
 
-Optional configuration:
-- `TIMETABLE_AUTH_DIR`: absolute path to an existing persistent accounts directory when upgrading into a new project folder.
-- `TIMETABLE_SECRET_KEY`: a deployment-managed random secret of at least 32 characters; otherwise the local key file is used.
-- `TIMETABLE_HTTPS=1`: secure cookies for an HTTPS deployment. Leave unset for the default local HTTP address.
+---
 
-The app still binds to `127.0.0.1` by default. Account support does not publish it online. This remains a shared workspace with file-based timetable data, so coordinate configuration edits and generation between users.
+## The problem
 
-## Forgot your password?
+Every year an academic department builds the timetable for an entire degree: dozens of courses, lecturers and prerequisite chains, squeezed into very few teaching hours. Building it by hand in Excel is long work, and a single change (a lecturer who becomes unavailable, a new course) sets off a chain of fixes.
 
-### Reset now on your Windows computer
+It is also genuinely hard. The number of ways to place the courses grows explosively with every course added, into the billions; timetabling is a known NP-hard problem, so trying every option is out of the question. General scheduling tools such as UniTime exist, but they are complex to run, don't know a degree's own rules, and need technical knowledge to set rules up.
 
-Update the application files in your existing project folder, keeping its `.instance` folder. Do not delete or replace your account database. If extracting into a new folder, copy your existing `.instance` folder there first, or set `TIMETABLE_AUTH_DIR` to its original absolute location. Stop and restart the app after updating.
+**TimeTabling asks:** can a valid, comfortable timetable for a whole degree be built automatically, even with very little teaching time and two intakes a year, and then be changed in free language with no technical knowledge?
 
-In PowerShell, in the project folder containing `requirements.txt`, run:
+## The answer: yes
 
-```powershell
-.\.venv\Scripts\python.exe reset_password.py
+On the computer science department's real data, with only **3 teaching days** (Monday and Thursday 17:00–22:00, Friday 08:00–14:00 = 16 hours a week) and **two intakes** (one starting in semester A, one in semester B):
+
+| Courses | Lecturers | Weekly meetings placed | Lecturer clashes | Courses shared by both intakes | Total run time |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| **38** | **15** | **65** | **0** | **32 / 38** | **≈ 100 s** |
+
+- All 38 courses fit inside the three degree years; none was pushed to an extra year.
+- Planning which semester each course goes in took **under two seconds**.
+- The semester-B intake needed only **3 extra course openings** instead of a second copy of the degree.
+- Every built timetable is checked again after the solve: 0 lessons outside teaching hours, 0 lecturer clashes, 0 overlapping required courses, 0 courses pushed past the degree, 0 unrecognised prerequisites.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A["📄 Course file<br/>(Excel)"] --> B["Read and check<br/>columns, hours, data errors"]
+    B --> C["Stage 1<br/>Which semester?<br/>CP-SAT"]
+    C --> D["Stage 2<br/>Which day and hour?<br/>CP-SAT"]
+    D --> E["Semester-B intake<br/>joins existing courses"]
+    E --> F["🗓️ Timetable<br/>web view, HTML / PDF"]
+    G["💬 A request<br/>in plain words"] --> H["Claude turns it<br/>into a rule"]
+    H --> I{"You<br/>approve?"}
+    I -- yes --> C
+    classDef step fill:#f4eefa,stroke:#75449a,color:#250433
+    classDef ai fill:#e6c9f5,stroke:#75449a,color:#250433
+    classDef solve fill:#75449a,stroke:#250433,color:#ffffff
+    class A,B,E,F step
+    class C,D solve
+    class G,H,I ai
 ```
 
-Enter the registered email, then the new password twice. Password typing is hidden. Use 10–256 characters. The command updates only that account's password and revokes its sessions and outstanding reset links. It does not delete accounts, courses or timetables. Local recovery is an operator command: it requires access to the computer and account database, and is not exposed as an unauthenticated web reset.
+**Splitting the problem is the key.** A single model that decides semesters, days and hours at once is too big to solve in reasonable time. TimeTabling first decides *which semester* each course is taught in (Stage 1), then *which day and hour* each lecture and tutorial gets on a 5-minute grid (Stage 2), and finally polishes the result for comfortable breaks and round start times. Both stages are models for [Google OR-Tools CP-SAT](https://developers.google.com/optimization/cp/cp_solver), a constraint solver: you give it variables (semester, day, start time), rules it may never break, and penalties for things that are merely inconvenient, and it searches for the best placement.
 
-### Reset by email
+<table>
+<tr>
+<th width="50%">Always (never broken)</th>
+<th width="50%">As far as possible (penalties)</th>
+</tr>
+<tr valign="top">
+<td>
 
-The sign-in screen now includes **שכחת סיסמה? / Forgot password?**. When SMTP is configured, enter the account email. The email contains a random single-use link that expires after 30 minutes. Only its hash is stored in SQLite. Requesting a newer link invalidates the older link. Opening a link does not consume it; successfully submitting a new password does. Sign in again after resetting; existing sessions on all devices are revoked. Known and unknown addresses receive the same response, and requests are rate-limited.
+- A prerequisite comes in an earlier semester; a parallel requirement in the same semester or earlier
+- Every lecture and tutorial is placed exactly once, in its course's semester
+- A lecturer never teaches two classes at once
+- Required and general courses never overlap any other course
+- Only inside the teaching days and hours, and inside a lecturer's own hours when set
+- Each course stays in its study year, so the degree ends on time
 
-Set these environment variables in the app server's environment before starting it:
+</td>
+<td>
 
-| Variable | Value |
-| --- | --- |
-| `TIMETABLE_SMTP_HOST` | Your email provider's SMTP hostname |
-| `TIMETABLE_SMTP_PORT` | Usually `587` for STARTTLS or `465` for implicit TLS; use your provider's settings |
-| `TIMETABLE_SMTP_SECURITY` | `starttls` (default) or `ssl` |
-| `TIMETABLE_SMTP_USER` | SMTP username, if authentication is required |
-| `TIMETABLE_SMTP_PASSWORD` | SMTP credential supplied by your provider |
-| `TIMETABLE_SMTP_FROM` | Sender address permitted by your provider |
-| `TIMETABLE_PUBLIC_URL` | The trusted base address users visit, e.g. `https://your-department.example`; for local testing, `http://127.0.0.1:5000` |
+- Breaks of 5–30 minutes between classes, not back to back and no long gaps
+- A balanced load across days and semesters
+- Compact teaching days and quarter-hour start times
+- Electives and seminars at separate times (they may overlap only as a fallback, since no student takes all of them)
+- As many courses as possible shared between the two intakes
 
-Links use the configured base URL, never the request Host header. Use HTTPS for a hosted deployment. Keep SMTP credentials outside source control and project ZIPs. If email delivery is not configured, the recovery page explains local recovery instead of claiming to send a link. SMTP failures are logged without passwords or tokens; no actual email delivery is tested by the automated suite.
+</td>
+</tr>
+</table>
 
-The database gains a `password_resets` table automatically on startup; existing users and their passwords are preserved during the upgrade.
+When no timetable fits, the app says so plainly and points at the rule or data in the way (for example, a prerequisite chain too long for its study year), instead of failing silently.
 
-## 1. Install and run
+## Change it in plain words
 
-Extract this archive and open a terminal in the folder containing `requirements.txt`, `timetable_frontend`, and `timetable_backend`.
+Write what you need in Hebrew or English, the way you would tell a colleague. Claude turns the request into a structured rule, shows it to you, and the solver enforces it **only after you approve**.
 
-### Windows PowerShell
+<img src="docs/screenshots/assistant.jpg" alt="The assistant drawer on the Rules page: the request 'Dr. Nur Igor cannot teach on Thursdays' and the proposed rule with a button to apply it and rebuild" width="100%">
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python timetable_frontend/app.py
+<sub>An example request and the rule the assistant proposes for it.</sub>
+
+> Dr. Nur Igor can't teach on Thursdays.
+
+becomes
+
+
+```json
+{
+  "kind": "placement_filter",
+  "description": "Dr. Nur Igor does not teach on Thursdays",
+  "hard": true,
+  "scope": { "lecturers": ["Dr. Nur Igor"] },
+  "forbidden_days": ["Thursday"]
+}
 ```
 
-If PowerShell blocks activation, run the environment's Python directly:
+The assistant understands three kinds of rules, and combines them for broader requests:
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe timetable_frontend/app.py
-```
+| Kind | Examples |
+|---|---|
+| **Placement** of courses, lecturers or study years | "only on Monday", "never after 18:00", "Data Structures in semester B" |
+| **Relation** between two courses | "on different days", "before / after / in the same semester as …" |
+| **Day load** | "make Wednesday lighter for second-year students", "at most 4 hours on Wednesday" |
 
-### macOS / Linux
+Words like *can't, must, never, only* become rules that must hold; *prefer, try, if possible* become preferences. If a request is vague, the assistant asks one short question instead of guessing. Semester rules are applied already in Stage 1, so "move this course to semester B" moves the courses that depend on it too.
+
+## A quick tour
+
+The screenshots show the English interface. The app opens in Hebrew, right to left, by default; the language switch is in the top menu on every page.
+
+<table>
+<tr valign="top">
+<td width="50%"><img src="docs/screenshots/setup.jpg" alt="Guided setup with three steps: course file, settings, check and build"><br><sub><b>Guided setup.</b> Upload the course file (or try the sample), check the settings, build.</sub></td>
+<td width="50%"><img src="docs/screenshots/building.jpg" alt="The building screen: a chain of courses lighting up above a progress bar and the build steps"><br><sub><b>Building.</b> Runs in the background with live progress; it can be cancelled.</sub></td>
+</tr>
+<tr valign="top">
+<td width="50%"><img src="docs/screenshots/timetable-overview.jpg" alt="The whole degree by year: three semesters side by side, each with Monday, Thursday and Friday columns of courses"><br><sub><b>The whole degree at a glance.</b> Each year in one row, each semester as a week. Click a semester to see it hour by hour.</sub></td>
+<td width="50%"><img src="docs/screenshots/settings-and-data.jpg" alt="Settings and data: cards for the course file, the settings and lecturer hours, and a data-check bar"><br><sub><b>Settings and data.</b> The course file, teaching days and hours, lecturer hours, and what was found in the file.</sub></td>
+</tr>
+<tr valign="top">
+<td width="50%"><img src="docs/screenshots/sign-in.jpg" alt="The sign-in page with the headline 'Your next timetable starts here'"><br><sub><b>Accounts.</b> Each account keeps its own course file and timetable.</sub></td>
+<td width="50%">
+<img src="docs/screenshots/phone-home.jpg" width="48%" alt="Home on a phone">
+<img src="docs/screenshots/phone-timetable.jpg" width="48%" alt="The degree overview on a phone"><br><sub><b>On a phone too.</b> Every page works at 390 px wide.</sub></td>
+</tr>
+</table>
+
+## Features
+
+**Getting the data in**
+- **Column check.** Headers with different names are matched by known synonyms, likely typos or the column's values; you confirm once and the names are remembered.
+- **Data check before every build.** Blocking problems, warnings and information, each in plain words: duplicate course IDs, prerequisites that match no course, rows that were skipped or given default hours, and more.
+- **Prerequisite parser** for `A + B / C` (and / or, with parentheses), safe for names like *C++*.
+- **Lecture and tutorial hours** are computed from credits and weekly hours.
+- **Study years**, three ways: exactly as in the file; suggest the fewest course moves and wait for approval (the default); or move them automatically and report.
+
+**Building**
+- **Semester-B intake.** A second cohort starting in semester B joins existing courses wherever its prerequisites allow; seminars are always shared.
+- **Lecturer hours.** Limit a lecturer to certain days and hours.
+- **Background builds** with a progress page, cancel, and a clear report when something is in the way.
+- **Your own rules** from the assistant, listed on the Rules page beside the built-in ones.
+
+**Seeing and sharing**
+- **Semester view** hour by hour, with the hours outside each day's teaching window shaded.
+- **Degree overview** by year, in the course-category colours (required, elective, seminar, project, general).
+- **Download** one standalone HTML file for students: pick cohort A, B or both, open it offline, print it or save it as PDF.
+- **Hebrew first** (right to left) with English one click away; keyboard friendly, visible focus, reduced motion respected.
+
+## Quick start
+
+Requires Python 3.11 or newer.
 
 ```bash
+git clone https://github.com/sarazoher/timeTabling.git
+cd timeTabling
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate              # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python timetable_frontend/app.py
 ```
 
-The app opens the browser automatically. If necessary, open:
+The browser opens at **http://127.0.0.1:5000**; the app starts in Hebrew, and the switch to English is in the top corner. Create an account, then on the setup page choose **Try it with sample data** and build: the bundled computer science sample (38 courses) is ready in about a minute.
 
-http://127.0.0.1:5000/
+**To use the assistant**, set an [Anthropic API key](https://console.anthropic.com/) in the same terminal before starting the app. Everything else works without one.
 
-Core dependencies are Flask, Flask-Babel, pandas, openpyxl, and OR-Tools. Use your own virtual environment rather than a bundled environment from an older archive.
-
-## 2. Generate a timetable
-
-1. Open the dashboard and review the loaded course catalog.
-2. Upload a course Excel workbook or add courses manually when needed.
-3. Open **Day & Hour Adjustment** (`/days`) to set the degree length, enabled teaching days, and each day's allowed start/end time.
-4. Enable semester-B intake if the schedule must support both starting cohorts.
-5. Review the built-in constraints and any natural-language rules.
-6. Click **Build Timetable**. The frontend saves the configuration, runs the backend, and displays the result on `/calendar`.
-
-The regular degree horizon is calculated as:
-
-```text
-degree_years × semesters_per_year
+```bash
+export ANTHROPIC_API_KEY="your-key"     # Windows PowerShell: $env:ANTHROPIC_API_KEY="your-key"
+export CLAUDE_MODEL="…"                 # optional: choose a model available to your account
 ```
 
-The newer dashboard separates day/hour adjustments from the main page. The older multilingual archive uses an earlier setup-page flow.
+## The course file
 
-## 3. Project structure
+One Excel sheet, one row per course. The column headers follow the sample file, [`timetable_frontend/sample/sample_courses.xlsx`](timetable_frontend/sample/sample_courses.xlsx); if yours are named differently, the column check matches them and asks you to confirm.
 
-| Path | Purpose |
-| --- | --- |
-| `requirements.txt` | Application dependencies |
-| `timetable_frontend/app.py` | Flask application, dashboard, imports, and exports |
-| `timetable_frontend/templates/` | Page templates |
-| `timetable_frontend/static/` | Styles and browser assets |
-| `timetable_frontend/course_translations.json` | English catalog translations indexed by course ID |
-| `timetable_frontend/translations/` | Hebrew and English interface translations |
-| `timetable_backend/main.py` | Backend entry point |
-| `timetable_backend/excel_reader.py` | Excel parsing and course-hour calculations |
-| `timetable_backend/scheduler.py` | Semester planning and weekly scheduling |
-| `timetable_backend/models.py` | Course data models |
-| `timetable_backend/output.py` | Output generation |
-| `timetable_backend/courses.xlsx` | Main course workbook |
-| `timetable_backend/schedule_config.json` | Saved scheduling settings |
+| Field | Needed |
+|---|:-:|
+| Course ID | ✔ |
+| Course name | ✔ |
+| Study year | ✔ |
+| Credits | ✔ |
+| Course category: required, general, elective, seminar or project (written as in the sample file) | ✔ |
+| Prerequisites: `+` means and, `/` means or | ✔ |
+| Parallel requirements | |
+| Lecturer | |
+| Weekly hours | |
+| Lesson type: lecture only, or lecture and tutorial | |
 
-## 4. Course data
+Optional fields that are missing get a default, and the data check lists them.
 
-The course workbook provides course identifiers, names, study years, lecturers, credits, weekly hours, lesson types, prerequisites, and parallel requirements.
+<details>
+<summary><b>How lecture and tutorial hours are calculated</b></summary>
 
-Important source column names include:
-
-| Column | Meaning |
-| --- | --- |
-| `מס.שעור` | Course ID |
-| `שם השיעור` | Course name |
-| `שם המרצה` | Lecturer |
-| `נ.זיכוי` | Credits |
-| `ש"ש` | Source weekly hours |
-| `סוג שיעור` | Lesson type, including whether lecture and tutorial are combined |
-| `תיאור ד.קדם` | Prerequisite requirements |
-| `תיאור ד.מקבילה` | Parallel requirements |
-| `קטגוריית קורס` | Course category, when supplied |
-
-Lesson type and course category serve different purposes: the lesson type affects the hour calculation, while the category affects overlap rules and display colors.
-
-Supported categories are חובה (required), כללי (general), בחירה (elective), סמינר (seminar), and פרויקט (project). When the category column is absent, the application infers the category from the available course data, defaulting to required.
-
-Keep lecturer names consistent across rows. Different spellings can cause the solver to treat one lecturer as multiple people. Preserve distinct course IDs unless a duplicate has been confirmed.
-
-Prerequisite parsing preserves course names containing C++ by splitting only on a plus sign surrounded by spaces.
-
-### Hour calculation in the supplied newer code
-
-For source weekly hours `S` and credits `C`, the reader first calculates:
+The weekly-hours column is in half-hour units, so a course meets `W = 2 × S` hours a week. For lessons marked lecture and tutorial, the credits `C` split those hours:
 
 ```text
 W = 2 × S
-```
-
-For lesson types explicitly identified as lecture plus tutorial:
-
-```text
-lecture hours = 2 × C − W
+lecture hours  = 2 × C − W
 tutorial hours = 2 × (W − C)
 ```
 
-Other lesson types receive `W` lecture/meeting hours and zero tutorial hours. Negative calculated durations are invalid source data and stop generation. A lecture-plus-tutorial row that calculates zero tutorial hours is flagged for review.
+Other lesson types meet as one block of `W` hours, with no tutorial. A negative result is invalid data and stops the build; a lecture-and-tutorial course with zero tutorial hours is flagged for review.
+</details>
 
-These formulas describe the supplied implementation. They are not a universal university credit rule; review flagged rows against the approved course data.
-
-## 5. Scheduling constraints
-
-### Hard constraints
-
-- A prerequisite must occur in an earlier semester than its dependent course.
-- A parallel requirement may occur in the same semester or an earlier semester.
-- A course's lecture and tutorial belong to its selected semester.
-- A lecturer cannot teach overlapping events.
-- Events must fit within enabled department days and allowed hours, including applicable lecturer restrictions.
-- Course-category overlap rules must be respected.
-
-### Course-category overlap policy
+<details>
+<summary><b>Which course categories may overlap</b></summary>
 
 | Combination | Policy |
-| --- | --- |
-| Required + any course | Forbidden |
-| General + any course | Forbidden |
-| Project + project | Allowed, subject to lecturer constraints |
-| Project + another category | Forbidden |
-| Elective + elective | Allowed with a penalty |
-| Elective + seminar | Allowed with a penalty |
-| Seminar + seminar | Allowed with a penalty |
+|---|---|
+| Required or general + any course | Never |
+| Project + project | Allowed (lecturer rules still apply) |
+| Project + any other category | Never |
+| Elective / seminar + elective / seminar | Allowed only as a fallback, with a penalty |
 
-Lecturer conflicts remain forbidden even when the course-category combination permits overlap.
+A lecturer can never teach two classes at once, whatever the categories.
+</details>
 
-### Soft preferences
-
-The solver favors a convenient schedule, including balanced loads, sharing offerings between cohorts, fewer repeated offerings, and compact student days. It uses a five-minute time grid for break preferences:
-
-- Zero-minute breaks receive a penalty.
-- Breaks of 5, 10, 15, 20, 25, or 30 minutes are preferred.
-- Breaks longer than 30 minutes receive increasing penalties.
-
-Unnecessary semester gaps along prerequisite chains are also penalized. Soft preferences do not override hard constraints.
-
-## 6. Semester-B intake
-
-When enabled, cohort A starts in semester 1 and cohort B starts in semester 2. The semester planner considers both cohorts before fixing A’s semesters. Existing offerings can be shared within the catalog study year whenever B’s own prerequisites and parallel requirements are satisfied. New B-only repeats retain the shifted study-year window. The weekly stages then verify day/time placements and lecturer conflicts.
-
-- Shared offerings are labeled **A+B**.
-- Repeated offerings for late starters are labeled **B**.
-- Repeats are minimized rather than copying the entire degree one semester later.
-- Prerequisite and parallel requirements apply to each cohort's progression.
-- One continuation semester is added for cohort B; it is not an extra regular semester for cohort A.
-
-The newer solver uses staged planning. A feasible semester plan does not guarantee feasible weekly placements: department hours, lecturer availability, and forbidden overlaps can still prevent generation.
-
-## 7. Natural-language scheduling assistant
-
-The newer archive includes a Claude integration that converts department requests into structured scheduling rules. For example:
+## Project structure
 
 ```text
-Professor Sela cannot teach on Tuesdays.
-Try to make Wednesday lighter for second-year students.
+timeTabling/
+├── timetable_frontend/          the web app (Flask)
+│   ├── app.py                   pages, background builds, the assistant
+│   ├── auth.py                  accounts, sessions, CSRF, rate limits
+│   ├── timetable_export.py      the standalone HTML download
+│   ├── templates/  static/      pages and the design system
+│   ├── translations/            Hebrew and English (Flask-Babel)
+│   └── sample/                  the computer science sample file
+├── timetable_backend/           the scheduler
+│   ├── main.py                  runs one build
+│   ├── excel_reader.py          reads the file, computes hours
+│   ├── column_mapping.py        matches differently named columns
+│   ├── requirements.py          the prerequisite parser
+│   ├── scheduler.py             Stage 1 and Stage 2 CP-SAT models
+│   ├── year_plan.py             study-year checks and suggested moves
+│   ├── diagnostics.py           data check and failure explanations
+│   └── ai_constraint_interpreter.py   plain words → structured rules (Claude)
+├── tests/                       290 tests
+├── PRODUCT.md  DESIGN.md        who it is for, and the design system
+└── reset_password.py            local password reset
 ```
 
-Configure the API key in the same terminal used to start the app.
-
-### Windows PowerShell
-
-```powershell
-$env:ANTHROPIC_API_KEY="your-key-here"
-python timetable_frontend/app.py
-```
-
-### macOS / Linux
+## Tests
 
 ```bash
-export ANTHROPIC_API_KEY="your-key-here"
-python timetable_frontend/app.py
+python -m unittest discover -s tests
 ```
 
-The model can be overridden using `CLAUDE_MODEL`; choose a model available to your Anthropic account. An API key is required for the assistant, not for ordinary manual timetable generation.
+290 tests in 28 files cover both solver stages and their rules, cohort sharing, and/or prerequisites, study-year plans, column matching and the data check, accounts and security, and every page in both languages. One test reads every page and fails if solver jargon ("solver", "infeasible", "CP-SAT") ever reaches the screen.
 
-Review interpreted rules before generating. Use the course upload or manual-add controls to maintain the catalog. Claude produces structured instructions; the OR-Tools solver performs scheduling.
+## Accounts and security
 
-## 8. Timetable download
+Each account has its own course file, settings and timetable. Passwords are hashed with scrypt; forms carry CSRF tokens; sessions expire after 8 hours and sign-out revokes them; repeated sign-in attempts are rate limited. Accounts live in `.instance/` (ignored by git): keep it private and never share it.
 
-The dashboard and calendar include **הורדת מערכת השעות** (Download timetable). The button downloads `timetable.html`, a standalone Hebrew file that opens offline in a browser.
+<details>
+<summary><b>Optional settings and password recovery</b></summary>
 
-- Select cohort A, cohort B, or all offerings.
-- Each academic year is one horizontal row of semesters; academic years are stacked vertically. Column widths are calculated from the actual overlapping meetings and title lengths. Busier days and semesters receive more width. On narrow screens, each year scrolls horizontally to preserve readable cards and keep its semesters in one row. Review the complete degree by study year and semester. Each day lists exact start/end times, course names, lecturers, meeting type and cohort.
-- Overlapping meetings appear in separate horizontal lanes. The layout is a readable daily agenda; vertical spacing is not a proportional time axis.
-- Click **הדפסה / שמירה כ־PDF** and choose Save as PDF in the browser print dialog. The print CSS uses A3 landscape pages with one horizontal row of semesters per academic year. Check the print preview for the selected paper size.
-- Semester 10 appears in B and combined views, with day/time cards. Reused recurring courses are labelled as existing offerings with a younger cohort. A remains a nine-semester plan. B semester 1 is omitted because that cohort has not enrolled yet.
+| Variable | Purpose |
+|---|---|
+| `TIMETABLE_AUTH_DIR` | Where the accounts database lives, when upgrading into a new folder |
+| `TIMETABLE_SECRET_KEY` | A managed signing key (32+ characters); otherwise one is generated in `.instance/` |
+| `TIMETABLE_HTTPS=1` | Secure cookies when served over HTTPS |
+| `TIMETABLE_SMTP_HOST`, `_PORT`, `_SECURITY`, `_USER`, `_PASSWORD`, `_FROM` | Email settings for "Forgot password?" links (`_SECURITY` is `starttls` or `ssl`) |
+| `TIMETABLE_PUBLIC_URL` | The address people visit, used in reset links |
 
-This export reads the current timetable only. It never runs the solver, generates an image, or requires extra dependencies. It is created on demand through `/export/timetable` (code: `timetable_frontend/timetable_export.py`). The HTML contains its own styles and cohort-selection script, with no external assets.
-
-The download endpoint, displayed buttons, escaping, overlap grouping and missing-timetable handling were checked. Browser print rendering could not be exercised in this environment, so check the browser print preview before distributing a PDF.
-
-## 9. Outputs and downloads
-
-Depending on the generation stage and enabled export path, project outputs include:
-
-| File | Purpose |
-| --- | --- |
-| `courses.json` | Parsed course catalog |
-| `courses_calculated.xlsx` | Calculated course hours for review |
-| `unresolved_requirements.json` | Requirements that could not be resolved |
-| `semester_plan.xlsx` | Planned course semesters |
-| `timetable.json` | Generated timetable and diagnostic data |
-| `timetable.xlsx` | Spreadsheet output where enabled |
-
-Export behavior changed across historical versions. The later documentation describes on-demand image export, with overlapping events drawn beside each other. Normal generation should display the calendar without preparing a presentation image. Do not assume that every historical Excel or image download button is present in the current UI.
-
-Generated files already included in an archive may belong to an earlier run. Generate again after changing course data or constraints.
-
-## 9. Hebrew and English support
-
-The interface uses Flask-Babel. Hebrew uses right-to-left layout; English uses left-to-right layout. Language switching is available through the UI and `/language/he` or `/language/en`.
-
-Catalog content is translated separately using `course_translations.json`, indexed by course ID. New or changed courses require corresponding English entries; this file does not update automatically.
-
-After adding or changing interface text:
+Without email configured, reset a password on the computer running the app:
 
 ```bash
-cd timetable_frontend
-pybabel extract -F babel.cfg -o messages.pot .
-pybabel update -i messages.pot -d translations
-# Edit the .po files to provide translations.
-pybabel compile -d translations
+python reset_password.py
 ```
 
-The app reads compiled `.mo` files, so editing `.po` files alone is insufficient.
+It asks for the email and the new password, and signs that account out everywhere.
+</details>
 
-## 10. Troubleshooting
+## Limits and next steps
 
-| Problem | What to check |
-| --- | --- |
-| Missing Python package | Install the root `requirements.txt` using the Python environment that runs the app. |
-| Browser does not open | Open `http://127.0.0.1:5000/` manually. |
-| Claude API key required | Set `ANTHROPIC_API_KEY` before starting Flask in that terminal, then restart the app. |
-| Model request fails | Check API access and the configured `CLAUDE_MODEL`. |
-| Course-hour review warning | Compare source weekly hours, credits, and lesson type with the official course information. |
-| Invalid negative duration | Correct the source data; the solver cannot schedule negative meeting hours. |
-| Unresolved prerequisite | Check course IDs/names and `unresolved_requirements.json`. |
-| No feasible timetable or timeout | Review active days/hours, lecturer availability, prerequisite chains, cohort-B repeats, and course categories. Inspect backend diagnostics to locate the failing stage. |
-| Category displayed incorrectly | Check `קטגוריית קורס` in the imported workbook and regenerate. |
-| English catalog entry missing | Add the course ID and its translated fields to `course_translations.json`. |
-| Edited translation not visible | Compile translations and restart the application. |
+- The search stops after a time limit. The result always keeps every rule, but a more comfortable timetable may exist.
+- Even when every course has a semester, the week's hours may be too few for all its lessons; the app then reports what is in the way.
+- Results are only as good as the course file, which is why the column and data checks come first.
 
-To run only the backend from the project root:
+**Next:** classroom assignment, a form where lecturers enter their own availability, student preferences for electives, and installation on the college server.
 
-```bash
-cd timetable_backend
-python main.py
-```
+## Team
 
-The backend uses the existing workbook and saved configuration. Use the frontend for normal configuration and timetable generation.
+**Sara Abd Alkader** and **Wasna Qadan**
 
-## Solver rules and validation
-
-Semester planning considers both cohorts before A's semesters are fixed. A useful first semester is preferred, then fewer new openings, then balance and timing. Existing A/B offerings are shared when B's prerequisites and parallel requirements permit it.
-
-### B continuation and recurring offerings
-
-Semester 10 (year 4 semester A for the supplied three-year, three-semesters-per-year configuration) is displayed for cohort B only.
-
-- If a course already has a regular phase-A offering in semesters 1, 4, or 7, B can join its next recurring offering with younger students. The continuation card keeps the exact source day/start/end and is marked `REUSED_RECURRING`. Its new-opening penalty is zero.
-- If no matching recurring offering exists and a final-year course is opened specifically for B in semester 10, it receives a normal new-opening penalty and must be physically scheduled. It is marked `NEW_B_ONLY`.
-- Availability, lecturers, durations, prerequisites, and B student overlap constraints remain enforced. A's own courses are not moved into semester 10.
-- Recurrence assumes the regular curriculum offerings repeat annually in the same semester phase and keep their current source times. This is the existing-offering model requested for younger cohorts; it is not an independently verified future-year university calendar.
-
-### Semester and day preferences
-
-Enrolled semesters are preferred nonempty. Active teaching days are preferred occupied, and B day loads receive a balancing objective. Source phase-A offerings are also spread during Stage 1 so B's recurring completion meetings can use the available days. These are soft preferences: a hard lecturer restriction, insufficient meetings, or prerequisites can make an empty day or semester unavoidable. B's first semester is not an enrolled semester and is not displayed in the student export.
-
-The Stage 1 interval model retains a feasible weekly witness. Stage 2 validates it against all compiled hard rules before using it as an optimisation starting point or timeout fallback. Export generation never runs the solver.
-
-### Earlier reference result (before clock-time refinement)
-
-With the supplied workbook, three years, three semesters per year, Monday/Thursday/Friday, 16 clock hours and B intake enabled:
-
-- A has courses in semesters 1–9; B has courses in semesters 2–10.
-- Each enrolled semester of both cohorts uses all three enabled days.
-- 33 courses share the current A+B offering; three use recurring existing offerings in semester 10; only two additional course openings are penalized (Calculus 1 and Linear Algebra 1).
-- Calculus 2 is A+B in semester 3. Both project alternatives are A+B in semester 9.
-- Semester 10 contains Organizational Behavior, Learning How to Learn, and Computer Organization and Assembly Language. The latter has separate lecture and tutorial meetings, resulting in four continuation cards.
-- All 38 courses have physical attendance events for both cohorts. No logical-only continuation course remains. The export contains 64 displayed events including recurring attendance cards; recurring cards do not mean newly created physical sessions.
-- Generated events passed department-window, duration, lecturer/category conflict, lecture/tutorial semester, and both cohorts' academic progression checks. Reused continuation cards match their source offering's day/time.
-- Twenty regression tests passed, including zero-cost recurring reuse, penalized new continuation meetings, day spreading, hard-rule rejection of invalid witnesses, and timeout fallback.
-
-Run checks from the project root:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-The B solver returned OPTIMAL for the tested fixed A calendar. This does not prove global optimality across every possible combined A/B weekly calendar. Sharing counts and layouts can vary by solver choices and inputs.
-
-### Presentation
-
-The timetable HTML export uses the same category palette as the app: required blue, elective green, seminar pink, project yellow, and general purple. Semesters of each year remain in one horizontal table row; years stack vertically. Print CSS targets A3 landscape. Browser print rendering was not available in this environment, so check the print preview before distributing a PDF.
-
-Course data, hour calculations and saved department settings are unchanged. The existing course-hour review warning for course 8500036 remains visible.
-
-### Content-aware export widths
-
-Day widths are based on simultaneous meeting lanes and course title lengths; semester widths are proportional to their total day widths. Successive meetings reuse a lane. Each cohort view is measured independently from its actual events. Screen layouts preserve readable minimum widths through horizontal scrolling; print uses the same proportions fitted to the page. Layout calculations never modify course assignments or times. Build Timetable runs OR-Tools using the catalog and saved constraints; Download formats the most recently saved solver output. The supplied HTML is a snapshot and must be downloaded again after rebuilding the timetable.
-
-### Preferred start times
-
-The solver prefers quarter-hour clock starts (:00, :15, :30, :45), then earlier starts within the chosen day. The five-minute domain remains available when exact availability or other hard constraints require it. A final clock optimization of up to twenty seconds preserves each A meeting's semester and day, all hard rules, and its weekly footprint or improves that footprint. If this optimization times out, the verified timetable is retained; preferred times are not guaranteed for every input. B reuse follows the actual source times, and B-only placement uses the same clock preference. The export displays the solver's exact times without rounding.
-
-The 22 regression tests include moving an unnecessary 08:05 start to 08:00 and retaining 08:05 when an exact availability window requires it. Regenerate with **Build Timetable** after installing this version; existing downloads are snapshots.
-
-Earlier clock-only full run: 64 attendance events, all quarter-hour starts; 33 shared courses, two recurring continuation courses, three new B-only openings. Clock refinement and the fixed-A B solver both returned OPTIMAL; full A optimization returned FEASIBLE. Sharing choices can vary between runs. Availability, duration, lecturer/category conflicts, and A/B academic progression checks passed.
-
-### Short breaks and first-class starts
-
-Final A timing refinement now minimizes first-class start times before break preferences. It never delays the first class relative to the selected timetable. Breaks of 5–30 minutes between consecutive non-overlapping class groups carry no break penalty; zero-minute breaks are allowed with a penalty when needed. Parallel alternative classes form one group, so no break is requested between simultaneous alternatives. The original complete weekly constraints remain active, and semesters and teaching days are fixed during refinement.
-
-B-only meetings receive a separate refinement around fixed shared offerings; academic choices and teaching days stay fixed, and recurring offerings retain their exact source times. B uses a 15-minute base start grid with additional five- and ten-minute break candidates beside existing offerings, plus exact window-end candidates. A timeout can retain a verified incumbent with imperfect comfort; diagnostics explicitly report an unfinished A clock refinement. No export times are rounded.
-
-Run **Build Timetable** again after restarting the updated app. Previously saved schedules and downloaded HTML files do not update automatically.
-
-Earlier short-break validation (15-minute-target version): all 24 tests passed. The full run produced 65 attendance events with no off-quarter-hour starts. Counting each cohort's agenda separately, there were 40 fifteen-minute breaks and seven back-to-back transitions. All days beginning in the 08:00 hour began at 08:00. A and B final time refinements returned OPTIMAL for their fixed-day models. Department availability, exact durations, lecturer/category conflicts and both cohorts' academic progression checks passed. These counts describe this run, not a guarantee for every input.
-
-### Electives and seminars: overlap only as a fallback
-
-Elective/elective, elective/seminar and seminar/seminar conflicts are allowed with a penalty proportional to the concurrent five-minute slots. A weekly scheduling prefers fewer such conflicts before empty-day preferences, footprint compaction and clock alignment. B counts conflicts among B-only, shared and recurring attendance, with an overlap penalty below the main new-opening penalty. Its academic progression and opening objectives remain active. Final time/break refinements cannot increase the selected schedule's optional-course overlap score. Project/project treatment and all mandatory/general/lecturer hard restrictions remain unchanged.
-
-This is a soft preference: limited availability, academic requirements and search time can still leave conflicts. It is not a proof that every remaining conflict is unavoidable across all possible semester plans. Tests cover separate elective/elective, elective/seminar and seminar/seminar classes when there is room, plus necessary overlap in a tight window.
-
-Latest overlap-preference validation: 26 tests passed; the supplied full run produced 63 attendance events with zero elective/seminar overlap pairs for either cohort and zero off-quarter-hour starts. Availability, duration, lecturer/category constraints and A/B progression checks passed. This is a tested result, not a guarantee for every input.
-
-Account-release validation: 40 tests passed across the six test modules, including 14 account/security tests and the existing scheduling and export tests. Hebrew and English pages were checked through Flask requests; browser visual rendering was not exercised.
-
-Password-recovery release: 52 tests passed across seven test modules, including 12 recovery tests. SMTP transport was simulated; no real reset emails were sent during validation. Existing accounts, password hashes, and timetable data are preserved by the startup migration.
-
-## Current rule update: shared seminars and minimum soft break
-
-When semester-B intake is enabled, every seminar is a single shared A+B offering. This is enforced in both joint semester planning and B weekly attendance planning. The cohorts attend the same semester, day and start/end times; a separate B-only or recurring-younger-cohort seminar does not satisfy this rule. Prerequisites remain hard for both cohorts. If these requirements cannot be met, generation reports failure rather than silently splitting a seminar. With B intake disabled, the usual A-only seminar scheduling applies.
-
-Breaks remain a soft preference. Five through thirty minutes receive no break penalty; a zero-minute transition costs six unscaled comfort units, and each additional five-minute slot beyond thirty minutes adds one. Other timing preferences can still prefer a quarter-hour start when both choices provide an acceptable break. No break is added before the first class. Back-to-back sessions remain permitted when constraints or the selected day plan leave no room. The B candidate grid adds five- and ten-minute break options beside existing offerings to its 15-minute base grid; final timing refinement uses five-minute precision.
-
-Validation of this update: 56 regression tests passed. A full curriculum run produced 66 physical events with 32 shared courses. All five seminars have exactly one A+B offering; availability, durations, lecturer/category conflicts and both cohorts’ prerequisites were checked. Soft comfort remains subject to solver time limits.
+Built with Python, Flask and Flask-Babel, Google OR-Tools CP-SAT, pandas and openpyxl, the Claude API, and SQLite.
